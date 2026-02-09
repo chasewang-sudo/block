@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Block Blast · Mahjong Collect</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="top">
+        <div class="brand">
+          <div class="logo">BLOCK BLAST</div>
+          <div class="sub">收集 1-9 饼</div>
+        </div>
+        <div class="mahjong-bar" id="mahjongBar"></div>
+      </header>
+
+      <section class="game">
+        <div class="board-wrap">
+          <div class="board" id="board"></div>
+          <div class="board-glow"></div>
+        </div>
+        <aside class="panel">
+          <div class="hint">
+            选一个方块放上棋盘，凑满一行或一列即可消除。带饼子的格子被消除后会收入上方。
+          </div>
+          <div class="pieces" id="pieces"></div>
+          <div class="status" id="status"></div>
+        </aside>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
