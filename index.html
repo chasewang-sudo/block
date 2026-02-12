@@ -1,35 +1,1526 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Block Blast · Mahjong Collect</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <main class="page">
-      <header class="top">
-        <div class="brand">
-          <div class="logo">BLOCK BLAST</div>
-          <div class="sub">收集 1-9 饼</div>
-        </div>
-        <div class="mahjong-bar" id="mahjongBar"></div>
-      </header>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方块打地鼠：进阶版</title>
+    <style>
+        :root {
+            --bg-0: #d9f6b9;
+            --bg-1: #c9eca0;
+            --bg-2: #bde28f;
+            --panel: #ffffffd9;
+            --panel-border: rgba(95, 68, 29, 0.15);
+            --grid: #f7e4c0;
+            --grid-border: rgba(120, 90, 45, 0.18);
+            --block-a: #7fd45f;
+            --block-b: #6bc24f;
+            --block-glow: rgba(107, 194, 79, 0.45);
+            --text: #2f2a18;
+            --muted: #6e5b2b;
+            --accent: #ffb347;
+            --danger: #ff5a6c;
+            --shadow: 0 18px 45px rgba(44, 30, 12, 0.22);
+            --radius: 16px;
+            --device-w: 402px;
+            --device-h: 874px;
+        }
 
-      <section class="game">
-        <div class="board-wrap">
-          <div class="board" id="board"></div>
-          <div class="board-glow"></div>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: "Baloo 2", "Comic Sans MS", "PingFang SC", "Noto Sans SC", sans-serif;
+            background:
+                        radial-gradient(900px 600px at 80% -10%, #f6ffe9 0%, transparent 60%),
+                        radial-gradient(800px 800px at -10% 10%, #c7efb0 0%, transparent 55%),
+                        linear-gradient(160deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
+            color: var(--text);
+            margin: 0;
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(rgba(255,255,255,0.35) 1px, transparent 1px);
+            background-size: 22px 22px;
+            opacity: 0.22;
+            pointer-events: none;
+            mix-blend-mode: soft-light;
+        }
+
+        .device-shell {
+            width: min(var(--device-w), 94vw);
+            height: min(var(--device-h), 94vh);
+            background: url('background.jpg') center / 100% 100% no-repeat;
+            border-radius: 34px;
+            border: 4px solid rgba(110, 76, 28, 0.2);
+            box-shadow: 0 24px 60px rgba(52, 34, 12, 0.35);
+            padding: 16px 14px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .device-shell::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .status-bar {
+            position: absolute;
+            top: 8px;
+            left: 0;
+            width: 100%;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .dynamic-island {
+            width: 120px;
+            height: 26px;
+            border-radius: 20px;
+            background: #20150a;
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.05);
+        }
+
+        .status-icons {
+            position: absolute;
+            right: 14px;
+            top: 4px;
+            display: flex;
+            gap: 6px;
+            opacity: 0.7;
+            color: #2e1c0a;
+            font-weight: 800;
+            font-size: 0.7rem;
+        }
+
+        .status-icons .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2e1c0a;
+            opacity: 0.7;
+        }
+
+        .app {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 40px 10px 16px;
+        }
+
+        header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 4px 0;
+            box-sizing: border-box;
+        }
+
+        .top-time {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            color: #2b2919;
+        }
+
+        .top-money {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #1e8a38;
+        }
+
+        .top-settings {
+            font-size: 22px;
+            color: #6b5a2c;
+        }
+
+        .goal-panel {
+            width: 100%;
+            background: transparent;
+            border-radius: 10px;
+            padding: 8px 10px 10px;
+            margin-top: 6px;
+        }
+
+        .goal-title {
+            text-align: center;
+            font-weight: 800;
+            color: #3d3d3d;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .goal-title span {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(120, 80, 30, 0.2);
+        }
+
+        .goal-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .goal-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .goal-bar-row .goal-badge {
+            flex: 0 0 auto;
+        }
+
+        .goal-scale {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .goal-bar-row .goal-bar {
+            flex: 1 1 auto;
+        }
+
+        .goal-bar {
+            position: relative;
+            height: 10px;
+            background: #d5e3c2;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .goal-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #2dbb5d, #1f9f4f);
+        }
+
+        .goal-dot {
+            position: absolute;
+            top: 50%;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ffd24d;
+            transform: translate(-50%, -50%);
+            left: 66.667%;
+        }
+
+        .goal-meta {
+            position: relative;
+            height: 16px;
+            font-size: 0.8rem;
+            color: #000;
+            margin-bottom: 4px;
+        }
+
+        .goal-meta span {
+            position: absolute;
+            transform: translateX(-50%);
+        }
+
+        .goal-reward {
+            position: relative;
+            height: 16px;
+            font-size: 0.78rem;
+            color: #000;
+            font-weight: 800;
+            margin-top: 4px;
+        }
+
+        .goal-reward span {
+            position: absolute;
+            transform: translateX(-50%);
+        }
+
+        .goal-meta span:nth-child(1),
+        .goal-reward span:nth-child(1) { left: 0%; transform: translateX(0); }
+        .goal-meta span:nth-child(2),
+        .goal-reward span:nth-child(2) { left: 33.333%; }
+        .goal-meta span:nth-child(3),
+        .goal-reward span:nth-child(3) { left: 66.667%; }
+        .goal-meta span:nth-child(4),
+        .goal-reward span:nth-child(4) { left: 100%; transform: translateX(-100%); }
+
+        .reward-step {
+            transition: transform 0.2s ease, color 0.2s ease;
+            color: #000;
+        }
+
+        .reward-step.active {
+            color: #000;
+            transform: scale(1.08);
+        }
+
+        .goal-badge {
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(120, 80, 30, 0.2);
+            font-weight: 800;
+            font-size: 0.78rem;
+            color: #000;
+            white-space: nowrap;
+        }
+
+        /* 游戏主容器 */
+        #board-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            aspect-ratio: 1;
+            background: linear-gradient(180deg, #dfc18d, #cda667);
+            padding: 6px;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            border: 2px solid rgba(120, 80, 30, 0.2);
+        }
+
+        #game-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 4px;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 地鼠独立层 */
+        #mole-layer {
+            position: absolute;
+            top: 6px; left: 6px;
+            width: calc(100% - 12px);
+            height: calc(100% - 12px);
+            pointer-events: none;
+        }
+
+        .cell {
+            background: #f6e9cd;
+            border-radius: 8px;
+            border: 2px dashed rgba(132, 96, 52, 0.55);
+            transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cell.filled {
+            background:
+                linear-gradient(90deg, #6cc24a 50%, #63b142 50%),
+                linear-gradient(0deg, #7bd157 50%, #6cc24a 50%);
+            background-size: 6px 6px, 6px 6px;
+            box-shadow:
+                0 0 0 2px rgba(255,255,255,0.25) inset,
+                0 6px 12px rgba(40, 90, 30, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .cell.has-hole::after {
+            content: "";
+            position: absolute;
+            width: 56%;
+            height: 32%;
+            left: 22%;
+            bottom: 8%;
+            background: radial-gradient(ellipse at center, var(--hole-color, #5a3a16) 0%, #3f2710 60%, #2a1908 100%);
+            border-radius: 50% 50% 45% 45%;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.35) inset;
+            opacity: 0.7;
+        }
+
+        .cell.has-hole {
+            background-image:
+                linear-gradient(90deg, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.08) 50%),
+                linear-gradient(0deg, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.12) 50%),
+                radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--hole-color, #5a3a16) 45%, transparent) 0%, transparent 70%);
+            background-size: 6px 6px, 6px 6px, 100% 100%;
+        }
+
+        .cell.reachable {
+            outline: 2px solid rgba(142, 216, 110, 0.7);
+            outline-offset: -2px;
+            background: rgba(170, 230, 140, 0.3);
+        }
+
+        .cell.preview {
+            background: rgba(120, 200, 90, 0.35);
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.45) inset;
+        }
+
+        .cell.preview.invalid {
+            background: rgba(255, 90, 108, 0.28);
+            box-shadow: 0 0 0 2px rgba(255,90,108,0.45) inset;
+        }
+
+        .cell.preview.hit {
+            outline: 2px solid rgba(255, 214, 74, 0.85);
+            outline-offset: -2px;
+        }
+
+        .cell.line-preview {
+            background: rgba(255, 214, 74, 0.25);
+        }
+
+        .board-shake {
+            animation: board-shake 0.22s ease;
+        }
+
+        @keyframes board-shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            50% { transform: translateX(4px); }
+            75% { transform: translateX(-3px); }
+            100% { transform: translateX(0); }
+        }
+
+        .screen-shake {
+            animation: screen-shake 0.25s ease;
+        }
+
+        @keyframes screen-shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-3px, 2px); }
+            50% { transform: translate(3px, -2px); }
+            75% { transform: translate(-2px, -2px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .cell.pulse {
+            animation: cell-pulse 0.4s ease;
+        }
+
+        @keyframes cell-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(110,243,194,0.0); }
+            50% { transform: scale(1.03); box-shadow: 0 0 0 8px rgba(110,243,194,0.15); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(110,243,194,0.0); }
+        }
+
+        /* 地鼠动画逻辑 */
+        .mole-entity {
+            position: absolute;
+            width: 12.5%;
+            height: 12.5%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: translate3d(var(--mx, 0), var(--my, 0), 0);
+            will-change: transform;
+            pointer-events: none;
+        }
+
+        .mole-entity .mole-sprite {
+            width: calc(88% + 20px);
+            height: calc(88% + 20px);
+            object-fit: contain;
+            filter: drop-shadow(0 6px 8px rgba(120,70,20,0.35));
+            animation: mole-bob 1.6s ease-in-out infinite;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        @keyframes mole-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .hammer {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            z-index: 200;
+            background: url('hammer.png') center / contain no-repeat;
+        }
+
+        #pieces-container {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 10px;
+            height: 110px;
+            padding: 8px 2px 6px;
+            border-radius: 14px;
+        }
+
+        .piece-slot {
+            flex: 1;
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid rgba(120, 80, 30, 0.18);
+            border-radius: 14px;
+            box-shadow: 0 8px 18px rgba(120, 80, 30, 0.18);
+        }
+
+        .piece {
+            display: grid;
+            gap: 4px;
+            cursor: grab;
+            transition: transform 0.2s, filter 0.2s;
+            filter: drop-shadow(0 6px 8px rgba(120,70,20,0.25));
+        }
+
+        .piece:active { cursor: grabbing; transform: scale(1.02); }
+
+        .p-cell {
+            width: 22px;
+            height: 22px;
+            background:
+                linear-gradient(90deg, #74cd55 50%, #66bb4a 50%),
+                linear-gradient(0deg, #83da5f 50%, #74cd55 50%);
+            background-size: 6px 6px, 6px 6px;
+            border-radius: 5px;
+            box-shadow:
+                0 0 0 2px rgba(255,255,255,0.18) inset,
+                0 4px 8px rgba(40, 90, 30, 0.25);
+            position: relative;
+        }
+
+        .p-cell.empty { background: transparent; box-shadow: none; }
+
+        .p-cell.has-range::before {
+            content: '';
+            position: absolute;
+            width: 70%;
+            height: 40%;
+            left: 15%;
+            bottom: 6%;
+            background: radial-gradient(ellipse at center, #5a3a16 0%, #3f2710 60%, #2a1908 100%);
+            border-radius: 50% 50% 45% 45%;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.45) inset;
+        }
+
+        .p-cell.has-mole::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 50%;
+            top: 4%;
+            transform: translateX(-50%);
+            background: url('mole.png') center / contain no-repeat;
+        }
+
+
+        .cell.clearing {
+            animation: clear-pop 0.35s ease both;
+            background: radial-gradient(circle, #fff 0%, #ffe2a4 40%, #ffc46b 100%);
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.6) inset, 0 8px 18px rgba(120,70,20,0.35);
+        }
+
+        @keyframes clear-pop {
+            0% { transform: scale(1); opacity: 1; }
+            60% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.2; }
+        }
+
+        .cell.crack {
+            animation: crack-jitter 0.18s ease;
+            background: linear-gradient(135deg, #ead1a2, #c9a160);
+        }
+
+        @keyframes crack-jitter {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            50% { transform: translateX(2px); }
+            75% { transform: translateX(-1px); }
+            100% { transform: translateX(0); }
+        }
+
+        .cell.shatter {
+            animation: shatter 0.32s ease both;
+            background: radial-gradient(circle, #fff 0%, #f0d29c 45%, #cfa15a 100%);
+        }
+
+        @keyframes shatter {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            70% { transform: scale(1.1) rotate(4deg); opacity: 0.9; }
+            100% { transform: scale(0.85) rotate(-6deg); opacity: 0.1; }
+        }
+
+        .hammer.ready {
+            animation: hammer-ready 0.22s ease-out forwards;
+        }
+
+        .hammer.hit {
+            animation: hammer-hit-strong 0.38s ease-out forwards;
+        }
+
+        .hammer.smash {
+            animation: hammer-smash 0.35s ease-out forwards;
+            transform-origin: center center;
+        }
+
+        @keyframes hammer-smash {
+            0% { transform: scale(1.25) translate(0, -30px) rotate(-12deg); opacity: 0; }
+            40% { transform: scale(0.95) translate(0, 0) rotate(0deg); opacity: 1; }
+            100% { transform: scale(0.8) translate(0, 10px) rotate(6deg); opacity: 0; }
+        }
+
+        .mole-entity.stunned .mole-sprite {
+            animation: mole-stun 0.5s ease-out forwards;
+        }
+
+        .mole-entity.scared .mole-sprite {
+            animation: mole-scared 0.6s ease-in-out infinite;
+        }
+
+        @keyframes mole-scared {
+            0% { transform: translateX(-2px); }
+            50% { transform: translateX(2px); }
+            100% { transform: translateX(-2px); }
+        }
+
+        .mole-entity .mole-emoji {
+            position: absolute;
+            top: -4px;
+            right: -2px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .mole-entity.scared .mole-emoji {
+            opacity: 1;
+        }
+
+        @keyframes mole-stun {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(6px) rotate(-12deg); opacity: 0.6; }
+        }
+
+        .egg {
+            position: absolute;
+            font-size: 22px;
+            z-index: 210;
+            animation: egg-pop 0.35s ease-out forwards;
+        }
+
+        .egg.shatter {
+            animation: egg-shatter 0.45s ease-out forwards;
+        }
+
+        @keyframes egg-shatter {
+            0% { transform: scale(1); opacity: 1; }
+            60% { transform: scale(1.2); opacity: 0.9; }
+            100% { transform: scale(0.6); opacity: 0; }
+        }
+
+        .reward-fly {
+            position: absolute;
+            font-size: 18px;
+            z-index: 220;
+            animation: reward-fly 0.7s ease-out forwards;
+        }
+
+        @keyframes reward-fly {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-28px) scale(1.1); opacity: 0; }
+        }
+
+        .reward-fly.to-top {
+            animation: reward-to-top 0.9s ease-out forwards;
+        }
+
+        @keyframes reward-to-top {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(-120px, -260px) scale(0.9); opacity: 0; }
+        }
+        @keyframes hammer-ready {
+            0% { transform: translate(0, -60px) rotate(-35deg); opacity: 0; }
+            100% { transform: translate(0, -10px) rotate(-10deg); opacity: 1; }
+        }
+
+        @keyframes hammer-hit-strong {
+            0% { transform: translate(0, -10px) rotate(-10deg); opacity: 1; }
+            35% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            100% { transform: translate(0, -20px) rotate(8deg); opacity: 0; }
+        }
+
+        .mole-entity.money .mole-sprite {
+            animation: money-fly 0.6s ease-out forwards;
+        }
+
+        @keyframes money-fly {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            60% { transform: translateY(-18px) scale(1.1); opacity: 1; }
+            100% { transform: translateY(-30px) scale(0.9); opacity: 0; }
+        }
+
+        @keyframes egg-pop {
+            0% { transform: translateY(-4px) scale(0.8); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .toast {
+            position: absolute;
+            top: 56px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(120, 80, 30, 0.2);
+            border-radius: 14px;
+            padding: 6px 12px;
+            font-weight: 800;
+            color: #000;
+            box-shadow: 0 8px 18px rgba(120, 80, 30, 0.2);
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(2px);
+        }
+
+        .hidden { display: none !important; }
+
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 231, 189, 0.95); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 1000;
+            gap: 18px;
+        }
+
+        #msg-title {
+            font-size: 2rem;
+            letter-spacing: 0.04em;
+        }
+
+        button {
+            padding: 12px 40px;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, var(--block-a), var(--block-b));
+            color: #4b2c10;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 800;
+            box-shadow: 0 10px 20px rgba(120, 80, 30, 0.3);
+        }
+
+        @media (max-width: 420px) {
+            .device-shell { border-radius: 28px; }
+            .hud-value { font-size: 1rem; }
+            #board-wrapper { max-width: 340px; }
+        }
+    </style>
+</head>
+<body>
+<div class="device-shell">
+    <div class="status-bar">
+        <div class="dynamic-island"></div>
+        <div class="status-icons">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span>5G</span>
+            <span>100%</span>
         </div>
-        <aside class="panel">
-          <div class="hint">
-            选一个方块放上棋盘，凑满一行或一列即可消除。带饼子的格子被消除后会收入上方。
-          </div>
-          <div class="pieces" id="pieces"></div>
-          <div class="status" id="status"></div>
-        </aside>
-      </section>
-    </main>
-    <script src="script.js"></script>
-  </body>
+    </div>
+    <div class="app">
+        <div id="toast" class="toast">已过关，可继续挑战</div>
+        <header>
+            <div id="timer" class="top-time">03:00</div>
+            <div id="money-total" class="top-money">$0.0</div>
+            <div class="top-settings">⚙</div>
+        </header>
+
+        <div class="goal-panel">
+            <div class="goal-row">
+                <div class="goal-title"><span>goal 10</span></div>
+            </div>
+            <div class="goal-bar-row">
+                <span class="goal-badge">🐹 $0.1</span>
+                <div class="goal-scale">
+                    <div class="goal-meta">
+                        <span>0</span>
+                        <span>5</span>
+                        <span>10</span>
+                        <span>15</span>
+                    </div>
+                    <div class="goal-bar">
+                        <div id="goal-fill" class="goal-fill"></div>
+                        <div class="goal-dot"></div>
+                    </div>
+                    <div class="goal-reward">
+                        <span></span>
+                        <span id="reward-step-1" class="reward-step">$0.5</span>
+                        <span id="reward-step-2" class="reward-step">$1.0</span>
+                        <span id="reward-step-3" class="reward-step">$1.5</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <div id="board-wrapper">
+            <div id="game-grid"></div>
+            <div id="mole-layer"></div>
+        </div>
+
+        <div id="pieces-container"></div>
+    </div>
+</div>
+
+<div id="overlay" class="hidden">
+    <h1 id="msg-title">游戏结束</h1>
+    <button onclick="location.reload()">重新开始</button>
+</div>
+
+<script>
+    const GRID_SIZE = 8;
+    const gridEl = document.getElementById('game-grid');
+    const moleLayer = document.getElementById('mole-layer');
+    const piecesContainer = document.getElementById('pieces-container');
+    const timerEl = document.getElementById('timer');
+    const moneyTotalEl = document.getElementById('money-total');
+    const goalFillEl = document.getElementById('goal-fill');
+    const toastEl = document.getElementById('toast');
+    const rewardStepEls = [
+        document.getElementById('reward-step-1'),
+        document.getElementById('reward-step-2'),
+        document.getElementById('reward-step-3')
+    ];
+
+    let grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+    let holes = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+    let holeBlockId = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(-1));
+    let moles = [];
+    let collectedCount = 0;
+    let timeLeft = 180;
+    let gameActive = true;
+    let moleIdCounter = 0;
+    let previewCells = [];
+    let previewLines = [];
+    let rewards = [0, 0, 0];
+    let roundCount = 0;
+    let missStreak = 0;
+    let lastSegment = 0;
+    let holeVisits = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+    let passedGoal = false;
+    let blockIdCounter = 0;
+
+    const SHAPES = [
+        { id: 'square2', s: [[1,1],[1,1]], w:2, h:2 },
+        { id: 'single', s: [[1]], w:1, h:1 },
+        { id: 'diag2', s: [[1,0],[0,1]], w:2, h:2 },
+        { id: 'l2', s: [[1,1],[1,0]], w:2, h:2 },
+        { id: 'line2h', s: [[1,1]], w:2, h:1 },
+        { id: 'line2v', s: [[1],[1]], w:1, h:2 },
+        { id: 'rect2x3', s: [[1,1,1],[1,1,1]], w:3, h:2 },
+        { id: 'line4', s: [[1,1,1,1]], w:4, h:1 },
+        { id: 'line3h', s: [[1,1,1]], w:3, h:1 },
+        { id: 'line3v', s: [[1],[1],[1]], w:1, h:3 },
+        { id: 't', s: [[1,1,1],[0,1,0]], w:3, h:2 },
+        { id: 'diag', s: [[1,1,0],[0,1,1]], w:3, h:2 },
+        { id: 'l', s: [[1,1,1],[1,0,0]], w:3, h:2 }
+    ];
+
+    const MOLE_ELIGIBLE = new Set(['square2', 'line3h', 'line3v', 'l', 't', 'l2']);
+    const MOLE_MAX_ON_BOARD = 4;
+    const MOLE_CHANCE_BASE = [0.34, 0.40, 0.50];
+    const MOLE_CHANCE_INC = [0.33, 0.40, 0.50];
+    const GOAL_STEPS = [5, 10, 15];
+    const HOLE_COLORS = ['#6b4b2a', '#4a7b3e', '#2f5f8a', '#8a5a2f', '#6b2f6b', '#2f6b6b'];
+
+    const MOLE_TYPES = [
+        { id: 'normal', reward: 0.1, chance: 1.0 }
+    ];
+
+    function initGrid() {
+        gridEl.innerHTML = '';
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `grid-${r}-${c}`;
+                gridEl.appendChild(cell);
+            }
+        }
+    }
+
+    function generatePieces() {
+        piecesContainer.innerHTML = '';
+        roundCount++;
+
+        const segment = Math.min(collectedCount, 2);
+        if (segment !== lastSegment) {
+            missStreak = 0;
+            lastSegment = segment;
+        }
+
+        let spawnMoleThisRound = false;
+        if (moles.length === 0) {
+            spawnMoleThisRound = true;
+        } else if (roundCount === 1) {
+            spawnMoleThisRound = true;
+        } else if (moles.length < MOLE_MAX_ON_BOARD) {
+            const chance = Math.min(1, MOLE_CHANCE_BASE[segment] + missStreak * MOLE_CHANCE_INC[segment]);
+            spawnMoleThisRound = Math.random() < chance;
+        }
+
+        const pieces = [];
+        for (let i = 0; i < 3; i++) {
+            const shapeObj = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+            pieces.push({ shapeObj });
+        }
+
+        if (spawnMoleThisRound) {
+            const eligibleIndexes = pieces
+                .map((p, idx) => (isMoleEligible(p.shapeObj) ? idx : -1))
+                .filter(idx => idx !== -1);
+
+            if (eligibleIndexes.length === 0) {
+                const eligibleShapes = SHAPES.filter(s => isMoleEligible(s));
+                if (eligibleShapes.length > 0) {
+                    pieces[0].shapeObj = eligibleShapes[Math.floor(Math.random() * eligibleShapes.length)];
+                    eligibleIndexes.push(0);
+                }
+            }
+
+            if (eligibleIndexes.length > 0 && moles.length < MOLE_MAX_ON_BOARD) {
+                const pickIdx = eligibleIndexes[Math.floor(Math.random() * eligibleIndexes.length)];
+                pieces[pickIdx].forceMole = true;
+                missStreak = 0;
+            } else {
+                missStreak++;
+                spawnMoleThisRound = false;
+            }
+        } else {
+            if (roundCount > 1) missStreak++;
+        }
+
+        for (let i = 0; i < 3; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'piece-slot';
+
+            const shapeObj = pieces[i].shapeObj;
+            const shapeH = shapeObj.s.length;
+            const shapeW = shapeObj.s[0].length;
+            const pieceEl = document.createElement('div');
+            pieceEl.className = 'piece';
+            pieceEl.draggable = true;
+
+            let validCells = [];
+            shapeObj.s.forEach((row, r) => row.forEach((v, c) => v && validCells.push({r, c})));
+
+            const allowMole = pieces[i].forceMole === true;
+            let molePos = allowMole ? validCells[Math.floor(Math.random() * validCells.length)] : null;
+            const moleType = allowMole ? pickMoleType() : null;
+
+            pieceEl.style.gridTemplateColumns = `repeat(${shapeW}, 1fr)`;
+            pieceEl.setAttribute('data-shape', JSON.stringify(shapeObj.s));
+
+            shapeObj.s.forEach((row, r) => {
+                row.forEach((v, c) => {
+                    const cEl = document.createElement('div');
+                    cEl.className = v ? 'p-cell' : 'p-cell empty';
+                    if (v && molePos) cEl.classList.add('has-range');
+                    if (v && molePos && r === molePos.r && c === molePos.c) {
+                        cEl.classList.add('has-mole');
+                    }
+                    pieceEl.appendChild(cEl);
+                });
+            });
+
+            pieceEl.addEventListener('dragstart', (e) => {
+                if(!gameActive) return;
+                const shapeCopy = shapeObj.s.map(row => row.slice());
+                const fixedMolePos = normalizeMolePos(shapeCopy, molePos);
+                const data = {shape: shapeCopy, molePos: fixedMolePos, moleType};
+                e.dataTransfer.setData('pieceData', JSON.stringify(data));
+                pieceEl.style.opacity = '0.35';
+                pieceEl.style.filter = 'grayscale(0.2) brightness(1.1)';
+
+                const rect = pieceEl.getBoundingClientRect();
+                const cellW = rect.width / shapeW;
+                const cellH = rect.height / shapeH;
+                const ox = (typeof e.offsetX === 'number') ? e.offsetX : rect.width / 2;
+                const oy = (typeof e.offsetY === 'number') ? e.offsetY : rect.height / 2;
+                const offsetC = Math.max(0, Math.min(shapeW - 1, Math.floor(ox / cellW)));
+                const offsetR = Math.max(0, Math.min(shapeH - 1, Math.floor(oy / cellH)));
+                dragInfo = { data, offsetR, offsetC, sourceEl: pieceEl };
+            });
+            pieceEl.addEventListener('dragend', () => {
+                pieceEl.style.opacity = '1';
+                pieceEl.style.filter = 'none';
+                clearPreview();
+                dragInfo = null;
+            });
+
+            slot.appendChild(pieceEl);
+            piecesContainer.appendChild(slot);
+        }
+    }
+
+    let dragInfo = null;
+
+    gridEl.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (!dragInfo) return;
+        const data = dragInfo.data;
+        const rect = gridEl.getBoundingClientRect();
+        const cellSize = rect.width / GRID_SIZE;
+        const targetR = Math.floor((e.clientY - rect.top) / cellSize) - dragInfo.offsetR;
+        const targetC = Math.floor((e.clientX - rect.left) / cellSize) - dragInfo.offsetC;
+        const snap = getSnapPlacement(data.shape, targetR, targetC);
+        updatePreview(data.shape, snap.r, snap.c);
+    });
+    gridEl.addEventListener('drop', e => {
+        e.preventDefault();
+        if (!dragInfo) return;
+        const data = dragInfo.data;
+        const rect = gridEl.getBoundingClientRect();
+        const cellSize = rect.width / GRID_SIZE;
+        const targetR = Math.floor((e.clientY - rect.top) / cellSize) - dragInfo.offsetR;
+        const targetC = Math.floor((e.clientX - rect.left) / cellSize) - dragInfo.offsetC;
+        const snap = getSnapPlacement(data.shape, targetR, targetC);
+        const ok = canPlace(data.shape, snap.r, snap.c);
+        if (ok) {
+            placeBlock(data.shape, snap.r, snap.c, data.molePos, data.moleType);
+            if (dragInfo.sourceEl && dragInfo.sourceEl.parentElement) {
+                dragInfo.sourceEl.parentElement.innerHTML = '';
+            }
+
+            if (isAllSlotsEmpty()) generatePieces();
+
+            setTimeout(() => {
+                checkClearance();
+                setTimeout(moveMoles, 360);
+            }, 50);
+            setTimeout(() => {
+                if (!hasAnyMoves()) endGame(false, '没有空格了');
+            }, 520);
+        } else {
+            boardShake();
+        }
+        clearPreview();
+        dragInfo = null;
+    });
+
+    function canPlace(shape, r, c) {
+        for (let i = 0; i < shape.length; i++) {
+            for (let j = 0; j < shape[i].length; j++) {
+                if (shape[i][j]) {
+                    let nr = r + i, nc = c + j;
+                    if (nr < 0 || nc < 0 || nr >= GRID_SIZE || nc >= GRID_SIZE || grid[nr][nc]) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function placeBlock(shape, r, c, molePos, moleType) {
+        const fixedMolePos = normalizeMolePos(shape, molePos);
+        const hasMole = Boolean(fixedMolePos) && moles.length < MOLE_MAX_ON_BOARD;
+        const blockId = blockIdCounter++;
+        shape.forEach((row, i) => {
+            row.forEach((v, j) => {
+                if (v) {
+                    grid[r + i][c + j] = 1;
+                    if (hasMole) {
+                        holes[r + i][c + j] = 1;
+                        holeBlockId[r + i][c + j] = blockId;
+                        holeVisits[r + i][c + j] = 0;
+                    }
+                    if (hasMole && i === fixedMolePos.r && j === fixedMolePos.c) {
+                        createMoleEntity(r + i, c + j, moleType, blockId);
+                    }
+                }
+            });
+        });
+        updateGridView(true);
+    }
+
+    function createMoleEntity(r, c, moleType, blockId) {
+        const el = document.createElement('div');
+        el.className = 'mole-entity';
+        const sprite = document.createElement('img');
+        sprite.className = 'mole-sprite';
+        sprite.src = 'mole.png';
+        sprite.alt = 'mole';
+        el.appendChild(sprite);
+        const emoji = document.createElement('div');
+        emoji.className = 'mole-emoji';
+        emoji.innerText = '💦';
+        el.appendChild(emoji);
+        moleLayer.appendChild(el);
+        const reward = 0.1;
+        const moleObj = { id: moleIdCounter++, r, c, element: el, freezeTurns: 1, reward, moleType, blockId };
+        moles.push(moleObj);
+        positionMoleElement(moleObj);
+    }
+
+    function positionMoleElement(mole) {
+        const x = mole.c * 100;
+        const y = mole.r * 100;
+        mole.element.style.setProperty('--mx', `${x}%`);
+        mole.element.style.setProperty('--my', `${y}%`);
+    }
+
+    function moveMoles() {
+        moles.forEach(mole => {
+            if (mole.freezeTurns > 0) {
+                mole.freezeTurns--;
+                positionMoleElement(mole);
+                return;
+            }
+            const neighbors = [
+                { dr: 0, dc: 1 },  // right
+                { dr: 1, dc: 0 },  // down
+                { dr: 0, dc: -1 }, // left
+                { dr: -1, dc: 0 }  // up
+            ];
+
+            let candidates = [];
+            neighbors.forEach((d, idx) => {
+                const nr = mole.r + d.dr;
+                const nc = mole.c + d.dc;
+                if (nr < 0 || nc < 0 || nr >= GRID_SIZE || nc >= GRID_SIZE) return;
+                if (!holes[nr][nc]) return;
+                if (holeBlockId[nr][nc] !== mole.blockId) return;
+                candidates.push({
+                    r: nr,
+                    c: nc,
+                    visits: holeVisits[nr][nc],
+                    order: idx
+                });
+            });
+
+            if (candidates.length > 0) {
+                candidates.sort((a, b) => (a.visits - b.visits) || (a.order - b.order));
+                const next = candidates[0];
+                mole.r = next.r;
+                mole.c = next.c;
+                holeVisits[mole.r][mole.c] += 1;
+            }
+            positionMoleElement(mole);
+        });
+        collapseIsolatedHoles();
+        updateGridView();
+    }
+
+    function checkClearance() {
+        let fullRows = [];
+        let fullCols = [];
+
+        for (let i = 0; i < GRID_SIZE; i++) {
+            if (grid[i].every(v => v === 1)) fullRows.push(i);
+            if (grid.every(row => row[i] === 1)) fullCols.push(i);
+        }
+
+        if (fullRows.length === 0 && fullCols.length === 0) return;
+
+        const captured = moles.filter(mole => fullRows.includes(mole.r) || fullCols.includes(mole.c));
+
+        animateClearance(fullRows, fullCols);
+
+        setTimeout(() => {
+            fullRows.forEach(r => {
+                grid[r].fill(0);
+                holes[r].fill(0);
+                holeVisits[r].fill(0);
+                holeBlockId[r].fill(-1);
+            });
+            fullCols.forEach(c => {
+                grid.forEach(row => row[c] = 0);
+                holes.forEach(row => row[c] = 0);
+                holeVisits.forEach(row => row[c] = 0);
+                holeBlockId.forEach(row => row[c] = -1);
+            });
+            updateGridView();
+        }, 360);
+
+        captured.forEach((mole, idx) => {
+            const delay = 260 + idx * 80;
+            setTimeout(() => spawnHammerSequence(mole), delay);
+        });
+
+        moles = moles.filter(mole => !captured.includes(mole));
+    }
+
+    function animateClearance(fullRows, fullCols) {
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                if (fullRows.includes(r) || fullCols.includes(c)) {
+                    const cell = document.getElementById(`grid-${r}-${c}`);
+                    cell.classList.add('crack');
+                    setTimeout(() => {
+                        cell.classList.remove('crack');
+                        cell.classList.add('shatter');
+                    }, 160);
+                    setTimeout(() => cell.classList.remove('shatter'), 360);
+                }
+            }
+        }
+    }
+
+    function updatePreview(shape, r, c) {
+        clearPreview();
+        let invalid = false;
+        const occupied = [];
+        for (let i = 0; i < shape.length; i++) {
+            for (let j = 0; j < shape[i].length; j++) {
+                if (!shape[i][j]) continue;
+                const nr = r + i;
+                const nc = c + j;
+                if (nr < 0 || nc < 0 || nr >= GRID_SIZE || nc >= GRID_SIZE || grid[nr][nc]) {
+                    invalid = true;
+                } else {
+                    previewCells.push({ r: nr, c: nc });
+                    occupied.push({ r: nr, c: nc });
+                }
+            }
+        }
+        const predicted = predictClearance(occupied);
+        previewCells.forEach(p => {
+            const cell = document.getElementById(`grid-${p.r}-${p.c}`);
+            cell.classList.add('preview');
+            if (invalid) cell.classList.add('invalid');
+            if (predicted.hit) cell.classList.add('hit');
+        });
+        predicted.lineCells.forEach(p => {
+            const cell = document.getElementById(`grid-${p.r}-${p.c}`);
+            cell.classList.add('line-preview');
+            previewLines.push(p);
+        });
+    }
+
+    function clearPreview() {
+        previewCells.forEach(p => {
+            const cell = document.getElementById(`grid-${p.r}-${p.c}`);
+            cell.classList.remove('preview', 'invalid', 'hit');
+        });
+        previewLines.forEach(p => {
+            const cell = document.getElementById(`grid-${p.r}-${p.c}`);
+            cell.classList.remove('line-preview');
+        });
+        previewCells = [];
+        previewLines = [];
+    }
+
+    function boardShake() {
+        const board = document.getElementById('board-wrapper');
+        board.classList.remove('board-shake');
+        board.offsetWidth;
+        board.classList.add('board-shake');
+    }
+
+    function hasAnyMoves() {
+        const shapes = Array.from(piecesContainer.querySelectorAll('.piece'))
+            .map(piece => JSON.parse(piece.getAttribute('data-shape') || 'null'))
+            .filter(Boolean);
+        if (shapes.length === 0) return false;
+        for (const shape of shapes) {
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (canPlace(shape, r, c)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function screenShake() {
+        const shell = document.querySelector('.device-shell');
+        if (!shell) return;
+        shell.classList.remove('screen-shake');
+        shell.offsetWidth;
+        shell.classList.add('screen-shake');
+    }
+
+    function getSnapPlacement(shape, r, c) {
+        if (canPlace(shape, r, c)) return { r, c };
+        return findNearestPlacement(shape, r, c, 2);
+    }
+
+    function findNearestPlacement(shape, r, c, radius) {
+        let best = null;
+        let bestDist = Infinity;
+        for (let dr = -radius; dr <= radius; dr++) {
+            for (let dc = -radius; dc <= radius; dc++) {
+                const nr = r + dr;
+                const nc = c + dc;
+                if (!canPlace(shape, nr, nc)) continue;
+                const dist = Math.abs(dr) + Math.abs(dc);
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    best = { r: nr, c: nc };
+                }
+            }
+        }
+        return best || { r, c };
+    }
+
+    function predictClearance(occupied) {
+        const temp = grid.map(row => row.slice());
+        occupied.forEach(p => {
+            temp[p.r][p.c] = 1;
+        });
+        const fullRows = [];
+        const fullCols = [];
+        for (let i = 0; i < GRID_SIZE; i++) {
+            if (temp[i].every(v => v === 1)) fullRows.push(i);
+            if (temp.every(row => row[i] === 1)) fullCols.push(i);
+        }
+        const lineCells = [];
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                if (fullRows.includes(r) || fullCols.includes(c)) {
+                    lineCells.push({ r, c });
+                }
+            }
+        }
+        const hit = moles.some(m => fullRows.includes(m.r) || fullCols.includes(m.c));
+        return { lineCells, hit };
+    }
+
+    function spawnHammerSequence(mole) {
+        const h = document.createElement('div');
+        h.className = 'hammer';
+        h.style.left = (mole.c * 12.5) + '%';
+        h.style.top = (mole.r * 12.5) + '%';
+        moleLayer.appendChild(h);
+
+        const egg = document.createElement('div');
+        egg.className = 'egg';
+        egg.innerText = '🥚';
+        egg.style.left = (mole.c * 12.5) + '%';
+        egg.style.top = (mole.r * 12.5) + '%';
+        moleLayer.appendChild(egg);
+
+        setTimeout(() => {
+            h.classList.add('smash');
+        }, 300);
+
+        setTimeout(() => {
+            mole.element.classList.add('stunned');
+            screenShake();
+        }, 260);
+
+        setTimeout(() => {
+            egg.classList.add('shatter');
+        }, 320);
+
+        setTimeout(() => {
+            const reward = document.createElement('div');
+            reward.className = 'reward-fly to-top';
+            reward.innerText = '💵';
+            reward.style.left = (mole.c * 12.5) + '%';
+            reward.style.top = (mole.r * 12.5) + '%';
+            moleLayer.appendChild(reward);
+            setTimeout(() => reward.remove(), 1000);
+        }, 420);
+
+        setTimeout(() => {
+            egg.remove();
+            mole.element.remove();
+            h.remove();
+            collectedCount++;
+            const idx = Math.min(collectedCount - 1, 2);
+            rewards[idx] = mole.reward;
+            const total = rewards.reduce((a, b) => a + b, 0);
+            moneyTotalEl.innerText = `$${total.toFixed(1)}`;
+            goalFillEl.style.width = `${Math.min(100, (collectedCount / GOAL_STEPS[2]) * 100)}%`;
+            if (!passedGoal && collectedCount >= GOAL_STEPS[1]) {
+                passedGoal = true;
+                if (toastEl) {
+                    toastEl.classList.add('show');
+                    setTimeout(() => toastEl.classList.remove('show'), 1400);
+                }
+            }
+            updateRewardSteps();
+            if (collectedCount >= GOAL_STEPS[2]) endGame(true);
+        }, 780);
+    }
+
+    function updateGridView(pulse = false) {
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                const cell = document.getElementById(`grid-${r}-${c}`);
+                let classes = grid[r][c] ? 'cell filled' : 'cell';
+                if (holes[r][c]) {
+                    classes += ' has-hole';
+                    const color = HOLE_COLORS[holeBlockId[r][c] % HOLE_COLORS.length];
+                    cell.style.setProperty('--hole-color', color);
+                } else {
+                    cell.style.removeProperty('--hole-color');
+                }
+                cell.className = classes;
+                if (pulse && grid[r][c]) {
+                    cell.classList.add('pulse');
+                    setTimeout(() => cell.classList.remove('pulse'), 420);
+                }
+            }
+        }
+        updateReachableOverlay();
+    }
+
+    function updateReachableOverlay() {
+        const reachable = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false));
+        const queue = [];
+        moles.forEach(m => {
+            reachable[m.r][m.c] = true;
+            queue.push({ r: m.r, c: m.c, blockId: m.blockId });
+        });
+
+        while (queue.length) {
+            const cur = queue.shift();
+            const neighbors = [[0,1], [0,-1], [1,0], [-1,0]];
+            neighbors.forEach(d => {
+                const nr = cur.r + d[0];
+                const nc = cur.c + d[1];
+                if (nr < 0 || nc < 0 || nr >= GRID_SIZE || nc >= GRID_SIZE) return;
+                if (!holes[nr][nc] || reachable[nr][nc]) return;
+                if (holeBlockId[nr][nc] !== cur.blockId) return;
+                reachable[nr][nc] = true;
+                queue.push({ r: nr, c: nc, blockId: cur.blockId });
+            });
+        }
+
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                const cell = document.getElementById(`grid-${r}-${c}`);
+                cell.classList.toggle('reachable', reachable[r][c]);
+            }
+        }
+
+        moles.forEach(m => {
+            let count = 0;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (reachable[r][c] && holeBlockId[r][c] === m.blockId) count++;
+                }
+            }
+            if (count <= 1) {
+                m.element.classList.add('scared');
+            } else {
+                m.element.classList.remove('scared');
+            }
+        });
+    }
+
+    function collapseIsolatedHoles() {
+        const reachable = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false));
+        const queue = [];
+        moles.forEach(m => {
+            reachable[m.r][m.c] = true;
+            queue.push({ r: m.r, c: m.c, blockId: m.blockId });
+        });
+
+        while (queue.length) {
+            const cur = queue.shift();
+            const neighbors = [[0,1], [0,-1], [1,0], [-1,0]];
+            neighbors.forEach(d => {
+                const nr = cur.r + d[0];
+                const nc = cur.c + d[1];
+                if (nr < 0 || nc < 0 || nr >= GRID_SIZE || nc >= GRID_SIZE) return;
+                if (!holes[nr][nc] || reachable[nr][nc]) return;
+                if (holeBlockId[nr][nc] !== cur.blockId) return;
+                reachable[nr][nc] = true;
+                queue.push({ r: nr, c: nc, blockId: cur.blockId });
+            });
+        }
+
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                if (holes[r][c] && !reachable[r][c]) {
+                    holes[r][c] = 0;
+                    holeVisits[r][c] = 0;
+                    holeBlockId[r][c] = -1;
+                }
+            }
+        }
+    }
+
+    function pickMoleType() {
+        const roll = Math.random();
+        let acc = 0;
+        for (const t of MOLE_TYPES) {
+            acc += t.chance;
+            if (roll <= acc) return t.id;
+        }
+        return MOLE_TYPES[0].id;
+    }
+
+    function isMoleEligible(shapeObj) {
+        return MOLE_ELIGIBLE.has(shapeObj.id);
+    }
+
+    function updateRewardSteps() {
+        rewardStepEls.forEach((el, idx) => {
+            if (!el) return;
+            const reached = collectedCount >= GOAL_STEPS[idx];
+            el.classList.toggle('active', reached);
+        });
+    }
+
+    function normalizeMolePos(shape, molePos) {
+        if (!molePos) return null;
+        if (shape[molePos.r] && shape[molePos.r][molePos.c]) return molePos;
+        const valid = [];
+        shape.forEach((row, r) => row.forEach((v, c) => v && valid.push({ r, c })));
+        return valid.length ? valid[0] : null;
+    }
+
+    function isAllSlotsEmpty() {
+        return Array.from(piecesContainer.children).every(slot => slot.innerHTML === '');
+    }
+
+    const timerInterval = setInterval(() => {
+        if (!gameActive) return;
+        timeLeft--;
+        const m = Math.floor(timeLeft/60).toString().padStart(2, '0');
+        const s = (timeLeft%60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+        if (timeLeft <= 0) endGame(false);
+    }, 1000);
+
+    function endGame(win, message) {
+        gameActive = false;
+        clearInterval(timerInterval);
+        document.getElementById('overlay').classList.remove('hidden');
+        const msg = message || (win ? '目标达成！' : '时间到！');
+        document.getElementById('msg-title').innerText = msg;
+        document.getElementById('msg-title').style.color = win ? "#6ef3c2" : "#ff5a6c";
+    }
+
+    initGrid();
+    generatePieces();
+    goalFillEl.style.width = '0%';
+    moneyTotalEl.innerText = '$0.0';
+    updateRewardSteps();
+</script>
+
+</body>
 </html>
