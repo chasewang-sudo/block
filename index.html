@@ -74,6 +74,14 @@
             pointer-events: none;
         }
 
+        .preload {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
         .status-bar {
             position: absolute;
             top: 8px;
@@ -744,6 +752,7 @@
 </head>
 <body>
 <div class="device-shell">
+    <img class="preload" src="hammer.png" alt="">
     <div class="status-bar">
         <div class="dynamic-island"></div>
         <div class="status-icons">
