@@ -487,6 +487,17 @@
             cursor: grab;
             transition: transform 0.2s, filter 0.2s;
             filter: drop-shadow(0 6px 8px rgba(120,70,20,0.25));
+            touch-action: none;
+        }
+
+        .drag-ghost {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            display: grid;
+            gap: 4px;
+            transform: translate(-50%, -50%);
+            filter: drop-shadow(0 6px 8px rgba(0,0,0,0.25));
         }
 
         .piece:active { cursor: grabbing; transform: scale(1.02); }
@@ -995,12 +1006,15 @@
                 pieceEl.style.opacity = '0.35';
                 pieceEl.style.filter = 'grayscale(0.2) brightness(1.1)';
                 pieceEl.style.transform = 'translateY(-200px)';
+                createDragGhost(shapeCopy, fixedMolePos);
+                moveDragGhost(t.clientX, t.clientY);
                 updatePreviewFromPointer(t.clientX, t.clientY);
             }, { passive: false });
             pieceEl.addEventListener('touchmove', (e) => {
                 if (!touchDrag) return;
                 e.preventDefault();
                 const t = e.touches[0];
+                moveDragGhost(t.clientX, t.clientY);
                 updatePreviewFromPointer(t.clientX, t.clientY);
             }, { passive: false });
             pieceEl.addEventListener('touchend', (e) => {
@@ -1021,6 +1035,7 @@
 
     let dragInfo = null;
     let touchDrag = null;
+    let dragGhost = null;
 
     gridEl.addEventListener('dragover', e => {
         e.preventDefault();
@@ -1319,7 +1334,40 @@
             el.style.filter = 'none';
             el.style.transform = '';
         }
+        removeDragGhost();
         touchDrag = null;
+    }
+
+    function createDragGhost(shape, molePos) {
+        removeDragGhost();
+        const ghost = document.createElement('div');
+        ghost.className = 'drag-ghost';
+        ghost.style.gridTemplateColumns = `repeat(${shape[0].length}, 1fr)`;
+        shape.forEach((row, r) => {
+            row.forEach((v, c) => {
+                const cEl = document.createElement('div');
+                cEl.className = v ? 'p-cell' : 'p-cell empty';
+                if (v && molePos && r === molePos.r && c === molePos.c) {
+                    cEl.classList.add('has-mole');
+                }
+                ghost.appendChild(cEl);
+            });
+        });
+        document.body.appendChild(ghost);
+        dragGhost = ghost;
+    }
+
+    function moveDragGhost(x, y) {
+        if (!dragGhost) return;
+        dragGhost.style.left = `${x}px`;
+        dragGhost.style.top = `${y - 200}px`;
+    }
+
+    function removeDragGhost() {
+        if (dragGhost && dragGhost.parentElement) {
+            dragGhost.parentElement.removeChild(dragGhost);
+        }
+        dragGhost = null;
     }
 
     function hasAnyMoves() {
