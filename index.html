@@ -969,7 +969,7 @@
                 const fixedMolePos = normalizeMolePos(shapeCopy, molePos);
                 const data = {shape: shapeCopy, molePos: fixedMolePos, moleType};
                 e.dataTransfer.setData('pieceData', JSON.stringify(data));
-                pieceEl.style.opacity = '0.35';
+                pieceEl.style.opacity = '0';
                 pieceEl.style.filter = 'grayscale(0.2) brightness(1.1)';
 
                 const rect = pieceEl.getBoundingClientRect();
@@ -1004,7 +1004,7 @@
                 touchDrag = { data, offsetR, offsetC, sourceEl: pieceEl };
                 pieceEl.style.opacity = '0.35';
                 pieceEl.style.filter = 'grayscale(0.2) brightness(1.1)';
-                pieceEl.style.transform = 'translateY(-200px)';
+                pieceEl.style.transform = 'translateY(-15px)';
                 createDragGhost(shapeCopy, fixedMolePos);
                 moveDragGhost(t.clientX, t.clientY);
                 updatePreviewFromPointer(t.clientX, t.clientY);
@@ -1368,7 +1368,7 @@
         const rect = gridEl.getBoundingClientRect();
         const cellSize = rect.width / GRID_SIZE;
         const left = x - (touchDrag.offsetC + 0.5) * cellSize;
-        const top = y - (touchDrag.offsetR + 0.5) * cellSize - 200;
+        const top = y - (touchDrag.offsetR + 0.5) * cellSize - 15;
         return { left, top, cellSize, gridTop: rect.top, gridLeft: rect.left };
     }
 
