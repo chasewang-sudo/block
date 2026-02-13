@@ -496,7 +496,6 @@
             pointer-events: none;
             display: grid;
             gap: 4px;
-            transform: translate(-50%, -50%);
             filter: drop-shadow(0 6px 8px rgba(0,0,0,0.25));
         }
 
@@ -1290,20 +1289,14 @@
 
     function updatePreviewFromPointer(x, y) {
         if (!touchDrag) return;
-        const rect = gridEl.getBoundingClientRect();
-        const cellSize = rect.width / GRID_SIZE;
-        const targetR = Math.floor((y - rect.top) / cellSize) - touchDrag.offsetR;
-        const targetC = Math.floor((x - rect.left) / cellSize) - touchDrag.offsetC;
+        const { targetR, targetC } = getPlacementFromPointer(x, y);
         const snap = getSnapPlacement(touchDrag.data.shape, targetR, targetC);
         updatePreview(touchDrag.data.shape, snap.r, snap.c);
     }
 
     function finalizeTouchDrop(x, y) {
         if (!touchDrag) return;
-        const rect = gridEl.getBoundingClientRect();
-        const cellSize = rect.width / GRID_SIZE;
-        const targetR = Math.floor((y - rect.top) / cellSize) - touchDrag.offsetR;
-        const targetC = Math.floor((x - rect.left) / cellSize) - touchDrag.offsetC;
+        const { targetR, targetC } = getPlacementFromPointer(x, y);
         const snap = getSnapPlacement(touchDrag.data.shape, targetR, targetC);
         const ok = canPlace(touchDrag.data.shape, snap.r, snap.c);
         if (ok) {
@@ -1359,8 +1352,9 @@
 
     function moveDragGhost(x, y) {
         if (!dragGhost) return;
-        dragGhost.style.left = `${x}px`;
-        dragGhost.style.top = `${y - 200}px`;
+        const { left, top } = getGhostTopLeft(x, y);
+        dragGhost.style.left = `${left}px`;
+        dragGhost.style.top = `${top}px`;
     }
 
     function removeDragGhost() {
@@ -1368,6 +1362,21 @@
             dragGhost.parentElement.removeChild(dragGhost);
         }
         dragGhost = null;
+    }
+
+    function getGhostTopLeft(x, y) {
+        const rect = gridEl.getBoundingClientRect();
+        const cellSize = rect.width / GRID_SIZE;
+        const left = x - (touchDrag.offsetC + 0.5) * cellSize;
+        const top = y - (touchDrag.offsetR + 0.5) * cellSize - 200;
+        return { left, top, cellSize, gridTop: rect.top, gridLeft: rect.left };
+    }
+
+    function getPlacementFromPointer(x, y) {
+        const { left, top, cellSize, gridTop, gridLeft } = getGhostTopLeft(x, y);
+        const targetR = Math.floor((top - gridTop) / cellSize);
+        const targetC = Math.floor((left - gridLeft) / cellSize);
+        return { targetR, targetC };
     }
 
     function hasAnyMoves() {
