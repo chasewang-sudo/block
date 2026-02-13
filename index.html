@@ -939,7 +939,7 @@
             const shapeW = shapeObj.s[0].length;
             const pieceEl = document.createElement('div');
             pieceEl.className = 'piece';
-            pieceEl.draggable = true;
+            pieceEl.draggable = false;
 
             let validCells = [];
             shapeObj.s.forEach((row, r) => row.forEach((v, c) => v && validCells.push({r, c})));
@@ -969,7 +969,7 @@
                 const fixedMolePos = normalizeMolePos(shapeCopy, molePos);
                 const data = {shape: shapeCopy, molePos: fixedMolePos, moleType};
                 e.dataTransfer.setData('pieceData', JSON.stringify(data));
-                pieceEl.style.opacity = '0';
+                pieceEl.style.opacity = '0.35';
                 pieceEl.style.filter = 'grayscale(0.2) brightness(1.1)';
 
                 const rect = pieceEl.getBoundingClientRect();
@@ -980,12 +980,45 @@
                 const offsetC = Math.max(0, Math.min(shapeW - 1, Math.floor(ox / cellW)));
                 const offsetR = Math.max(0, Math.min(shapeH - 1, Math.floor(oy / cellH)));
                 dragInfo = { data, offsetR, offsetC, sourceEl: pieceEl };
+                createDragGhost(shapeCopy, fixedMolePos);
             });
             pieceEl.addEventListener('dragend', () => {
                 pieceEl.style.opacity = '1';
                 pieceEl.style.filter = 'none';
+                removeDragGhost();
                 clearPreview();
                 dragInfo = null;
+            });
+            pieceEl.addEventListener('mousedown', (e) => {
+                if (!gameActive) return;
+                e.preventDefault();
+                const shapeCopy = shapeObj.s.map(row => row.slice());
+                const fixedMolePos = normalizeMolePos(shapeCopy, molePos);
+                const data = {shape: shapeCopy, molePos: fixedMolePos, moleType};
+                const rect = pieceEl.getBoundingClientRect();
+                const cellW = rect.width / shapeW;
+                const cellH = rect.height / shapeH;
+                const ox = e.clientX - rect.left;
+                const oy = e.clientY - rect.top;
+                const offsetC = Math.max(0, Math.min(shapeW - 1, Math.floor(ox / cellW)));
+                const offsetR = Math.max(0, Math.min(shapeH - 1, Math.floor(oy / cellH)));
+                touchDrag = { data, offsetR, offsetC, sourceEl: pieceEl, lift: 0 };
+                pieceEl.style.opacity = '0.35';
+                pieceEl.style.filter = 'grayscale(0.2) brightness(1.1)';
+                createDragGhost(shapeCopy, fixedMolePos);
+                moveDragGhost(e.clientX, e.clientY);
+                updatePreviewFromPointer(e.clientX, e.clientY);
+                const onMove = (ev) => {
+                    updatePreviewFromPointer(ev.clientX, ev.clientY);
+                    moveDragGhost(ev.clientX, ev.clientY);
+                };
+                const onUp = (ev) => {
+                    finalizeTouchDrop(ev.clientX, ev.clientY);
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('mouseup', onUp);
+                };
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onUp);
             });
             pieceEl.addEventListener('touchstart', (e) => {
                 if (!gameActive) return;
@@ -1001,7 +1034,7 @@
                 const oy = t.clientY - rect.top;
                 const offsetC = Math.max(0, Math.min(shapeW - 1, Math.floor(ox / cellW)));
                 const offsetR = Math.max(0, Math.min(shapeH - 1, Math.floor(oy / cellH)));
-                touchDrag = { data, offsetR, offsetC, sourceEl: pieceEl };
+                touchDrag = { data, offsetR, offsetC, sourceEl: pieceEl, lift: 80 };
                 pieceEl.style.opacity = '0.35';
                 pieceEl.style.filter = 'grayscale(0.2) brightness(1.1)';
                 pieceEl.style.transform = 'translateY(-80px)';
@@ -1368,7 +1401,7 @@
         const rect = gridEl.getBoundingClientRect();
         const cellSize = rect.width / GRID_SIZE;
         const left = x - (touchDrag.offsetC + 0.5) * cellSize;
-        const top = y - (touchDrag.offsetR + 0.5) * cellSize - 80;
+        const top = y - (touchDrag.offsetR + 0.5) * cellSize - (touchDrag.lift || 0);
         return { left, top, cellSize, gridTop: rect.top, gridLeft: rect.left };
     }
 
