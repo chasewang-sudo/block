@@ -977,6 +977,42 @@
                 clearPreview();
                 dragInfo = null;
             });
+            pieceEl.addEventListener('touchstart', (e) => {
+                if (!gameActive) return;
+                e.preventDefault();
+                const t = e.touches[0];
+                const shapeCopy = shapeObj.s.map(row => row.slice());
+                const fixedMolePos = normalizeMolePos(shapeCopy, molePos);
+                const data = {shape: shapeCopy, molePos: fixedMolePos, moleType};
+                const rect = pieceEl.getBoundingClientRect();
+                const cellW = rect.width / shapeW;
+                const cellH = rect.height / shapeH;
+                const ox = t.clientX - rect.left;
+                const oy = t.clientY - rect.top;
+                const offsetC = Math.max(0, Math.min(shapeW - 1, Math.floor(ox / cellW)));
+                const offsetR = Math.max(0, Math.min(shapeH - 1, Math.floor(oy / cellH)));
+                touchDrag = { data, offsetR, offsetC, sourceEl: pieceEl };
+                pieceEl.style.opacity = '0.35';
+                pieceEl.style.filter = 'grayscale(0.2) brightness(1.1)';
+                pieceEl.style.transform = 'translateY(-200px)';
+                updatePreviewFromPointer(t.clientX, t.clientY);
+            }, { passive: false });
+            pieceEl.addEventListener('touchmove', (e) => {
+                if (!touchDrag) return;
+                e.preventDefault();
+                const t = e.touches[0];
+                updatePreviewFromPointer(t.clientX, t.clientY);
+            }, { passive: false });
+            pieceEl.addEventListener('touchend', (e) => {
+                if (!touchDrag) return;
+                e.preventDefault();
+                const t = e.changedTouches[0];
+                finalizeTouchDrop(t.clientX, t.clientY);
+            });
+            pieceEl.addEventListener('touchcancel', () => {
+                if (!touchDrag) return;
+                resetTouchDrag();
+            });
 
             slot.appendChild(pieceEl);
             piecesContainer.appendChild(slot);
@@ -984,6 +1020,7 @@
     }
 
     let dragInfo = null;
+    let touchDrag = null;
 
     gridEl.addEventListener('dragover', e => {
         e.preventDefault();
@@ -1234,6 +1271,55 @@
         board.classList.remove('board-shake');
         board.offsetWidth;
         board.classList.add('board-shake');
+    }
+
+    function updatePreviewFromPointer(x, y) {
+        if (!touchDrag) return;
+        const rect = gridEl.getBoundingClientRect();
+        const cellSize = rect.width / GRID_SIZE;
+        const targetR = Math.floor((y - rect.top) / cellSize) - touchDrag.offsetR;
+        const targetC = Math.floor((x - rect.left) / cellSize) - touchDrag.offsetC;
+        const snap = getSnapPlacement(touchDrag.data.shape, targetR, targetC);
+        updatePreview(touchDrag.data.shape, snap.r, snap.c);
+    }
+
+    function finalizeTouchDrop(x, y) {
+        if (!touchDrag) return;
+        const rect = gridEl.getBoundingClientRect();
+        const cellSize = rect.width / GRID_SIZE;
+        const targetR = Math.floor((y - rect.top) / cellSize) - touchDrag.offsetR;
+        const targetC = Math.floor((x - rect.left) / cellSize) - touchDrag.offsetC;
+        const snap = getSnapPlacement(touchDrag.data.shape, targetR, targetC);
+        const ok = canPlace(touchDrag.data.shape, snap.r, snap.c);
+        if (ok) {
+            placeBlock(touchDrag.data.shape, snap.r, snap.c, touchDrag.data.molePos, touchDrag.data.moleType);
+            if (touchDrag.sourceEl && touchDrag.sourceEl.parentElement) {
+                touchDrag.sourceEl.parentElement.innerHTML = '';
+            }
+            if (isAllSlotsEmpty()) generatePieces();
+            setTimeout(() => {
+                checkClearance();
+                setTimeout(moveMoles, 360);
+            }, 50);
+            setTimeout(() => {
+                if (!hasAnyMoves()) endGame(false, '没有空格了');
+            }, 520);
+        } else {
+            boardShake();
+        }
+        clearPreview();
+        resetTouchDrag();
+    }
+
+    function resetTouchDrag() {
+        if (!touchDrag) return;
+        const el = touchDrag.sourceEl;
+        if (el) {
+            el.style.opacity = '1';
+            el.style.filter = 'none';
+            el.style.transform = '';
+        }
+        touchDrag = null;
     }
 
     function hasAnyMoves() {
