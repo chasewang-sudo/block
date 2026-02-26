@@ -169,136 +169,45 @@
             width: 100%;
             background: transparent;
             border-radius: 10px;
-            padding: 6px 8px 8px;
+            padding: 4px 6px 6px;
             margin-top: 2px;
         }
 
-        .goal-title {
+        .goal-headline {
             text-align: center;
-            font-weight: 800;
-            color: #3d3d3d;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+            font-weight: 900;
+            color: #101010;
             margin-bottom: 4px;
         }
 
-        .goal-title span {
-            background: rgba(255, 255, 255, 0.6);
-            padding: 2px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(120, 80, 30, 0.2);
-        }
-
-        .goal-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .goal-bar-row {
-            display: flex;
-            align-items: center;
+        .goal-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
 
-        .goal-bar-row .goal-badge {
-            flex: 0 0 auto;
+        .goal-card {
+            background: rgba(255, 255, 255, 0.42);
+            border: 1px solid rgba(120, 80, 30, 0.22);
+            border-radius: 8px;
+            padding: 6px 8px;
+            text-align: center;
         }
 
-        .goal-scale {
-            flex: 1 1 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .goal-bar-row .goal-bar {
-            flex: 1 1 auto;
-        }
-
-        .goal-bar {
-            position: relative;
-            height: 10px;
-            background: #d5e3c2;
-            border-radius: 999px;
-            overflow: hidden;
-        }
-
-        .goal-fill {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #2dbb5d, #1f9f4f);
-        }
-
-        .goal-dot {
-            position: absolute;
-            top: 50%;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #ffd24d;
-            transform: translate(-50%, -50%);
-            left: 66.667%;
-        }
-
-        .goal-meta {
-            position: relative;
-            height: 16px;
-            font-size: 0.8rem;
-            color: #000;
-            margin-bottom: 2px;
-        }
-
-        .goal-meta span {
-            position: absolute;
-            transform: translateX(-50%);
-        }
-
-        .goal-reward {
-            position: relative;
-            height: 16px;
+        .goal-card-label {
+            color: #11853a;
             font-size: 0.78rem;
-            color: #000;
-            font-weight: 800;
-            margin-top: 2px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 4px;
         }
 
-        .goal-reward span {
-            position: absolute;
-            transform: translateX(-50%);
-        }
-
-        .goal-meta span:nth-child(1),
-        .goal-reward span:nth-child(1) { left: 0%; transform: translateX(0); }
-        .goal-meta span:nth-child(2),
-        .goal-reward span:nth-child(2) { left: 33.333%; }
-        .goal-meta span:nth-child(3),
-        .goal-reward span:nth-child(3) { left: 66.667%; }
-        .goal-meta span:nth-child(4),
-        .goal-reward span:nth-child(4) { left: 100%; transform: translateX(-100%); }
-
-        .reward-step {
-            transition: transform 0.2s ease, color 0.2s ease;
-            color: #000;
-        }
-
-        .reward-step.active {
-            color: #000;
-            transform: scale(1.08);
-        }
-
-        .goal-badge {
-            padding: 4px 8px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(120, 80, 30, 0.2);
-            font-weight: 800;
-            font-size: 0.78rem;
-            color: #000;
-            white-space: nowrap;
+        .goal-card-value {
+            color: #11853a;
+            font-size: 1rem;
+            font-weight: 900;
+            line-height: 1.1;
         }
 
         /* 游戏主容器 */
@@ -669,6 +578,19 @@
             0% { transform: translate(0, 0) scale(1); opacity: 1; }
             100% { transform: translate(-120px, -260px) scale(0.9); opacity: 0; }
         }
+
+        .money-flyer {
+            position: fixed;
+            z-index: 3000;
+            pointer-events: none;
+            font-size: 14px;
+            font-weight: 900;
+            color: #11853a;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+            transform: translate(-50%, -50%);
+            opacity: 1;
+            transition: transform 0.65s ease-out, opacity 0.65s ease-out;
+        }
         @keyframes hammer-ready {
             0% { transform: translate(0, -60px) rotate(-35deg); opacity: 0; }
             100% { transform: translate(0, -10px) rotate(-10deg); opacity: 1; }
@@ -771,31 +693,17 @@
         </header>
 
         <div class="goal-panel">
-            <div class="goal-row">
-                <div class="goal-title"><span>goal 10</span></div>
-            </div>
-            <div class="goal-bar-row">
-                <span class="goal-badge">🐹 $0.1</span>
-                <div class="goal-scale">
-                    <div class="goal-meta">
-                        <span>0</span>
-                        <span>5</span>
-                        <span>10</span>
-                        <span>15</span>
-                    </div>
-                    <div class="goal-bar">
-                        <div id="goal-fill" class="goal-fill"></div>
-                        <div class="goal-dot"></div>
-                    </div>
-                    <div class="goal-reward">
-                        <span></span>
-                        <span id="reward-step-1" class="reward-step">$0.5</span>
-                        <span id="reward-step-2" class="reward-step">$1.0</span>
-                        <span id="reward-step-3" class="reward-step">$1.5</span>
-                    </div>
+            <div id="goal-headline" class="goal-headline">Whack-a-Mole</div>
+            <div class="goal-cards">
+                <div class="goal-card">
+                    <div class="goal-card-label">Goal</div>
+                    <div id="goal-status" class="goal-card-value">0/10</div>
+                </div>
+                <div class="goal-card">
+                    <div class="goal-card-label">You Earned</div>
+                    <div id="earned-status" class="goal-card-value">$0.00/$4.50</div>
                 </div>
             </div>
-            
         </div>
 
         <div id="board-wrapper">
@@ -819,13 +727,10 @@
     const piecesContainer = document.getElementById('pieces-container');
     const timerEl = document.getElementById('timer');
     const moneyTotalEl = document.getElementById('money-total');
-    const goalFillEl = document.getElementById('goal-fill');
+    const goalHeadlineEl = document.getElementById('goal-headline');
+    const goalStatusEl = document.getElementById('goal-status');
+    const earnedStatusEl = document.getElementById('earned-status');
     const toastEl = document.getElementById('toast');
-    const rewardStepEls = [
-        document.getElementById('reward-step-1'),
-        document.getElementById('reward-step-2'),
-        document.getElementById('reward-step-3')
-    ];
 
     let grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
     let holes = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
@@ -837,7 +742,6 @@
     let moleIdCounter = 0;
     let previewCells = [];
     let previewLines = [];
-    let rewards = [0, 0, 0];
     let roundCount = 0;
     let missStreak = 0;
     let lastSegment = 0;
@@ -865,11 +769,14 @@
     const MOLE_MAX_ON_BOARD = 4;
     const MOLE_CHANCE_BASE = [0.34, 0.40, 0.50];
     const MOLE_CHANCE_INC = [0.33, 0.40, 0.50];
-    const GOAL_STEPS = [5, 10, 15];
+    const GOAL_TARGET = 10;
+    const MAX_KILLS = 15;
+    const REWARD_PER_MOLE = 0.3;
+    const GOAL_EARNED = MAX_KILLS * REWARD_PER_MOLE;
     const HOLE_COLORS = ['#6b4b2a', '#4a7b3e', '#2f5f8a', '#8a5a2f', '#6b2f6b', '#2f6b6b'];
 
     const MOLE_TYPES = [
-        { id: 'normal', reward: 0.1, chance: 1.0 }
+        { id: 'normal', reward: REWARD_PER_MOLE, chance: 1.0 }
     ];
 
     function initGrid() {
@@ -888,7 +795,7 @@
         piecesContainer.innerHTML = '';
         roundCount++;
 
-        const segment = Math.min(collectedCount, 2);
+        const segment = collectedCount < 5 ? 0 : (collectedCount < 10 ? 1 : 2);
         if (segment !== lastSegment) {
             missStreak = 0;
             lastSegment = segment;
@@ -1514,13 +1421,7 @@
         }, 320);
 
         setTimeout(() => {
-            const reward = document.createElement('div');
-            reward.className = 'reward-fly to-top';
-            reward.innerText = '💵';
-            reward.style.left = (mole.c * 12.5) + '%';
-            reward.style.top = (mole.r * 12.5) + '%';
-            moleLayer.appendChild(reward);
-            setTimeout(() => reward.remove(), 1000);
+            flyMoneyToEarned(mole.r, mole.c, mole.reward);
         }, 420);
 
         setTimeout(() => {
@@ -1528,20 +1429,15 @@
             mole.element.remove();
             h.remove();
             collectedCount++;
-            const idx = Math.min(collectedCount - 1, 2);
-            rewards[idx] = mole.reward;
-            const total = rewards.reduce((a, b) => a + b, 0);
-            moneyTotalEl.innerText = `$${total.toFixed(1)}`;
-            goalFillEl.style.width = `${Math.min(100, (collectedCount / GOAL_STEPS[2]) * 100)}%`;
-            if (!passedGoal && collectedCount >= GOAL_STEPS[1]) {
+            updateTopStats();
+            if (!passedGoal && collectedCount >= GOAL_TARGET) {
                 passedGoal = true;
                 if (toastEl) {
                     toastEl.classList.add('show');
                     setTimeout(() => toastEl.classList.remove('show'), 1400);
                 }
             }
-            updateRewardSteps();
-            if (collectedCount >= GOAL_STEPS[2]) endGame(true);
+            if (collectedCount >= MAX_KILLS) endGame(true, '达到15只上限！');
         }, 780);
     }
 
@@ -1657,12 +1553,46 @@
         return MOLE_ELIGIBLE.has(shapeObj.id);
     }
 
-    function updateRewardSteps() {
-        rewardStepEls.forEach((el, idx) => {
-            if (!el) return;
-            const reached = collectedCount >= GOAL_STEPS[idx];
-            el.classList.toggle('active', reached);
+    function flyMoneyToEarned(r, c, reward) {
+        const boardRect = moleLayer.getBoundingClientRect();
+        const cellSize = boardRect.width / GRID_SIZE;
+        const startX = boardRect.left + (c + 0.5) * cellSize;
+        const startY = boardRect.top + (r + 0.5) * cellSize;
+
+        const targetRect = earnedStatusEl.getBoundingClientRect();
+        const targetX = targetRect.left + targetRect.width / 2;
+        const targetY = targetRect.top + targetRect.height / 2;
+
+        const flyer = document.createElement('div');
+        flyer.className = 'money-flyer';
+        flyer.innerText = `+$${reward.toFixed(1)}`;
+        flyer.style.left = `${startX}px`;
+        flyer.style.top = `${startY}px`;
+        document.body.appendChild(flyer);
+
+        requestAnimationFrame(() => {
+            const dx = targetX - startX;
+            const dy = targetY - startY;
+            flyer.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.75)`;
+            flyer.style.opacity = '0';
         });
+
+        setTimeout(() => {
+            flyer.remove();
+        }, 700);
+    }
+
+    function updateTopStats() {
+        const total = collectedCount * REWARD_PER_MOLE;
+        moneyTotalEl.innerText = `$${total.toFixed(2)}`;
+        earnedStatusEl.innerText = `$${total.toFixed(2)}/$${GOAL_EARNED.toFixed(2)}`;
+        if (collectedCount >= GOAL_TARGET) {
+            goalStatusEl.innerText = '✅';
+            goalHeadlineEl.innerText = 'Keep Earning';
+        } else {
+            goalStatusEl.innerText = `${collectedCount}/${GOAL_TARGET}`;
+            goalHeadlineEl.innerText = 'Whack-a-Mole';
+        }
     }
 
     function normalizeMolePos(shape, molePos) {
@@ -1697,9 +1627,7 @@
 
     initGrid();
     generatePieces();
-    goalFillEl.style.width = '0%';
-    moneyTotalEl.innerText = '$0.0';
-    updateRewardSteps();
+    updateTopStats();
 </script>
 
 </body>
