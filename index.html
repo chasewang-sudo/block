@@ -150,16 +150,6 @@
             color: #2b2919;
         }
 
-        .top-money {
-            font-size: 1.25rem;
-            font-weight: 900;
-            color: #1e8a38;
-            background: rgba(255, 255, 255, 0.7);
-            padding: 2px 8px;
-            border-radius: 8px;
-            border: 1px solid rgba(120, 80, 30, 0.2);
-        }
-
         .top-settings {
             font-size: 22px;
             color: #6b5a2c;
@@ -583,13 +573,21 @@
             position: fixed;
             z-index: 3000;
             pointer-events: none;
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 900;
             color: #11853a;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-            transform: translate(-50%, -50%);
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(17, 133, 58, 0.4);
+            border-radius: 999px;
+            padding: 4px 8px;
+            transform: translate(-50%, -50%) scale(1);
             opacity: 1;
-            transition: transform 0.65s ease-out, opacity 0.65s ease-out;
+            transition:
+                left 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+                top 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+                transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+                opacity 0.9s ease-out;
         }
         @keyframes hammer-ready {
             0% { transform: translate(0, -60px) rotate(-35deg); opacity: 0; }
@@ -688,7 +686,7 @@
         <div id="toast" class="toast">已过关，可继续挑战</div>
         <header>
             <div id="timer" class="top-time">03:00</div>
-            <div id="money-total" class="top-money">$0.0</div>
+            <div></div>
             <div class="top-settings">⚙</div>
         </header>
 
@@ -726,7 +724,6 @@
     const moleLayer = document.getElementById('mole-layer');
     const piecesContainer = document.getElementById('pieces-container');
     const timerEl = document.getElementById('timer');
-    const moneyTotalEl = document.getElementById('money-total');
     const goalHeadlineEl = document.getElementById('goal-headline');
     const goalStatusEl = document.getElementById('goal-status');
     const earnedStatusEl = document.getElementById('earned-status');
@@ -1565,26 +1562,35 @@
 
         const flyer = document.createElement('div');
         flyer.className = 'money-flyer';
-        flyer.innerText = `+$${reward.toFixed(1)}`;
+        flyer.innerText = `💵 +$${reward.toFixed(1)}`;
         flyer.style.left = `${startX}px`;
         flyer.style.top = `${startY}px`;
         document.body.appendChild(flyer);
+        const duration = 900;
+        const startTime = performance.now();
 
-        requestAnimationFrame(() => {
-            const dx = targetX - startX;
-            const dy = targetY - startY;
-            flyer.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.75)`;
-            flyer.style.opacity = '0';
-        });
+        function tick(now) {
+            const t = Math.min(1, (now - startTime) / duration);
+            const ease = 1 - Math.pow(1 - t, 3);
+            const x = startX + (targetX - startX) * ease;
+            const y = startY + (targetY - startY) * ease;
+            const scale = 1 - 0.18 * ease;
+            flyer.style.left = `${x}px`;
+            flyer.style.top = `${y}px`;
+            flyer.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            flyer.style.opacity = `${1 - ease}`;
+            if (t < 1) {
+                requestAnimationFrame(tick);
+            } else {
+                flyer.remove();
+            }
+        }
 
-        setTimeout(() => {
-            flyer.remove();
-        }, 700);
+        requestAnimationFrame(tick);
     }
 
     function updateTopStats() {
         const total = collectedCount * REWARD_PER_MOLE;
-        moneyTotalEl.innerText = `$${total.toFixed(2)}`;
         earnedStatusEl.innerText = `$${total.toFixed(2)}/$${GOAL_EARNED.toFixed(2)}`;
         if (collectedCount >= GOAL_TARGET) {
             goalStatusEl.innerText = '✅';
