@@ -361,7 +361,7 @@
         }
 
         #pieces-container {
-            margin-top: 6px;
+            margin-top: 64px;
             display: flex;
             justify-content: space-between;
             width: 100%;
@@ -637,6 +637,303 @@
             transform: translateX(-50%) translateY(2px);
         }
 
+        #level-gate {
+            position: absolute;
+            inset: 0;
+            z-index: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(16, 16, 16, 0.58);
+            backdrop-filter: blur(2px);
+        }
+
+        .level-card {
+            width: min(92%, 360px);
+            background: linear-gradient(180deg, rgba(241, 241, 241, 0.97), rgba(219, 219, 219, 0.96));
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 26px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+            padding: 14px 14px 14px;
+            color: #202020;
+        }
+
+        .level-title {
+            text-align: center;
+            font-size: 1.62rem;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            margin: 2px 0 8px;
+        }
+
+        .level-rules {
+            margin: 0 0 8px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            background: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            line-height: 1.35;
+            font-weight: 700;
+        }
+
+        .level-info {
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 18px;
+            padding: 10px 10px 12px;
+            text-align: center;
+        }
+
+        .level-info-row {
+            margin: 0;
+        }
+
+        .level-info-label {
+            font-size: 1rem;
+            font-weight: 900;
+        }
+
+        .level-info-goal {
+            margin-top: 2px;
+            font-size: 1.24rem;
+            font-weight: 900;
+            letter-spacing: 0.01em;
+        }
+
+        .level-info-max {
+            margin-top: 2px;
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #0c8e44;
+        }
+
+        .gate-atmosphere {
+            margin: 8px 0;
+            height: 86px;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.13);
+            background:
+                radial-gradient(90px 50px at 20% 70%, rgba(94, 73, 47, 0.35), transparent 70%),
+                radial-gradient(110px 64px at 82% 30%, rgba(72, 113, 43, 0.35), transparent 72%),
+                linear-gradient(180deg, rgba(151, 196, 100, 0.72), rgba(112, 153, 69, 0.64));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gate-atmosphere::before {
+            content: '🕳️   🐹   🕳️   🐹';
+            position: absolute;
+            bottom: 8px;
+            left: 10px;
+            font-size: 24px;
+            letter-spacing: 8px;
+            opacity: 0.78;
+        }
+
+        .stake-scroll {
+            margin-top: 12px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .stake-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .stake-picker {
+            display: flex;
+            gap: 10px;
+            min-width: max-content;
+            padding-bottom: 2px;
+        }
+
+        .stake-btn {
+            min-width: 90px;
+            border: 1px solid rgba(0, 0, 0, 0.18);
+            background: linear-gradient(180deg, #ffffff, #dcdcdc);
+            color: #1f1f1f;
+            border-radius: 14px;
+            height: 50px;
+            font-size: 1.02rem;
+            font-weight: 900;
+            padding: 0;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stake-btn.active {
+            background: linear-gradient(180deg, #fff4d4, #ffd98a);
+            border-color: rgba(128, 92, 24, 0.45);
+            color: #3d2b08;
+            transform: translateY(-1px);
+        }
+
+        .debug-entry {
+            margin-top: 10px;
+            border-radius: 14px;
+            border: 1px dashed rgba(30, 30, 30, 0.35);
+            background: rgba(20, 20, 20, 0.16);
+            padding: 8px 10px 10px;
+        }
+
+        .debug-title {
+            font-size: 0.82rem;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            opacity: 0.85;
+            margin-bottom: 6px;
+        }
+
+        .debug-multi-picker {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .debug-multi-btn {
+            border: 1px solid rgba(12, 120, 96, 0.38);
+            background: rgba(40, 100, 90, 0.22);
+            color: #0b3430;
+            border-radius: 10px;
+            height: 38px;
+            font-size: 0.94rem;
+            font-weight: 900;
+            padding: 0;
+        }
+
+        .debug-multi-btn.active {
+            background: rgba(28, 152, 123, 0.36);
+            border-color: rgba(13, 95, 75, 0.6);
+            color: #082f29;
+        }
+
+        .debug-hint {
+            margin-top: 6px;
+            font-size: 0.76rem;
+            opacity: 0.76;
+        }
+
+        .debug-mode-toggle {
+            margin-top: 8px;
+            width: 100%;
+            height: 38px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.32);
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+            font-size: 0.88rem;
+            font-weight: 800;
+            padding: 0;
+        }
+
+        .debug-mode-toggle.active {
+            background: rgba(85, 186, 255, 0.3);
+            border-color: rgba(120, 216, 255, 0.8);
+        }
+
+        .debug-toggle-btn {
+            position: absolute;
+            left: 50%;
+            bottom: 8px;
+            transform: translateX(-50%);
+            z-index: 910;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(20, 20, 20, 0.35);
+            color: #fff;
+            border-radius: 999px;
+            height: 34px;
+            min-width: 86px;
+            padding: 0 14px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+        }
+
+        .debug-drawer {
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 48px;
+            z-index: 909;
+            border-radius: 14px;
+            border: 1px dashed rgba(30, 30, 30, 0.35);
+            background: rgba(18, 18, 18, 0.34);
+            backdrop-filter: blur(2px);
+            padding: 8px 10px 10px;
+            color: #fff;
+        }
+
+        .play-entry-btn {
+            margin-top: 12px;
+            width: 100%;
+            height: 56px;
+            border-radius: 28px;
+            font-size: 1.3rem;
+            font-weight: 900;
+            letter-spacing: 0.01em;
+            background: linear-gradient(180deg, #ffffff, #d9d9d9);
+            color: #1d1d1d;
+            border: 1px solid rgba(0, 0, 0, 0.25);
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.95), 0 10px 18px rgba(0, 0, 0, 0.2);
+        }
+
+        .ingame-debug {
+            margin-top: 58px;
+            border-radius: 12px;
+            border: 1px dashed rgba(0, 0, 0, 0.26);
+            background: rgba(255, 255, 255, 0.34);
+            padding: 6px 8px;
+            color: #202020;
+        }
+
+        .ingame-debug-title {
+            font-size: 0.76rem;
+            font-weight: 900;
+            opacity: 0.74;
+        }
+
+        .ingame-debug-multi {
+            margin-top: 3px;
+            font-size: 0.88rem;
+            font-weight: 800;
+        }
+
+        .top-balance {
+            background: rgba(255, 255, 255, 0.66);
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 999px;
+            height: 28px;
+            min-width: 88px;
+            padding: 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 900;
+            color: #0e8b43;
+        }
+
+        .top-balance-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .balance-plus-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 0, 0, 0.18);
+            background: linear-gradient(180deg, #fff, #ddd);
+            color: #1f1f1f;
+            font-weight: 900;
+            font-size: 1.1rem;
+            padding: 0;
+            line-height: 1;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
         .hidden { display: none !important; }
 
         #overlay {
@@ -649,6 +946,75 @@
         #msg-title {
             font-size: 2rem;
             letter-spacing: 0.04em;
+        }
+
+        #msg-subtitle {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #2a2a2a;
+            margin: 0;
+        }
+
+        .recharge-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            background: rgba(0, 0, 0, 0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .recharge-card {
+            width: min(88vw, 340px);
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: linear-gradient(180deg, #3b3f4a, #242730);
+            color: #fff;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .recharge-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+        }
+
+        .recharge-subtitle {
+            margin-top: 4px;
+            opacity: 0.78;
+            font-size: 0.9rem;
+        }
+
+        .recharge-list {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .recharge-pack {
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: linear-gradient(180deg, #ffe494, #ffbf4d);
+            color: #3a2500;
+            font-weight: 900;
+            height: 44px;
+            padding: 0;
+        }
+
+        .recharge-close-btn {
+            margin-top: 12px;
+            width: 100%;
+            height: 40px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+            font-weight: 800;
+            padding: 0;
         }
 
         button {
@@ -683,10 +1049,39 @@
         </div>
     </div>
     <div class="app">
-        <div id="toast" class="toast">已过关，可继续挑战</div>
+        <div id="level-gate">
+            <div class="level-card">
+                <div id="level-title" class="level-title">Level 48</div>
+                <div class="level-rules">
+                    1. block puzzle玩法<br>
+                    2. 消除地鼠来获得cash奖励<br>
+                    3. 达成消除Goal才算过关
+                </div>
+                <div class="gate-atmosphere"></div>
+                <div class="level-info">
+                    <p class="level-info-row level-info-label">Goal</p>
+                    <p class="level-info-row level-info-goal">Whack <span id="gate-goal-moles">10</span> Moles</p>
+                    <p class="level-info-row level-info-label" style="margin-top:6px;">Rewards</p>
+                    <p class="level-info-row level-info-label">up to</p>
+                    <p id="gate-max" class="level-info-row level-info-max">$2.00</p>
+                </div>
+                <div class="stake-scroll">
+                    <div class="stake-picker">
+                        <button class="stake-btn active" data-stake="1">1x</button>
+                        <button class="stake-btn" data-stake="3">3x</button>
+                        <button class="stake-btn" data-stake="5">5x</button>
+                    </div>
+                </div>
+                <button id="play-entry-btn" class="play-entry-btn">Play for $1</button>
+            </div>
+        </div>
+        <div id="toast" class="toast"></div>
         <header>
             <div id="timer" class="top-time">03:00</div>
-            <div></div>
+            <div class="top-balance-wrap">
+                <div id="balance" class="top-balance">$10.00</div>
+                <button id="balance-plus-btn" class="balance-plus-btn">+</button>
+            </div>
             <div class="top-settings">⚙</div>
         </header>
 
@@ -710,12 +1105,41 @@
         </div>
 
         <div id="pieces-container"></div>
+        <div id="ingame-debug" class="ingame-debug">
+            <div class="ingame-debug-title">DEBUG VIEW</div>
+            <div id="ingame-debug-multi" class="ingame-debug-multi">Return Multiplier: --</div>
+        </div>
+    </div>
+    <button id="debug-toggle-btn" class="debug-toggle-btn">Debug</button>
+    <div id="debug-drawer" class="debug-drawer hidden">
+        <div class="debug-title">DEBUG RETURN MULTIPLIER</div>
+        <div class="debug-multi-picker">
+            <button class="debug-multi-btn" data-multi="2">2x</button>
+            <button class="debug-multi-btn" data-multi="2.5">2.5x</button>
+            <button class="debug-multi-btn" data-multi="3">3x</button>
+        </div>
+        <div id="debug-hint" class="debug-hint">未选择时自动按概率: 40% / 50% / 10%</div>
+        <button id="debug-unlimited-btn" class="debug-mode-toggle">Unlimited Mode: OFF</button>
     </div>
 </div>
 
 <div id="overlay" class="hidden">
     <h1 id="msg-title">游戏结束</h1>
-    <button onclick="location.reload()">重新开始</button>
+    <p id="msg-subtitle"></p>
+    <button id="overlay-btn">下一关</button>
+</div>
+
+<div id="recharge-modal" class="recharge-modal hidden">
+    <div class="recharge-card">
+        <div class="recharge-title">Top Up Coins</div>
+        <div class="recharge-subtitle">Choose a bundle to continue</div>
+        <div class="recharge-list">
+            <button class="recharge-pack" data-amount="5">+$5</button>
+            <button class="recharge-pack" data-amount="10">+$10</button>
+            <button class="recharge-pack" data-amount="20">+$20</button>
+        </div>
+        <button id="recharge-close-btn" class="recharge-close-btn">Close</button>
+    </div>
 </div>
 
 <script>
@@ -724,10 +1148,29 @@
     const moleLayer = document.getElementById('mole-layer');
     const piecesContainer = document.getElementById('pieces-container');
     const timerEl = document.getElementById('timer');
+    const balanceEl = document.getElementById('balance');
+    const balancePlusBtn = document.getElementById('balance-plus-btn');
     const goalHeadlineEl = document.getElementById('goal-headline');
     const goalStatusEl = document.getElementById('goal-status');
     const earnedStatusEl = document.getElementById('earned-status');
     const toastEl = document.getElementById('toast');
+    const levelGateEl = document.getElementById('level-gate');
+    const levelTitleEl = document.getElementById('level-title');
+    const gateGoalMolesEl = document.getElementById('gate-goal-moles');
+    const gateMaxEl = document.getElementById('gate-max');
+    const debugHintEl = document.getElementById('debug-hint');
+    const debugToggleBtn = document.getElementById('debug-toggle-btn');
+    const debugDrawerEl = document.getElementById('debug-drawer');
+    const debugUnlimitedBtn = document.getElementById('debug-unlimited-btn');
+    const playEntryBtn = document.getElementById('play-entry-btn');
+    const stakeBtns = Array.from(document.querySelectorAll('.stake-btn'));
+    const debugMultiBtns = Array.from(document.querySelectorAll('.debug-multi-btn'));
+    const ingameDebugMultiEl = document.getElementById('ingame-debug-multi');
+    const msgSubtitleEl = document.getElementById('msg-subtitle');
+    const overlayBtnEl = document.getElementById('overlay-btn');
+    const rechargeModalEl = document.getElementById('recharge-modal');
+    const rechargeCloseBtn = document.getElementById('recharge-close-btn');
+    const rechargePackBtns = Array.from(document.querySelectorAll('.recharge-pack'));
 
     let grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
     let holes = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
@@ -735,7 +1178,7 @@
     let moles = [];
     let collectedCount = 0;
     let timeLeft = 180;
-    let gameActive = true;
+    let gameActive = false;
     let moleIdCounter = 0;
     let previewCells = [];
     let previewLines = [];
@@ -743,6 +1186,19 @@
     let passedGoal = false;
     let blockIdCounter = 0;
     let blockSequenceCursor = 0;
+    let selectedStake = 1;
+    let selectedDebugMultiplier = null;
+    let activeReturnMultiplier = 2;
+    let debugUnlimitedMode = false;
+    let runSeed = null;
+    let runRandom = Math.random;
+    let levelNumber = 48;
+    let accountBalance = 10;
+    let entryFee = 1;
+    let goalReward = 1.5;
+    let maxReward = 2.0;
+    let rewardPerMole = 0.15;
+    let maxKillsCurrent = 15;
 
     const LEVEL_INITIAL_GRID = [0, 0, 24, 60, 90, 126, 102, 0];
     const BLOCK_FIGURES = [
@@ -807,12 +1263,15 @@
     ]);
     const GOAL_TARGET = 10;
     const MAX_KILLS = 15;
-    const REWARD_PER_MOLE = 0.3;
-    const GOAL_EARNED = MAX_KILLS * REWARD_PER_MOLE;
     const HOLE_COLORS = ['#6b4b2a', '#4a7b3e', '#2f5f8a', '#8a5a2f', '#6b2f6b', '#2f6b6b'];
     const MOLE_SPAWN_RATE = 0.30;
     const FORCE_SECOND_BLOCK = false;
     const FORCE_ONE_MOLE_IN_FIRST_THREE = true;
+    const DEBUG_RETURN_OPTIONS = [
+        { value: 2, chance: 0.40 },
+        { value: 2.5, chance: 0.50 },
+        { value: 3, chance: 0.10 }
+    ];
 
     function initGrid() {
         gridEl.innerHTML = '';
@@ -842,7 +1301,13 @@
 
     function nextSequenceShape() {
         const seqIndex = blockSequenceCursor;
-        const nextId = BLOCK_SEQUENCE_IDS[blockSequenceCursor % BLOCK_SEQUENCE_IDS.length];
+        let nextId;
+        if (debugUnlimitedMode) {
+            const randomIdx = Math.floor(runRandom() * SHAPES.length);
+            nextId = SHAPES[randomIdx].id;
+        } else {
+            nextId = BLOCK_SEQUENCE_IDS[blockSequenceCursor % BLOCK_SEQUENCE_IDS.length];
+        }
         blockSequenceCursor++;
         return {
             seqIndex,
@@ -853,6 +1318,21 @@
     function deterministicRoll01(seqIndex) {
         const raw = Math.sin((seqIndex + 1) * 12.9898 + 78.233) * 43758.5453;
         return raw - Math.floor(raw);
+    }
+
+    function mulberry32(seed) {
+        let t = seed >>> 0;
+        return function() {
+            t += 0x6D2B79F5;
+            let x = Math.imul(t ^ (t >>> 15), 1 | t);
+            x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
+            return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    function startRandomRunSeed() {
+        runSeed = Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+        runRandom = mulberry32(runSeed);
     }
 
     function isMoleEligibleByList(shapeObj) {
@@ -922,7 +1402,7 @@
 
         eligibleIndexes.forEach((idx) => {
             if (pieces[idx].forceMole) return;
-            const roll = deterministicRoll01(pieces[idx].seqIndex);
+            const roll = debugUnlimitedMode ? runRandom() : deterministicRoll01(pieces[idx].seqIndex);
             if (roll < MOLE_SPAWN_RATE) {
                 pieces[idx].forceMole = true;
             }
@@ -944,7 +1424,9 @@
 
             const allowMole = pieces[i].forceMole === true
                 && (isMoleEligibleByList(shapeObj) || pieces[i].forceMoleOverrideList === true);
-            const fixedIdx = validCells.length ? (pieces[i].seqIndex % validCells.length) : 0;
+            const fixedIdx = validCells.length
+                ? (debugUnlimitedMode ? Math.floor(runRandom() * validCells.length) : (pieces[i].seqIndex % validCells.length))
+                : 0;
             let molePos = allowMole ? validCells[fixedIdx] : null;
             const moleType = allowMole ? 'normal' : null;
 
@@ -1159,7 +1641,7 @@
         emoji.innerText = '💦';
         el.appendChild(emoji);
         moleLayer.appendChild(el);
-        const reward = 0.1;
+        const reward = rewardPerMole;
         const moleObj = { id: moleIdCounter++, r, c, element: el, freezeTurns: 1, reward, moleType, blockId };
         moles.push(moleObj);
         positionMoleElement(moleObj);
@@ -1520,12 +2002,11 @@
             updateTopStats();
             if (!passedGoal && collectedCount >= GOAL_TARGET) {
                 passedGoal = true;
-                if (toastEl) {
-                    toastEl.classList.add('show');
-                    setTimeout(() => toastEl.classList.remove('show'), 1400);
-                }
+                showToast('Goal达成，可继续冲刺最大奖励', 1400);
             }
-            if (collectedCount >= MAX_KILLS) endGame(true, '达到15只上限！');
+            if (getEarnedAmount() >= maxReward || collectedCount >= maxKillsCurrent) {
+                endGame(true, '已拿满最大奖励', { type: 'max_win' });
+            }
         }, 780);
     }
 
@@ -1639,7 +2120,7 @@
 
         const flyer = document.createElement('div');
         flyer.className = 'money-flyer';
-        flyer.innerText = `💵 +$${reward.toFixed(1)}`;
+        flyer.innerText = `💵 +$${reward.toFixed(2)}`;
         flyer.style.left = `${startX}px`;
         flyer.style.top = `${startY}px`;
         document.body.appendChild(flyer);
@@ -1666,9 +2147,32 @@
         requestAnimationFrame(tick);
     }
 
+    function getEarnedAmount() {
+        return Math.min(collectedCount * rewardPerMole, maxReward);
+    }
+
+    function updateBalanceView() {
+        balanceEl.innerText = `$${accountBalance.toFixed(2)}`;
+    }
+
+    function showToast(message, delay = 1200) {
+        toastEl.innerText = message;
+        toastEl.classList.add('show');
+        setTimeout(() => toastEl.classList.remove('show'), delay);
+    }
+
+    function openRechargeModal() {
+        rechargeModalEl.classList.remove('hidden');
+    }
+
+    function closeRechargeModal() {
+        rechargeModalEl.classList.add('hidden');
+    }
+
     function updateTopStats() {
-        const total = collectedCount * REWARD_PER_MOLE;
-        earnedStatusEl.innerText = `$${total.toFixed(2)}/$${GOAL_EARNED.toFixed(2)}`;
+        const total = getEarnedAmount();
+        const maxText = Number.isFinite(maxReward) ? `$${maxReward.toFixed(2)}` : '∞';
+        earnedStatusEl.innerText = `$${total.toFixed(2)}/${maxText}`;
         if (collectedCount >= GOAL_TARGET) {
             goalStatusEl.innerText = '✅';
             goalHeadlineEl.innerText = 'Keep Earning';
@@ -1690,28 +2194,219 @@
         return Array.from(piecesContainer.children).every(slot => slot.innerHTML === '');
     }
 
+    function drawAutoReturnMultiplier() {
+        const roll = Math.random();
+        let acc = 0;
+        for (const option of DEBUG_RETURN_OPTIONS) {
+            acc += option.chance;
+            if (roll <= acc) return option.value;
+        }
+        return DEBUG_RETURN_OPTIONS[DEBUG_RETURN_OPTIONS.length - 1].value;
+    }
+
+    function updateIngameDebugView() {
+        const label = Number.isFinite(activeReturnMultiplier) ? `${activeReturnMultiplier}x` : 'INF';
+        const mode = debugUnlimitedMode ? 'Unlimited' : 'Normal';
+        const seedText = runSeed === null ? '--' : runSeed;
+        ingameDebugMultiEl.innerText = `Mode: ${mode} | Return: ${label} | Seed: ${seedText}`;
+    }
+
+    function recalcRewards() {
+        goalReward = entryFee * 1.5;
+        maxReward = debugUnlimitedMode ? Infinity : (entryFee * activeReturnMultiplier);
+        rewardPerMole = goalReward / GOAL_TARGET;
+        maxKillsCurrent = debugUnlimitedMode ? Infinity : Math.max(MAX_KILLS, Math.ceil(maxReward / rewardPerMole));
+    }
+
+    function updateGateSummary() {
+        gateGoalMolesEl.innerText = `${GOAL_TARGET}`;
+        gateMaxEl.innerText = Number.isFinite(maxReward) ? `$${maxReward.toFixed(2)}` : '∞';
+        playEntryBtn.innerText = `Play for $${entryFee}`;
+        const autoText = selectedDebugMultiplier === null
+            ? '未选择时自动按概率: 40% / 50% / 10%（当前将自动抽取）'
+            : `已固定返奖倍率: ${selectedDebugMultiplier}x`;
+        debugHintEl.innerText = autoText;
+        debugUnlimitedBtn.classList.toggle('active', debugUnlimitedMode);
+        debugUnlimitedBtn.innerText = `Unlimited Mode: ${debugUnlimitedMode ? 'ON' : 'OFF'}`;
+    }
+
+    function applyStake(multiplier) {
+        selectedStake = multiplier;
+        entryFee = multiplier;
+        activeReturnMultiplier = selectedDebugMultiplier ?? 2;
+        recalcRewards();
+        updateGateSummary();
+        stakeBtns.forEach((btn) => {
+            btn.classList.toggle('active', Number(btn.dataset.stake) === selectedStake);
+        });
+        updateTopStats();
+    }
+
+    function resetRuntimeState() {
+        moles.forEach((mole) => mole.element.remove());
+        moles = [];
+        grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+        holes = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+        holeBlockId = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(-1));
+        holeVisits = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+        collectedCount = 0;
+        passedGoal = false;
+        blockIdCounter = 0;
+        blockSequenceCursor = 0;
+        timeLeft = 180;
+        timerEl.innerText = debugUnlimitedMode ? '∞' : '03:00';
+        piecesContainer.innerHTML = '';
+        initGrid();
+        applyInitialGrid();
+        updateTopStats();
+        updateIngameDebugView();
+    }
+
+    function returnToLevelGate(nextLevel = false) {
+        if (nextLevel) {
+            levelNumber += 1;
+            levelTitleEl.innerText = `Level ${levelNumber}`;
+        }
+        document.getElementById('overlay').classList.add('hidden');
+        msgSubtitleEl.innerText = '';
+        overlayBtnEl.onclick = null;
+        gameActive = false;
+        levelGateEl.classList.remove('hidden');
+        debugToggleBtn.classList.remove('hidden');
+        resetRuntimeState();
+    }
+
+    function openSettlement(title, subtitle, buttonText, onClick) {
+        document.getElementById('msg-title').innerText = title;
+        msgSubtitleEl.innerText = subtitle;
+        document.getElementById('msg-title').style.color = '#1f1f1f';
+        overlayBtnEl.innerText = buttonText;
+        overlayBtnEl.onclick = onClick;
+        document.getElementById('overlay').classList.remove('hidden');
+    }
+
+    function startGameFromGate() {
+        if (accountBalance < entryFee) {
+            showToast('余额不足，无法下注', 1400);
+            openRechargeModal();
+            return;
+        }
+        accountBalance -= entryFee;
+        updateBalanceView();
+        activeReturnMultiplier = selectedDebugMultiplier ?? drawAutoReturnMultiplier();
+        if (debugUnlimitedMode) {
+            startRandomRunSeed();
+        } else {
+            runSeed = null;
+            runRandom = Math.random;
+        }
+        recalcRewards();
+        updateGateSummary();
+        resetRuntimeState();
+        gameActive = true;
+        generatePieces();
+        levelGateEl.classList.add('hidden');
+        debugDrawerEl.classList.add('hidden');
+        debugToggleBtn.classList.add('hidden');
+        closeRechargeModal();
+    }
+
+    stakeBtns.forEach((btn) => {
+        btn.addEventListener('click', () => applyStake(Number(btn.dataset.stake)));
+    });
+    debugMultiBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const val = Number(btn.dataset.multi);
+            selectedDebugMultiplier = (selectedDebugMultiplier === val) ? null : val;
+            debugMultiBtns.forEach((it) => it.classList.toggle('active', Number(it.dataset.multi) === selectedDebugMultiplier));
+            activeReturnMultiplier = selectedDebugMultiplier ?? 2;
+            recalcRewards();
+            updateGateSummary();
+            updateTopStats();
+        });
+    });
+    debugUnlimitedBtn.addEventListener('click', () => {
+        debugUnlimitedMode = !debugUnlimitedMode;
+        recalcRewards();
+        updateGateSummary();
+        updateTopStats();
+        updateIngameDebugView();
+    });
+    debugToggleBtn.addEventListener('click', () => {
+        if (gameActive) return;
+        debugDrawerEl.classList.toggle('hidden');
+    });
+    balancePlusBtn.addEventListener('click', openRechargeModal);
+    rechargeCloseBtn.addEventListener('click', closeRechargeModal);
+    rechargePackBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const amount = Number(btn.dataset.amount) || 0;
+            accountBalance += amount;
+            updateBalanceView();
+            showToast(`充值成功 +$${amount.toFixed(2)}`, 1000);
+            closeRechargeModal();
+        });
+    });
+    playEntryBtn.addEventListener('click', startGameFromGate);
+
     const timerInterval = setInterval(() => {
         if (!gameActive) return;
+        if (debugUnlimitedMode) {
+            timerEl.innerText = '∞';
+            return;
+        }
         timeLeft--;
         const m = Math.floor(timeLeft/60).toString().padStart(2, '0');
         const s = (timeLeft%60).toString().padStart(2, '0');
         timerEl.innerText = `${m}:${s}`;
-        if (timeLeft <= 0) endGame(false);
+        if (timeLeft <= 0) endGame(false, '时间到');
     }, 1000);
 
-    function endGame(win, message) {
+    function endGame(win, message, meta = {}) {
         gameActive = false;
-        clearInterval(timerInterval);
-        document.getElementById('overlay').classList.remove('hidden');
-        const msg = message || (win ? '目标达成！' : '时间到！');
-        document.getElementById('msg-title').innerText = msg;
-        document.getElementById('msg-title').style.color = win ? "#6ef3c2" : "#ff5a6c";
+        const earned = getEarnedAmount();
+        const reachedGoal = collectedCount >= GOAL_TARGET;
+        const reachedMax = earned >= maxReward || meta.type === 'max_win';
+
+        if (reachedMax) {
+            accountBalance += earned;
+            updateBalanceView();
+            openSettlement(
+                'Victory',
+                `你获得了 $${earned.toFixed(2)}，余额 $${accountBalance.toFixed(2)}`,
+                '下一关',
+                () => returnToLevelGate(true)
+            );
+            return;
+        }
+
+        if (!reachedGoal) {
+            showToast('挑战失败', 900);
+            setTimeout(() => {
+                openSettlement(
+                    '未达成Goal',
+                    '本局没有获得钱',
+                    accountBalance <= 0 ? '去充值' : '返回关卡',
+                    () => returnToLevelGate(false)
+                );
+                if (accountBalance <= 0) openRechargeModal();
+            }, 950);
+            return;
+        }
+
+        accountBalance += earned;
+        updateBalanceView();
+        openSettlement(
+            'Victory',
+            `过关奖励 $${earned.toFixed(2)}，余额 $${accountBalance.toFixed(2)}`,
+            '下一关',
+            () => returnToLevelGate(true)
+        );
     }
 
-    initGrid();
-    applyInitialGrid();
-    generatePieces();
-    updateTopStats();
+    applyStake(1);
+    resetRuntimeState();
+    updateBalanceView();
 </script>
 
 </body>
