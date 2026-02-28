@@ -739,42 +739,80 @@
     let moleIdCounter = 0;
     let previewCells = [];
     let previewLines = [];
-    let roundCount = 0;
-    let missStreak = 0;
-    let lastSegment = 0;
     let holeVisits = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
     let passedGoal = false;
     let blockIdCounter = 0;
+    let blockSequenceCursor = 0;
 
-    const SHAPES = [
-        { id: 'square2', s: [[1,1],[1,1]], w:2, h:2 },
-        { id: 'single', s: [[1]], w:1, h:1 },
-        { id: 'diag2', s: [[1,0],[0,1]], w:2, h:2 },
-        { id: 'l2', s: [[1,1],[1,0]], w:2, h:2 },
-        { id: 'line2h', s: [[1,1]], w:2, h:1 },
-        { id: 'line2v', s: [[1],[1]], w:1, h:2 },
-        { id: 'rect2x3', s: [[1,1,1],[1,1,1]], w:3, h:2 },
-        { id: 'line4', s: [[1,1,1,1]], w:4, h:1 },
-        { id: 'line3h', s: [[1,1,1]], w:3, h:1 },
-        { id: 'line3v', s: [[1],[1],[1]], w:1, h:3 },
-        { id: 't', s: [[1,1,1],[0,1,0]], w:3, h:2 },
-        { id: 'diag', s: [[1,1,0],[0,1,1]], w:3, h:2 },
-        { id: 'l', s: [[1,1,1],[1,0,0]], w:3, h:2 }
+    const LEVEL_INITIAL_GRID = [0, 0, 24, 60, 90, 126, 102, 0];
+    const BLOCK_FIGURES = [
+        { id: '1111001', w:1, h:1, s:[[1]] },
+        { id: '1122003', w:2, h:1, s:[[1,1]] },
+        { id: '1212003', w:1, h:2, s:[[1],[1]] },
+        { id: '1222009', w:2, h:2, s:[[1,0],[0,1]] },
+        { id: '1222006', w:2, h:2, s:[[0,1],[1,0]] },
+        { id: '1133007', w:3, h:1, s:[[1,1,1]] },
+        { id: '1313007', w:1, h:3, s:[[1],[1],[1]] },
+        { id: '1223007', w:2, h:2, s:[[0,1],[1,1]] },
+        { id: '1223013', w:2, h:2, s:[[1,1],[0,1]] },
+        { id: '1223014', w:2, h:2, s:[[1,1],[1,0]] },
+        { id: '1223011', w:2, h:2, s:[[1,0],[1,1]] },
+        { id: '1224015', w:2, h:2, s:[[1,1],[1,1]] },
+        { id: '1234058', w:3, h:2, s:[[1,1,1],[0,1,0]] },
+        { id: '1324046', w:2, h:3, s:[[1,0],[1,1],[1,0]] },
+        { id: '1234023', w:3, h:2, s:[[0,1,0],[1,1,1]] },
+        { id: '1324029', w:2, h:3, s:[[0,1],[1,1],[0,1]] },
+        { id: '1234015', w:3, h:2, s:[[0,0,1],[1,1,1]] },
+        { id: '1324053', w:2, h:3, s:[[1,1],[0,1],[0,1]] },
+        { id: '1234060', w:3, h:2, s:[[1,1,1],[1,0,0]] },
+        { id: '1324043', w:2, h:3, s:[[1,0],[1,0],[1,1]] },
+        { id: '1234039', w:3, h:2, s:[[1,0,0],[1,1,1]] },
+        { id: '1324023', w:2, h:3, s:[[0,1],[0,1],[1,1]] },
+        { id: '1234057', w:3, h:2, s:[[1,1,1],[0,0,1]] },
+        { id: '1324058', w:2, h:3, s:[[1,1],[1,0],[1,0]] },
+        { id: '1234030', w:3, h:2, s:[[0,1,1],[1,1,0]] },
+        { id: '1234051', w:3, h:2, s:[[1,1,0],[0,1,1]] },
+        { id: '1324045', w:2, h:3, s:[[1,0],[1,1],[0,1]] },
+        { id: '1324030', w:2, h:3, s:[[0,1],[1,1],[1,0]] },
+        { id: '1333273', w:3, h:3, s:[[1,0,0],[0,1,0],[0,0,1]] },
+        { id: '1333084', w:3, h:3, s:[[0,0,1],[0,1,0],[1,0,0]] },
+        { id: '1144015', w:4, h:1, s:[[1,1,1,1]] },
+        { id: '1414015', w:1, h:4, s:[[1],[1],[1],[1]] },
+        { id: '1326063', w:2, h:3, s:[[1,1],[1,1],[1,1]] },
+        { id: '1236063', w:3, h:2, s:[[1,1,1],[1,1,1]] },
+        { id: '1155031', w:5, h:1, s:[[1,1,1,1,1]] },
+        { id: '1515031', w:1, h:5, s:[[1],[1],[1],[1],[1]] },
+        { id: '1335079', w:3, h:3, s:[[0,0,1],[0,0,1],[1,1,1]] },
+        { id: '1335457', w:3, h:3, s:[[1,1,1],[0,0,1],[0,0,1]] },
+        { id: '1335484', w:3, h:3, s:[[1,1,1],[1,0,0],[1,0,0]] },
+        { id: '1335295', w:3, h:3, s:[[1,0,0],[1,0,0],[1,1,1]] },
+        { id: '1339511', w:3, h:3, s:[[1,1,1],[1,1,1],[1,1,1]] }
     ];
+    const BLOCK_SEQUENCE_IDS = ["1111001","1111001","1224015","1313007","1223014","1223013","1224015","1224015","1313007","1313007","1122003","1122003","1236063","1224015","1313007","1234060","1122003","1212003","1224015","1313007","1111001","1212003","1234023","1234058","1234060","1223007","1224015","1212003","1234058","1324043","1223007","1133007","1234023","1223014","1122003","1223011","1133007","1222006","1223013","1212003","1133007","1234058","1313007","1133007","1313007","1133007","1234058","1111001","1326063","1222009","1223007","1212003","1313007","1234023","1223013","1212003","1222009","1335295","1223007","1222009","1212003","1313007","1313007","1111001","1222009","1111001","1223014","1223007","1133007","1234023","1122003","1224015","1324029","1133007","1111001","1224015","1222006","1223011","1122003","1122003","1234058","1111001","1324046","1324046","1223013","1223014","1111001","1223007","1133007","1133007","1212003","1223013","1324029","1223011","1324029","1224015","1212003","1223014","1222009","1324046","1324046","1234058","1223007","1223013","1223013","1223011","1122003","1122003","1212003","1223013","1223011","1326063","1234023","1111001","1111001","1234023","1224015","1212003","1223007","1122003"];
 
-    const MOLE_ELIGIBLE = new Set(['square2', 'line3h', 'line3v', 'l', 't', 'l2']);
-    const MOLE_MAX_ON_BOARD = 4;
-    const MOLE_CHANCE_BASE = [0.34, 0.40, 0.50];
-    const MOLE_CHANCE_INC = [0.33, 0.40, 0.50];
+    const SHAPES = BLOCK_FIGURES.map((f) => ({ id: f.id, s: f.s, w: f.w, h: f.h }));
+    const SHAPE_BY_ID = new Map(SHAPES.map((shape) => [shape.id, shape]));
+    const MOLE_WHITELIST = new Set([
+        '1224015', // 2x2
+        '1133007', // 3x1
+        '1313007', // 1x3
+        '1223007', '1223013', '1223014', '1223011', // 2x2 L
+        '1234058', '1234023', '1324046', '1324029', // T
+        '1234060', '1234039', '1234015', '1234057', '1324043', '1324023', '1324053', '1324058' // L
+    ]);
+    const MOLE_BLACKLIST = new Set([
+        '1333273', '1333084', '1335079', '1335457', '1335484', '1335295', '1339511', // 3x3
+        '1144015', '1414015', // 1x4/4x1
+        '1222009', '1222006' // diagonal 2x2
+    ]);
     const GOAL_TARGET = 10;
     const MAX_KILLS = 15;
     const REWARD_PER_MOLE = 0.3;
     const GOAL_EARNED = MAX_KILLS * REWARD_PER_MOLE;
     const HOLE_COLORS = ['#6b4b2a', '#4a7b3e', '#2f5f8a', '#8a5a2f', '#6b2f6b', '#2f6b6b'];
-
-    const MOLE_TYPES = [
-        { id: 'normal', reward: REWARD_PER_MOLE, chance: 1.0 }
-    ];
+    const MOLE_SPAWN_RATE = 0.30;
+    const FORCE_SECOND_BLOCK = false;
+    const FORCE_ONE_MOLE_IN_FIRST_THREE = true;
 
     function initGrid() {
         gridEl.innerHTML = '';
@@ -788,56 +826,107 @@
         }
     }
 
+    function applyInitialGrid() {
+        for (let r = 0; r < GRID_SIZE; r++) {
+            const rowBits = LEVEL_INITIAL_GRID[r] || 0;
+            for (let c = 0; c < GRID_SIZE; c++) {
+                const bit = (rowBits >> (GRID_SIZE - 1 - c)) & 1;
+                grid[r][c] = bit ? 1 : 0;
+                holes[r][c] = 0;
+                holeVisits[r][c] = 0;
+                holeBlockId[r][c] = -1;
+            }
+        }
+        updateGridView();
+    }
+
+    function nextSequenceShape() {
+        const seqIndex = blockSequenceCursor;
+        const nextId = BLOCK_SEQUENCE_IDS[blockSequenceCursor % BLOCK_SEQUENCE_IDS.length];
+        blockSequenceCursor++;
+        return {
+            seqIndex,
+            shapeObj: SHAPE_BY_ID.get(nextId) || SHAPES[0]
+        };
+    }
+
+    function deterministicRoll01(seqIndex) {
+        const raw = Math.sin((seqIndex + 1) * 12.9898 + 78.233) * 43758.5453;
+        return raw - Math.floor(raw);
+    }
+
+    function isMoleEligibleByList(shapeObj) {
+        return MOLE_WHITELIST.has(shapeObj.id) && !MOLE_BLACKLIST.has(shapeObj.id);
+    }
+
+    function countActiveCells(shapeObj) {
+        let count = 0;
+        shapeObj.s.forEach((row) => row.forEach((v) => { if (v) count++; }));
+        return count;
+    }
+
     function generatePieces() {
         piecesContainer.innerHTML = '';
-        roundCount++;
-
-        const segment = collectedCount < 5 ? 0 : (collectedCount < 10 ? 1 : 2);
-        if (segment !== lastSegment) {
-            missStreak = 0;
-            lastSegment = segment;
-        }
-
-        let spawnMoleThisRound = false;
-        if (moles.length === 0) {
-            spawnMoleThisRound = true;
-        } else if (roundCount === 1) {
-            spawnMoleThisRound = true;
-        } else if (moles.length < MOLE_MAX_ON_BOARD) {
-            const chance = Math.min(1, MOLE_CHANCE_BASE[segment] + missStreak * MOLE_CHANCE_INC[segment]);
-            spawnMoleThisRound = Math.random() < chance;
-        }
 
         const pieces = [];
         for (let i = 0; i < 3; i++) {
-            const shapeObj = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-            pieces.push({ shapeObj });
+            const seqItem = nextSequenceShape();
+            pieces.push({
+                shapeObj: seqItem.shapeObj,
+                forceMole: false,
+                seqIndex: seqItem.seqIndex
+            });
         }
 
-        if (spawnMoleThisRound) {
-            const eligibleIndexes = pieces
-                .map((p, idx) => (isMoleEligible(p.shapeObj) ? idx : -1))
-                .filter(idx => idx !== -1);
+        const eligibleIndexes = pieces
+            .map((p, idx) => (isMoleEligibleByList(p.shapeObj) ? idx : -1))
+            .filter(idx => idx !== -1);
 
-            if (eligibleIndexes.length === 0) {
-                const eligibleShapes = SHAPES.filter(s => isMoleEligible(s));
-                if (eligibleShapes.length > 0) {
-                    pieces[0].shapeObj = eligibleShapes[Math.floor(Math.random() * eligibleShapes.length)];
-                    eligibleIndexes.push(0);
+        if (FORCE_SECOND_BLOCK && pieces[1] && isMoleEligibleByList(pieces[1].shapeObj)) {
+            pieces[1].forceMole = true;
+        }
+
+        if (FORCE_ONE_MOLE_IN_FIRST_THREE) {
+            const hasFirstThreeMole = pieces.some(p => p.seqIndex < 3 && p.forceMole);
+            if (!hasFirstThreeMole) {
+                const firstThreeIndexes = pieces
+                    .map((p, idx) => (p.seqIndex < 3 ? idx : -1))
+                    .filter(idx => idx !== -1);
+                const firstThreeEligible = pieces
+                    .map((p, idx) => (p.seqIndex < 3 && isMoleEligibleByList(p.shapeObj) ? idx : -1))
+                    .filter(idx => idx !== -1);
+                if (firstThreeEligible.length === firstThreeIndexes.length && firstThreeEligible.length > 0) {
+                    const candidates = firstThreeEligible.map((idx) => ({
+                        idx,
+                        cells: countActiveCells(pieces[idx].shapeObj)
+                    }));
+                    candidates.sort((a, b) => b.cells - a.cells || a.idx - b.idx);
+                    const pick = candidates[0].idx;
+                    pieces[pick].forceMole = true;
+                } else if (firstThreeEligible.length > 0) {
+                    const pick = firstThreeEligible.includes(1) ? 1 : firstThreeEligible[0];
+                    pieces[pick].forceMole = true;
+                } else {
+                    const firstThree = pieces
+                        .map((p, idx) => ({ idx, p }))
+                        .filter(({ p }) => p.seqIndex < 3);
+                    if (firstThree.length > 0) {
+                        firstThree.sort((a, b) => countActiveCells(a.p.shapeObj) - countActiveCells(b.p.shapeObj) || a.idx - b.idx);
+                        const pick = firstThree[0].idx;
+                        pieces[pick].forceMole = true;
+                        pieces[pick].forceMoleOverrideList = true;
+                    }
                 }
             }
-
-            if (eligibleIndexes.length > 0 && moles.length < MOLE_MAX_ON_BOARD) {
-                const pickIdx = eligibleIndexes[Math.floor(Math.random() * eligibleIndexes.length)];
-                pieces[pickIdx].forceMole = true;
-                missStreak = 0;
-            } else {
-                missStreak++;
-                spawnMoleThisRound = false;
-            }
-        } else {
-            if (roundCount > 1) missStreak++;
         }
+
+        eligibleIndexes.forEach((idx) => {
+            if (pieces[idx].forceMole) return;
+            const roll = deterministicRoll01(pieces[idx].seqIndex);
+            if (roll < MOLE_SPAWN_RATE) {
+                pieces[idx].forceMole = true;
+            }
+        });
 
         for (let i = 0; i < 3; i++) {
             const slot = document.createElement('div');
@@ -853,9 +942,11 @@
             let validCells = [];
             shapeObj.s.forEach((row, r) => row.forEach((v, c) => v && validCells.push({r, c})));
 
-            const allowMole = pieces[i].forceMole === true;
-            let molePos = allowMole ? validCells[Math.floor(Math.random() * validCells.length)] : null;
-            const moleType = allowMole ? pickMoleType() : null;
+            const allowMole = pieces[i].forceMole === true
+                && (isMoleEligibleByList(shapeObj) || pieces[i].forceMoleOverrideList === true);
+            const fixedIdx = validCells.length ? (pieces[i].seqIndex % validCells.length) : 0;
+            let molePos = allowMole ? validCells[fixedIdx] : null;
+            const moleType = allowMole ? 'normal' : null;
 
             pieceEl.style.gridTemplateColumns = `repeat(${shapeW}, 1fr)`;
             pieceEl.setAttribute('data-shape', JSON.stringify(shapeObj.s));
@@ -1035,7 +1126,7 @@
 
     function placeBlock(shape, r, c, molePos, moleType) {
         const fixedMolePos = normalizeMolePos(shape, molePos);
-        const hasMole = Boolean(fixedMolePos) && moles.length < MOLE_MAX_ON_BOARD;
+        const hasMole = Boolean(fixedMolePos);
         const blockId = blockIdCounter++;
         shape.forEach((row, i) => {
             row.forEach((v, j) => {
@@ -1536,20 +1627,6 @@
         }
     }
 
-    function pickMoleType() {
-        const roll = Math.random();
-        let acc = 0;
-        for (const t of MOLE_TYPES) {
-            acc += t.chance;
-            if (roll <= acc) return t.id;
-        }
-        return MOLE_TYPES[0].id;
-    }
-
-    function isMoleEligible(shapeObj) {
-        return MOLE_ELIGIBLE.has(shapeObj.id);
-    }
-
     function flyMoneyToEarned(r, c, reward) {
         const boardRect = moleLayer.getBoundingClientRect();
         const cellSize = boardRect.width / GRID_SIZE;
@@ -1632,6 +1709,7 @@
     }
 
     initGrid();
+    applyInitialGrid();
     generatePieces();
     updateTopStats();
 </script>
