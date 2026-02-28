@@ -1264,7 +1264,11 @@
     const GOAL_TARGET = 10;
     const MAX_KILLS = 15;
     const HOLE_COLORS = ['#6b4b2a', '#4a7b3e', '#2f5f8a', '#8a5a2f', '#6b2f6b', '#2f6b6b'];
-    const MOLE_SPAWN_RATE = 0.30;
+    const MOLE_SPAWN_RATE_BY_MULTIPLIER = {
+        2: 0.30,
+        2.5: 0.40,
+        3: 0.20
+    };
     const FORCE_SECOND_BLOCK = false;
     const FORCE_ONE_MOLE_IN_FIRST_THREE = true;
     const DEBUG_RETURN_OPTIONS = [
@@ -1318,6 +1322,10 @@
     function deterministicRoll01(seqIndex) {
         const raw = Math.sin((seqIndex + 1) * 12.9898 + 78.233) * 43758.5453;
         return raw - Math.floor(raw);
+    }
+
+    function getCurrentMoleSpawnRate() {
+        return MOLE_SPAWN_RATE_BY_MULTIPLIER[activeReturnMultiplier] ?? 0.30;
     }
 
     function mulberry32(seed) {
@@ -1403,7 +1411,7 @@
         eligibleIndexes.forEach((idx) => {
             if (pieces[idx].forceMole) return;
             const roll = debugUnlimitedMode ? runRandom() : deterministicRoll01(pieces[idx].seqIndex);
-            if (roll < MOLE_SPAWN_RATE) {
+            if (roll < getCurrentMoleSpawnRate()) {
                 pieces[idx].forceMole = true;
             }
         });
@@ -2208,7 +2216,8 @@
         const label = Number.isFinite(activeReturnMultiplier) ? `${activeReturnMultiplier}x` : 'INF';
         const mode = debugUnlimitedMode ? 'Unlimited' : 'Normal';
         const seedText = runSeed === null ? '--' : runSeed;
-        ingameDebugMultiEl.innerText = `Mode: ${mode} | Return: ${label} | Seed: ${seedText}`;
+        const moleRate = `${Math.round(getCurrentMoleSpawnRate() * 100)}%`;
+        ingameDebugMultiEl.innerText = `Mode: ${mode} | Return: ${label} | Mole: ${moleRate} | Seed: ${seedText}`;
     }
 
     function recalcRewards() {
