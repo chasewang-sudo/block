@@ -1060,6 +1060,7 @@
             <button class="debug-multi-btn" data-multi="3">3x</button>
         </div>
         <div id="debug-hint" class="debug-hint">未选择时自动按概率: 40% / 50% / 10%</div>
+        <button id="debug-refresh-multi-btn" class="debug-mode-toggle">Refresh Multiplier</button>
         <button id="debug-unlimited-btn" class="debug-mode-toggle">Unlimited Mode: OFF</button>
     </div>
 </div>
@@ -1101,6 +1102,7 @@
     const debugHintEl = document.getElementById('debug-hint');
     const debugToggleBtn = document.getElementById('debug-toggle-btn');
     const debugDrawerEl = document.getElementById('debug-drawer');
+    const debugRefreshMultiBtn = document.getElementById('debug-refresh-multi-btn');
     const debugUnlimitedBtn = document.getElementById('debug-unlimited-btn');
     const playEntryBtn = document.getElementById('play-entry-btn');
     const stakeBtns = Array.from(document.querySelectorAll('.stake-btn'));
@@ -1127,20 +1129,24 @@
     let blockIdCounter = 0;
     let blockSequenceCursor = 0;
     let selectedStake = 1;
-    let selectedDebugMultiplier = null;
-    let activeReturnMultiplier = 2;
+    const FIXED_RETURN_MULTIPLIER = 2;
+    let selectedDebugMultiplier = FIXED_RETURN_MULTIPLIER;
+    let activeReturnMultiplier = FIXED_RETURN_MULTIPLIER;
     let debugUnlimitedMode = false;
     let runSeed = null;
     let runRandom = Math.random;
+    let currentSeedName = 'B_001-V4_B_001_DE_001';
+    let currentDifficulty = 'Easy';
     let levelNumber = 48;
     let accountBalance = 10;
     let entryFee = 1;
     let goalReward = 1.5;
     let maxReward = 2.0;
-    let rewardPerMole = 0.15;
+    let rewardPerMole = 0.1;
     let maxKillsCurrent = 15;
+    const SEED_CASES = [{"file":"B_001-V4_B_001_DE_001-export.jsonl","name":"B_001-V4_B_001_DE_001","initialGrid":[0,0,24,60,90,126,102,0],"blockIds":["1111001","1111001","1224015","1313007","1223014","1223013","1224015","1224015","1313007","1313007","1122003","1122003","1236063","1224015","1313007","1234060","1122003","1212003","1224015","1313007","1111001","1212003","1234023","1234058","1234060","1223007","1224015","1212003","1234058","1324043","1223007","1133007","1234023","1223014","1122003","1223011","1133007","1222006","1223013","1212003","1133007","1234058","1313007","1133007","1313007","1133007","1234058","1111001","1326063","1222009","1223007","1212003","1313007","1234023","1223013","1212003","1222009","1335295","1223007","1222009","1212003","1313007","1313007","1111001","1222009","1111001","1223014","1223007","1133007","1234023","1122003","1224015","1324029","1133007","1111001","1224015","1222006","1223011","1122003","1122003","1234058","1111001","1324046","1324046","1223013","1223014","1111001","1223007","1133007","1133007","1212003","1223013","1324029","1223011","1324029","1224015","1212003","1223014","1222009","1324046","1324046","1234058","1223007","1223013","1223013","1223011","1122003","1122003","1212003","1223013","1223011","1326063","1234023","1111001","1111001","1234023","1224015","1212003","1223007","1122003"]},{"file":"B_003-V4_B_003_D1_039-export.jsonl","name":"B_003-V4_B_003_D1_039","initialGrid":[126,60,24,0,32,112,32,0],"blockIds":["1324029","1223011","1222006","1122003","1122003","1222009","1222009","1122003","1133007","1234015","1313007","1222009","1223011","1133007","1313007","1122003","1133007","1122003","1333273","1223011","1223013","1324043","1234023","1144015","1324058","1212003","1313007","1223014","1133007","1313007","1313007","1223014","1324029","1234060","1234039","1223011","1111001","1111001","1324053","1236063","1313007","1223011","1224015","1313007","1236063","1223013","1223007","1223011","1223011","1212003","1222009","1212003","1234057","1313007","1234015","1234039","1223007","1324046","1223014","1324023","1223013","1324030","1234057","1223007","1224015","1324030","1234051","1324045","1223011","1223014","1223014","1236063","1111001","1313007","1222009","1324030","1234060","1122003","1223007","1222006","1234058","1326063","1122003","1234060","1234015","1324030","1223014","1234030","1223007","1223007","1224015","1234030","1223013","1234023","1324053","1223014","1313007","1313007","1313007","1234030","1234058","1234051","1122003","1223007","1324046","1144015","1223014","1324058","1324058","1333084","1234060","1223013","1133007","1224015","1234058","1223011","1414015","1324058","1234015","1133007"]},{"file":"B_003-V4_B_003_D4_001-export.jsonl","name":"B_003-V4_B_003_D4_001","initialGrid":[126,60,24,0,32,112,32,0],"blockIds":["1223014","1111001","1212003","1223013","1414015","1223014","1223014","1324043","1223011","1234060","1324046","1223014","1122003","1111001","1224015","1324045","1212003","1111001","1223013","1212003","1144015","1133007","1223014","1234051","1122003","1324058","1223011","1324043","1324045","1234058","1313007","1223013","1223007","1324058","1324058","1313007","1223011","1223014","1236063","1324045","1222009","1324045","1212003","1324053","1223014","1234030","1223011","1222006","1326063","1324030","1324030","1222006","1324053","1234039","1326063","1223011","1324053","1234015","1223013","1333273","1212003","1133007","1234057","1339511","1313007","1133007","1133007","1133007","1111001","1223007","1224015","1222006","1333084","1414015","1223007","1224015","1223011","1234030","1335079","1414015","1133007","1414015","1333273","1212003","1224015","1224015","1414015","1234015","1414015","1234030","1326063","1234039","1224015","1313007","1313007","1234057","1122003","1335079","1333273","1122003","1144015","1326063","1234051","1324029","1234039","1324058","1313007","1223013","1333273","1122003","1144015","1223014","1324053","1234057","1234039","1222006","1224015","1234060","1234060","1234039"]},{"file":"B_009-V4_B_009_D12_038-export.jsonl","name":"B_009-V4_B_009_D12_038","initialGrid":[0,0,60,126,60,24,0,0],"blockIds":["1133007","1223011","1324029","1324053","1324045","1133007","1324045","1324058","1324023","1133007","1224015","1224015","1111001","1324030","1234060","1333084","1324029","1414015","1234030","1234030","1133007","1223013","1324030","1335295","1313007","1223014","1222006","1324058","1313007","1324023","1133007","1111001","1335484","1414015","1313007","1234058","1133007","1222009","1324053","1122003","1234015","1335457","1111001","1212003","1155031","1212003","1223014","1223014","1335295","1324043","1212003","1212003","1234023","1333273","1335295","1324053","1324023","1324043","1234060","1222006","1234039","1515031","1223007","1222006","1122003","1155031","1234058","1223013","1223013","1111001","1339511","1335079","1223014","1333084","1324029","1313007","1333084","1324043","1155031","1234060","1222009","1324030","1335295","1324045","1133007","1335079","1122003","1234039","1223013","1326063","1224015","1335484","1324029","1223011","1111001","1333273","1155031","1236063","1223013","1155031","1223007","1222006","1222009","1222006","1212003","1324029","1335079","1223007","1222006","1324030","1324046","1324043","1335457","1223013","1223011","1324029","1324053","1335295","1335295","1414015"]},{"file":"B_009-V4_B_009_D4_002-export.jsonl","name":"B_009-V4_B_009_D4_002","initialGrid":[0,0,60,126,60,24,0,0],"blockIds":["1223014","1234060","1133007","1313007","1223014","1234057","1234051","1223013","1313007","1133007","1222009","1133007","1133007","1313007","1414015","1333273","1326063","1414015","1234051","1234057","1144015","1414015","1223013","1324030","1224015","1324058","1234015","1222006","1111001","1144015","1414015","1234023","1111001","1122003","1223011","1234023","1223014","1234030","1223013","1313007","1324030","1234015","1333084","1313007","1223014","1144015","1234058","1324043","1222009","1234058","1133007","1223007","1234030","1324046","1222009","1222009","1212003","1234023","1122003","1223013","1223007","1324045","1223007","1234051","1236063","1222009","1223014","1222009","1234057","1155031","1326063","1234051","1414015","1324058","1324030","1234057","1234058","1222009","1223014","1324053","1144015","1223007","1234051","1324046","1324043","1324053","1144015","1223011","1223014","1222006","1234039","1234030","1111001","1234060","1324043","1333273","1223007","1223007","1324023","1324045","1234057","1324046","1144015","1234060","1236063","1222006","1223013","1414015","1234057","1324053","1234057","1234051","1111001","1324023","1335295","1234058","1222006","1223013","1234030","1324023"]},{"file":"B_009-V4_B_009_D7_037-export.jsonl","name":"B_009-V4_B_009_D7_037","initialGrid":[0,0,60,126,60,24,0,0],"blockIds":["1234039","1122003","1133007","1212003","1212003","1324030","1222006","1223011","1234051","1223011","1222006","1324058","1234023","1222009","1234030","1333084","1144015","1212003","1234057","1324046","1122003","1333084","1234030","1335457","1313007","1144015","1223013","1335457","1324053","1324043","1234015","1223013","1222006","1335295","1333273","1335457","1144015","1234051","1234039","1324046","1234058","1324045","1223007","1133007","1236063","1335295","1324023","1324058","1333084","1234015","1234030","1236063","1223014","1333273","1234030","1324043","1133007","1234057","1224015","1224015","1333273","1144015","1222009","1335457","1324030","1313007","1313007","1111001","1335079","1335079","1224015","1133007","1133007","1324053","1335484","1212003","1234023","1333084","1324029","1335484","1133007","1313007","1234030","1222009","1324058","1234057","1222006","1414015","1234015","1324053","1223014","1212003","1324046","1335079","1234023","1335079","1335457","1335295","1326063","1324045","1313007","1335079","1234058","1234051","1324043","1133007","1223007","1515031","1234015","1335079","1223013","1234030","1324058","1234058","1234039","1212003","1212003","1222009","1224015","1333084"]},{"file":"B_009-V4_B_009_R14_014-export.jsonl","name":"B_009-V4_B_009_R14_014","initialGrid":[0,0,60,126,60,24,0,0],"blockIds":["1234039","1339511","1335484","1234030","1326063","1324029","1133007","1234051","1133007","1324045","1339511","1234058","1234051","1333273","1335295","1333084","1234030","1234039","1324030","1324058","1234051","1212003","1324058","1333084","1234060","1333084","1223007","1324030","1335484","1222006","1236063","1234030","1515031","1324053","1333084","1335457","1324030","1335457","1515031","1333273","1333084","1333273","1324046","1155031","1236063","1333084","1313007","1335484","1515031","1335457","1333273","1333273","1236063","1234057","1339511","1155031","1339511","1335457","1313007","1515031","1333084","1144015","1313007","1155031","1133007","1335295","1335079","1335484","1326063","1234051","1155031","1335295","1333084","1414015","1333273","1133007","1333273","1324030","1335295","1333084","1335457","1324046","1326063","1234030","1335457","1333273","1155031","1234023","1234060","1333273","1324030","1335484","1333084","1333273","1333273","1515031","1133007","1324053","1324030","1324053","1324046","1339511","1155031","1234030","1339511","1335295","1155031","1515031","1326063","1144015","1335457","1313007","1333084","1234060","1333084","1236063","1234030","1335295","1324043","1236063"]}];
+    let currentSeedCase = null;
 
-    const LEVEL_INITIAL_GRID = [0, 0, 24, 60, 90, 126, 102, 0];
     const BLOCK_FIGURES = [
         { id: '1111001', w:1, h:1, s:[[1]] },
         { id: '1122003', w:2, h:1, s:[[1,1]] },
@@ -1184,7 +1190,6 @@
         { id: '1335295', w:3, h:3, s:[[1,0,0],[1,0,0],[1,1,1]] },
         { id: '1339511', w:3, h:3, s:[[1,1,1],[1,1,1],[1,1,1]] }
     ];
-    const BLOCK_SEQUENCE_IDS = ["1111001","1111001","1224015","1313007","1223014","1223013","1224015","1224015","1313007","1313007","1122003","1122003","1236063","1224015","1313007","1234060","1122003","1212003","1224015","1313007","1111001","1212003","1234023","1234058","1234060","1223007","1224015","1212003","1234058","1324043","1223007","1133007","1234023","1223014","1122003","1223011","1133007","1222006","1223013","1212003","1133007","1234058","1313007","1133007","1313007","1133007","1234058","1111001","1326063","1222009","1223007","1212003","1313007","1234023","1223013","1212003","1222009","1335295","1223007","1222009","1212003","1313007","1313007","1111001","1222009","1111001","1223014","1223007","1133007","1234023","1122003","1224015","1324029","1133007","1111001","1224015","1222006","1223011","1122003","1122003","1234058","1111001","1324046","1324046","1223013","1223014","1111001","1223007","1133007","1133007","1212003","1223013","1324029","1223011","1324029","1224015","1212003","1223014","1222009","1324046","1324046","1234058","1223007","1223013","1223013","1223011","1122003","1122003","1212003","1223013","1223011","1326063","1234023","1111001","1111001","1234023","1224015","1212003","1223007","1122003"];
 
     const SHAPES = BLOCK_FIGURES.map((f) => ({ id: f.id, s: f.s, w: f.w, h: f.h }));
     const SHAPE_BY_ID = new Map(SHAPES.map((shape) => [shape.id, shape]));
@@ -1204,11 +1209,8 @@
     const GOAL_TARGET = 10;
     const MAX_KILLS = 15;
     const HOLE_COLORS = ['#6b4b2a', '#4a7b3e', '#2f5f8a', '#8a5a2f', '#6b2f6b', '#2f6b6b'];
-    const MOLE_SPAWN_RATE_BY_MULTIPLIER = {
-        2: 0.30,
-        2.5: 0.40,
-        3: 0.20
-    };
+    const MOLE_SPAWN_RATE = 0.30;
+    const MOLE_REWARD = 0.10;
     const FORCE_SECOND_BLOCK = false;
     const FORCE_ONE_MOLE_IN_FIRST_THREE = true;
     const DEBUG_RETURN_OPTIONS = [
@@ -1216,7 +1218,6 @@
         { value: 2.5, chance: 0.50 },
         { value: 3, chance: 0.10 }
     ];
-
     function initGrid() {
         gridEl.innerHTML = '';
         for (let r = 0; r < GRID_SIZE; r++) {
@@ -1242,8 +1243,9 @@
             updateGridView();
             return;
         }
+        const initialGrid = currentSeedCase?.initialGrid || Array(GRID_SIZE).fill(0);
         for (let r = 0; r < GRID_SIZE; r++) {
-            const rowBits = LEVEL_INITIAL_GRID[r] || 0;
+            const rowBits = initialGrid[r] || 0;
             for (let c = 0; c < GRID_SIZE; c++) {
                 const bit = (rowBits >> (GRID_SIZE - 1 - c)) & 1;
                 grid[r][c] = bit ? 1 : 0;
@@ -1261,7 +1263,13 @@
         if (debugUnlimitedMode) {
             nextId = pickUnlimitedShapeId();
         } else {
-            nextId = BLOCK_SEQUENCE_IDS[blockSequenceCursor % BLOCK_SEQUENCE_IDS.length];
+            const blockIds = currentSeedCase?.blockIds || [];
+            if (blockIds.length > 0) {
+                const idx = blockSequenceCursor % blockIds.length;
+                nextId = blockIds[idx];
+            } else {
+                nextId = SHAPES[0].id;
+            }
         }
         blockSequenceCursor++;
         return {
@@ -1286,7 +1294,14 @@
     }
 
     function getCurrentMoleSpawnRate() {
-        return MOLE_SPAWN_RATE_BY_MULTIPLIER[activeReturnMultiplier] ?? 0.30;
+        return MOLE_SPAWN_RATE;
+    }
+
+    function parseDifficultyFromSeedName(seedName) {
+        const m = seedName.match(/_D(E|\d+)_/i);
+        if (!m) return 'Unknown';
+        if (m[1].toUpperCase() === 'E') return 'Easy';
+        return `D${m[1]}`;
     }
 
     function mulberry32(seed) {
@@ -2195,18 +2210,27 @@
         return DEBUG_RETURN_OPTIONS[DEBUG_RETURN_OPTIONS.length - 1].value;
     }
 
+    function rollSeedForDetail() {
+        const pick = SEED_CASES[Math.floor(Math.random() * SEED_CASES.length)] || SEED_CASES[0];
+        currentSeedCase = pick;
+        currentSeedName = pick?.name || 'UnknownSeed';
+        currentDifficulty = parseDifficultyFromSeedName(currentSeedName);
+    }
+
     function updateIngameDebugView() {
         const label = Number.isFinite(activeReturnMultiplier) ? `${activeReturnMultiplier}x` : 'INF';
         const mode = debugUnlimitedMode ? 'Unlimited' : 'Normal';
-        const seedText = runSeed === null ? '--' : runSeed;
+        const seedText = debugUnlimitedMode
+            ? `${currentSeedName} | RNG:${runSeed ?? '--'}`
+            : currentSeedName;
         const moleRate = `${Math.round(getCurrentMoleSpawnRate() * 100)}%`;
-        ingameDebugMultiEl.innerText = `Mode: ${mode} | Return: ${label} | Mole: ${moleRate} | Seed: ${seedText}`;
+        ingameDebugMultiEl.innerText = `Mode: ${mode} | Return: ${label} | Mole: ${moleRate} | Diff: ${currentDifficulty} | Seed: ${seedText}`;
     }
 
     function recalcRewards() {
-        goalReward = entryFee * 1.5;
+        goalReward = GOAL_TARGET * MOLE_REWARD;
         maxReward = debugUnlimitedMode ? Infinity : (entryFee * activeReturnMultiplier);
-        rewardPerMole = goalReward / GOAL_TARGET;
+        rewardPerMole = MOLE_REWARD;
         maxKillsCurrent = debugUnlimitedMode ? Infinity : Math.max(MAX_KILLS, Math.ceil(maxReward / rewardPerMole));
     }
 
@@ -2214,10 +2238,10 @@
         gateGoalMolesEl.innerText = `${GOAL_TARGET}`;
         gateMaxEl.innerText = Number.isFinite(maxReward) ? `$${maxReward.toFixed(2)}` : '∞';
         playEntryBtn.innerText = `Play for $${entryFee}`;
-        const autoText = selectedDebugMultiplier === null
-            ? '未选择时自动按概率: 40% / 50% / 10%（当前将自动抽取）'
-            : `已固定返奖倍率: ${selectedDebugMultiplier}x`;
-        debugHintEl.innerText = autoText;
+        debugHintEl.innerText = `倍率: ${activeReturnMultiplier}x (fixed) | 难度: ${currentDifficulty} | Seed: ${currentSeedName}`;
+        debugMultiBtns.forEach((btn) => {
+            btn.classList.toggle('active', Number(btn.dataset.multi) === FIXED_RETURN_MULTIPLIER);
+        });
         debugUnlimitedBtn.classList.toggle('active', debugUnlimitedMode);
         debugUnlimitedBtn.innerText = `Unlimited Mode: ${debugUnlimitedMode ? 'ON' : 'OFF'}`;
     }
@@ -2225,7 +2249,6 @@
     function applyStake(multiplier) {
         selectedStake = multiplier;
         entryFee = multiplier;
-        activeReturnMultiplier = selectedDebugMultiplier ?? 2;
         recalcRewards();
         updateGateSummary();
         stakeBtns.forEach((btn) => {
@@ -2254,6 +2277,13 @@
         updateIngameDebugView();
     }
 
+    function rollLevelMultiplierForDetail() {
+        activeReturnMultiplier = FIXED_RETURN_MULTIPLIER;
+        recalcRewards();
+        updateGateSummary();
+        updateIngameDebugView();
+    }
+
     function returnToLevelGate(nextLevel = false) {
         if (nextLevel) {
             levelNumber += 1;
@@ -2265,6 +2295,8 @@
         gameActive = false;
         levelGateEl.classList.remove('hidden');
         debugToggleBtn.classList.remove('hidden');
+        rollSeedForDetail();
+        rollLevelMultiplierForDetail();
         resetRuntimeState();
     }
 
@@ -2285,7 +2317,6 @@
         }
         accountBalance -= entryFee;
         updateBalanceView();
-        activeReturnMultiplier = selectedDebugMultiplier ?? drawAutoReturnMultiplier();
         if (debugUnlimitedMode) {
             startRandomRunSeed();
         } else {
@@ -2308,14 +2339,16 @@
     });
     debugMultiBtns.forEach((btn) => {
         btn.addEventListener('click', () => {
-            const val = Number(btn.dataset.multi);
-            selectedDebugMultiplier = (selectedDebugMultiplier === val) ? null : val;
-            debugMultiBtns.forEach((it) => it.classList.toggle('active', Number(it.dataset.multi) === selectedDebugMultiplier));
-            activeReturnMultiplier = selectedDebugMultiplier ?? 2;
-            recalcRewards();
-            updateGateSummary();
+            selectedDebugMultiplier = FIXED_RETURN_MULTIPLIER;
+            rollLevelMultiplierForDetail();
             updateTopStats();
         });
+    });
+    debugRefreshMultiBtn.addEventListener('click', () => {
+        selectedDebugMultiplier = FIXED_RETURN_MULTIPLIER;
+        rollSeedForDetail();
+        rollLevelMultiplierForDetail();
+        updateTopStats();
     });
     debugUnlimitedBtn.addEventListener('click', () => {
         debugUnlimitedMode = !debugUnlimitedMode;
@@ -2397,6 +2430,8 @@
     }
 
     applyStake(1);
+    rollSeedForDetail();
+    rollLevelMultiplierForDetail();
     resetRuntimeState();
     updateBalanceView();
 </script>
