@@ -2,15 +2,90 @@
 import argparse
 import html
 import random
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs
 
-from simulator import build_seed_pool, load_seed_cases, simulate
+from simulator import (
+    DEFAULT_POLICY,
+    build_run_seed_list,
+    build_seed_pool,
+    load_seed_cases,
+    normalize_policy,
+    policy_display_name,
+    simulate,
+)
 
 
 LAST_CSV = b""
 LAST_CSV_NAME = "sim_results.csv"
+
+FIELD_LABELS_ZH = {
+    "seed": "种子名",
+    "difficulty": "难度",
+    "level": "关卡",
+    "mode": "模式",
+    "stake": "下注金额",
+    "returnMultiplier": "返奖倍率",
+    "goalTarget": "过关目标(地鼠数)",
+    "maxMolesCap": "最大奖励上限(地鼠数)",
+    "moleSpawnRate": "鼹鼠覆盖率(0~1)",
+    "moleCoverage": "鼹鼠覆盖率(0~1)",
+    "maxReward": "最大奖励金额($)",
+    "maxRewardDollar": "最大奖励金额($)",
+    "totalBlocksInSeed": "种子总块数",
+    "blocksPlaced": "放置块数",
+    "clearEvents": "消除次数",
+    "rowsCleared": "消除行数",
+    "colsCleared": "消除列数",
+    "clearedCells": "消除格子数",
+    "molesSpawned": "生成鼹鼠数",
+    "molesCaptured": "捕获鼹鼠数",
+    "maxAliveMoles": "场上同时未消除鼹鼠峰值",
+    "earned": "本局收益",
+    "goalReached": "是否达成Goal",
+    "maxRewardReached": "是否达到最大奖励",
+    "remainingTime": "剩余时间(秒/∞=-1)",
+    "result": "比赛结果",
+    "policy": "策略版本",
+    "policyKey": "策略键",
+    "rtp": "返奖率",
+}
+
+PREFERRED_FIELD_ORDER = [
+    "startedAt",
+    "endedAt",
+    "seed",
+    "difficulty",
+    "level",
+    "mode",
+    "stake",
+    "returnMultiplier",
+    "goalTarget",
+    "maxMolesCap",
+    "moleCoverage",
+    "moleSpawnRate",
+    "maxRewardDollar",
+    "maxReward",
+    "totalBlocksInSeed",
+    "blocksPlaced",
+    "clearEvents",
+    "rowsCleared",
+    "colsCleared",
+    "clearedCells",
+    "molesSpawned",
+    "molesCaptured",
+    "maxAliveMoles",
+    "earned",
+    "goalReached",
+    "maxRewardReached",
+    "remainingTime",
+    "result",
+    "policy",
+    "policyKey",
+    "rtp",
+]
 
 
 def to_int(val: str, default: int) -> int:
@@ -27,11 +102,21 @@ def to_float(val: str, default: float) -> float:
         return default
 
 
+def ordered_fields(rows):
+    if not rows:
+        return []
+    keys = list(rows[0].keys())
+    ordered = [k for k in PREFERRED_FIELD_ORDER if k in keys]
+    ordered.extend([k for k in keys if k not in ordered])
+    return ordered
+
+
 def build_csv(rows):
     if not rows:
         return b""
-    header = list(rows[0].keys())
-    lines = [",".join(header)]
+    header = ordered_fields(rows)
+    zh = [FIELD_LABELS_ZH.get(k, k) for k in header]
+    lines = [",".join(header), ",".join(zh)]
     for row in rows:
         parts = []
         for k in header:
@@ -43,9 +128,9 @@ def build_csv(rows):
     return ("\n".join(lines) + "\n").encode("utf-8")
 
 
-def summarize(rows):
+def summarize(rows, duration_seconds: float = 0.0):
     if not rows:
-        return {"matches": 0, "win_rate": 0.0, "rtp": 0.0, "stake": 0.0, "earned": 0.0}
+        return {"matches": 0, "win_rate": 0.0, "rtp": 0.0, "stake": 0.0, "earned": 0.0, "duration_seconds": duration_seconds}
     stake = sum(r["stake"] for r in rows)
     earned = sum(r["earned"] for r in rows)
     win = sum(1 for r in rows if r["result"] != "Fail")
@@ -55,15 +140,26 @@ def summarize(rows):
         "rtp": (earned / stake) if stake > 0 else 0.0,
         "stake": stake,
         "earned": earned,
+        "duration_seconds": duration_seconds,
     }
 
 
 def render_page(defaults, summary=None, rows=None, error=""):
     rows = rows or []
     diff_val = str(defaults.get("difficulty", "D5")).upper()
+    policy_val = normalize_policy(str(defaults.get("policy", DEFAULT_POLICY)))
     diff_options = ["D5", "Easy", "D0", "D1", "D2", "D3", "D4", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "R13", "R14", "ALL"]
     diff_select = "".join(
         f'<option value="{d}" {"selected" if diff_val == d.upper() else ""}>{d}</option>' for d in diff_options
+    )
+    policy_options = [
+        ("capture_greedy", policy_display_name("capture_greedy")),
+        ("survival_mobility", policy_display_name("survival_mobility")),
+        ("lookahead_2ply", policy_display_name("lookahead_2ply")),
+        ("triplet_beam", policy_display_name("triplet_beam")),
+    ]
+    policy_select = "".join(
+        f'<option value="{v}" {"selected" if policy_val == v else ""}>{label}</option>' for v, label in policy_options
     )
     summary_html = ""
     if summary:
@@ -76,6 +172,7 @@ def render_page(defaults, summary=None, rows=None, error=""):
             <div>RTP: <b>{summary['rtp']:.3f}</b></div>
             <div>总下注: <b>${summary['stake']:.2f}</b></div>
             <div>总返奖: <b>${summary['earned']:.2f}</b></div>
+            <div>模拟耗时: <b>{summary.get('duration_seconds', 0.0):.3f}s</b></div>
           </div>
           <a class="btn" href="/download">下载CSV</a>
         </div>
@@ -83,10 +180,14 @@ def render_page(defaults, summary=None, rows=None, error=""):
 
     table_html = ""
     if rows:
-        head = "".join(f"<th>{html.escape(k)}</th>" for k in rows[0].keys())
+        header_fields = ordered_fields(rows)
+        head = "".join(
+            f"<th>{html.escape(k)}<br><small>{html.escape(FIELD_LABELS_ZH.get(k, ''))}</small></th>"
+            for k in header_fields
+        )
         body = []
         for row in rows[:300]:
-            tds = "".join(f"<td>{html.escape(str(v))}</td>" for v in row.values())
+            tds = "".join(f"<td>{html.escape(str(row.get(k, '')))}</td>" for k in header_fields)
             body.append(f"<tr>{tds}</tr>")
         table_html = f"""
         <div class="card">
@@ -140,15 +241,12 @@ def render_page(defaults, summary=None, rows=None, error=""):
           <div><label>max_moles (最大奖励对应地鼠数)</label><input name="max_moles" value="{defaults['max_moles']}" /></div>
           <div><label>mole_rate (0~1)</label><input name="mole_rate" value="{defaults['mole_rate']}" /></div>
           <div><label>difficulty</label><select name="difficulty">{diff_select}</select></div>
+          <div><label>策略版本</label><select name="policy">{policy_select}</select></div>
           <div><label>action_seconds</label><input name="action_seconds" value="{defaults['action_seconds']}" /></div>
           <div><label>max_actions</label><input name="max_actions" value="{defaults['max_actions']}" /></div>
           <div><label>rng_seed</label><input name="rng_seed" value="{defaults['rng_seed']}" /></div>
         </div>
         <div style="margin-top:10px;">
-          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#222;">
-            <input type="checkbox" name="use_improved" value="1" {"checked" if defaults.get("use_improved") else ""} />
-            使用新放置算法（提高胜率）
-          </label>
           <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#222;margin-top:6px;">
             <input type="checkbox" name="prefer_unique" value="1" {"checked" if defaults.get("prefer_unique") else ""} />
             优先不同初始牌面（不强制）
@@ -212,10 +310,10 @@ class Handler(BaseHTTPRequestHandler):
             "max_moles": to_int(form.get("max_moles", str(self.defaults["max_moles"])), self.defaults["max_moles"]),
             "mole_rate": to_float(form.get("mole_rate", str(self.defaults["mole_rate"])), self.defaults["mole_rate"]),
             "difficulty": (form.get("difficulty", self.defaults["difficulty"]) or "D5").strip(),
+            "policy": normalize_policy((form.get("policy", self.defaults["policy"]) or DEFAULT_POLICY).strip().lower()),
             "action_seconds": to_float(form.get("action_seconds", str(self.defaults["action_seconds"])), self.defaults["action_seconds"]),
             "max_actions": to_int(form.get("max_actions", str(self.defaults["max_actions"])), self.defaults["max_actions"]),
             "rng_seed": to_int(form.get("rng_seed", str(self.defaults["rng_seed"])), self.defaults["rng_seed"]),
-            "use_improved": form.get("use_improved", "0") == "1",
             "prefer_unique": form.get("prefer_unique", "0") == "1",
         }
         self.defaults = defaults
@@ -228,13 +326,14 @@ class Handler(BaseHTTPRequestHandler):
 
             rng = random.Random(defaults["rng_seed"])
 
+            t0 = time.perf_counter()
             rows = []
             runs = defaults["runs"]
             if runs > 0:
-                for _ in range(runs):
+                for sc in build_run_seed_list(seed_cases, runs, rng):
                     rows.append(
                         simulate(
-                            rng.choice(seed_cases),
+                            sc,
                             rng,
                             defaults["entry_fee"],
                             defaults["action_seconds"],
@@ -242,7 +341,7 @@ class Handler(BaseHTTPRequestHandler):
                             defaults["goal_target"],
                             defaults["max_moles"],
                             defaults["mole_rate"],
-                            "improved" if defaults["use_improved"] else "legacy",
+                            defaults["policy"],
                         )
                     )
             else:
@@ -257,13 +356,14 @@ class Handler(BaseHTTPRequestHandler):
                             defaults["goal_target"],
                             defaults["max_moles"],
                             defaults["mole_rate"],
-                            "improved" if defaults["use_improved"] else "legacy",
+                            defaults["policy"],
                         )
                     )
 
+            elapsed = time.perf_counter() - t0
             LAST_CSV = build_csv(rows)
             LAST_CSV_NAME = "sim_results.csv"
-            self.send_html(render_page(defaults, summarize(rows), rows))
+            self.send_html(render_page(defaults, summarize(rows, elapsed), rows))
         except Exception as e:
             self.send_html(render_page(defaults, error=str(e)), status=400)
 
@@ -278,8 +378,9 @@ def main():
     ap.add_argument("--entry-fee", type=float, default=1.0)
     ap.add_argument("--goal-target", type=int, default=6)
     ap.add_argument("--max-moles", type=int, default=10)
-    ap.add_argument("--mole-rate", type=float, default=0.30)
+    ap.add_argument("--mole-rate", type=float, default=0.40)
     ap.add_argument("--difficulty", default="D5")
+    ap.add_argument("--policy", default=DEFAULT_POLICY)
     ap.add_argument(
         "--prefer-unique",
         dest="prefer_unique",
@@ -289,7 +390,6 @@ def main():
     ap.add_argument("--action-seconds", type=float, default=1.0)
     ap.add_argument("--max-actions", type=int, default=500)
     ap.add_argument("--rng-seed", type=int, default=20260302)
-    ap.add_argument("--use-improved", action="store_true")
     args = ap.parse_args()
 
     Handler.defaults = {
@@ -301,10 +401,10 @@ def main():
         "max_moles": args.max_moles,
         "mole_rate": args.mole_rate,
         "difficulty": args.difficulty,
+        "policy": normalize_policy(args.policy),
         "action_seconds": args.action_seconds,
         "max_actions": args.max_actions,
         "rng_seed": args.rng_seed,
-        "use_improved": args.use_improved,
         "prefer_unique": args.prefer_unique,
     }
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)

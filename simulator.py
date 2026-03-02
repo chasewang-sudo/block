@@ -5,6 +5,7 @@ import json
 import math
 import random
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -13,10 +14,35 @@ from typing import Dict, List, Optional, Tuple
 GRID_SIZE = 8
 TIME_LIMIT = 180.0
 MOLE_REWARD_RATE = 0.2
-MOLE_SPAWN_RATE = 0.30
+MOLE_SPAWN_RATE = 0.40
 FORCE_SECOND_BLOCK = False
 FORCE_ONE_MOLE_IN_FIRST_THREE = True
 FIXED_RETURN_MULTIPLIER = 2.0
+DEFAULT_POLICY = "capture_greedy"
+POLICY_META = {
+    "capture_greedy": {"version": "V1", "name_zh": "抓鼠贪心"},
+    "survival_mobility": {"version": "V2", "name_zh": "生存机动"},
+    "lookahead_2ply": {"version": "V3", "name_zh": "双步前瞻"},
+    "triplet_beam": {"version": "V4", "name_zh": "三块束搜索"},
+}
+POLICY_ALIASES = {
+    "capture_greedy": "capture_greedy",
+    "legacy": "capture_greedy",
+    "survival_mobility": "survival_mobility",
+    "improved": "survival_mobility",
+    "lookahead_2ply": "lookahead_2ply",
+    "latest": "lookahead_2ply",
+    "triplet_beam": "triplet_beam",
+    "beam_triplet": "triplet_beam",
+    "抓鼠贪心": "capture_greedy",
+    "生存机动": "survival_mobility",
+    "双步前瞻": "lookahead_2ply",
+    "三块束搜索": "triplet_beam",
+    "v1": "capture_greedy",
+    "v2": "survival_mobility",
+    "v3": "lookahead_2ply",
+    "v4": "triplet_beam",
+}
 
 
 BLOCK_FIGURES = [
@@ -100,6 +126,17 @@ def parse_difficulty(seed_name: str) -> str:
     return "Easy" if token == "DE" else token
 
 
+def normalize_policy(policy: str) -> str:
+    key = (policy or "").strip().lower()
+    return POLICY_ALIASES.get(key, DEFAULT_POLICY)
+
+
+def policy_display_name(policy: str) -> str:
+    p = normalize_policy(policy)
+    meta = POLICY_META.get(p, POLICY_META[DEFAULT_POLICY])
+    return f"{meta['version']}-{meta['name_zh']}"
+
+
 def build_seed_pool(seed_cases: List[dict], difficulty: str = "D5", prefer_unique_initial: bool = True) -> List[dict]:
     diff = (difficulty or "ALL").strip().upper()
     if diff in ("ALL", "*"):
@@ -124,6 +161,20 @@ def build_seed_pool(seed_cases: List[dict], difficulty: str = "D5", prefer_uniqu
             unique.append(s)
     # "Prefer unique" (not strict): unique first, then duplicates.
     return unique + dup
+
+
+def build_run_seed_list(seed_cases: List[dict], runs: int, rng: random.Random) -> List[dict]:
+    if runs <= 0 or not seed_cases:
+        return []
+    # Minimize duplicates: sample without replacement per cycle, reshuffle next cycle.
+    out = []
+    n = len(seed_cases)
+    while len(out) < runs:
+        bucket = list(seed_cases)
+        rng.shuffle(bucket)
+        take = min(runs - len(out), n)
+        out.extend(bucket[:take])
+    return out
 
 
 def deterministic_roll01(seq_index: int, salt: int = 0) -> float:
@@ -310,13 +361,13 @@ def simulate(
                 holes[r][c] = 0
                 hole_visits[r][c] = 0
                 hole_block[r][c] = -1
-        return {"did_clear": True, "rows": rows, "cols": cols, "captured": captured_this}
         for c in cols:
             for r in range(GRID_SIZE):
                 grid[r][c] = 0
                 holes[r][c] = 0
                 hole_visits[r][c] = 0
                 hole_block[r][c] = -1
+        return {"did_clear": True, "rows": rows, "cols": cols, "captured": captured_this}
 
     def move_moles():
         for m in moles:
@@ -377,54 +428,222 @@ def simulate(
         cap = sum(1 for m in moles if m.r in rows or m.c in cols)
         return cap, clear_cells, len(rows) + len(cols)
 
-    def all_moves(pieces: List[Piece], use_improved: bool = False):
+    def apply_shape_and_clear(base_grid: List[List[int]], shape: List[List[int]], rr: int, cc: int):
+        temp = [row[:] for row in base_grid]
+        for i, row in enumerate(shape):
+            for j, v in enumerate(row):
+                if v:
+                    temp[rr + i][cc + j] = 1
+        rows, cols = full_rows_cols(temp)
+        clear_cells = 0
+        if rows or cols:
+            for r in range(GRID_SIZE):
+                for c in range(GRID_SIZE):
+                    if r in rows or c in cols:
+                        clear_cells += 1
+            for r in rows:
+                for c in range(GRID_SIZE):
+                    temp[r][c] = 0
+            for c in cols:
+                for r in range(GRID_SIZE):
+                    temp[r][c] = 0
+        return temp, rows, cols, clear_cells
+
+    def count_piece_placements(base_grid: List[List[int]], piece: Piece) -> int:
+        cnt = 0
+        for rr in range(GRID_SIZE):
+            for cc in range(GRID_SIZE):
+                if can_place(base_grid, piece.shape, rr, cc):
+                    cnt += 1
+        return cnt
+
+    def base_move_score(base_grid: List[List[int]], pieces: List[Piece], pick_idx: int, rr: int, cc: int, cap_override: Optional[int] = None):
+        p = pieces[pick_idx]
+        fill = count_active_cells(p.shape)
+        temp, rows, cols, clear_cells = apply_shape_and_clear(base_grid, p.shape, rr, cc)
+        lines = len(rows) + len(cols)
+        cap = cap_override if cap_override is not None else sum(1 for m in moles if m.r in rows or m.c in cols)
+        free_after = sum(1 for r in range(GRID_SIZE) for c in range(GRID_SIZE) if temp[r][c] == 0)
+        remain = [pp for i2, pp in enumerate(pieces) if i2 != pick_idx and pp is not None]
+        mobility = sum(count_piece_placements(temp, rp) for rp in remain)
+        min_fit = min((count_piece_placements(temp, rp) for rp in remain), default=12)
+        return {
+            "grid_after": temp,
+            "rows": rows,
+            "cols": cols,
+            "cap": cap,
+            "lines": lines,
+            "clear_cells": clear_cells,
+            "fill": fill,
+            "free_after": free_after,
+            "mobility": mobility,
+            "min_fit": min_fit,
+        }
+
+    def score_survival(detail: dict) -> float:
+        return (
+            (detail["cap"] * 1800)
+            + (detail["lines"] * 180)
+            + (detail["clear_cells"] * 3)
+            + (detail["mobility"] * 2)
+            + detail["free_after"]
+            + (detail["min_fit"] * 4)
+            - (detail["fill"] * 2)
+        )
+
+    def score_adaptive(detail: dict) -> float:
+        goal_progress = 0.0 if goal_target <= 0 else min(1.0, captured / max(1, goal_target))
+        cap_w = 1700 + (700 * goal_progress)
+        line_w = 160 + (80 * goal_progress)
+        mobility_w = 3.2 - (1.4 * goal_progress)
+        min_fit_w = 24.0 - (8.0 * goal_progress)
+        return (
+            (detail["cap"] * cap_w)
+            + (detail["lines"] * line_w)
+            + (detail["clear_cells"] * 3.3)
+            + (detail["mobility"] * mobility_w)
+            + (detail["min_fit"] * min_fit_w)
+            + (detail["free_after"] * 1.1)
+            - (detail["fill"] * 2.5)
+        )
+
+    def top_piece_moves(base_grid: List[List[int]], pieces_local: List[Piece], pick_idx: int, cap_override: int, limit: int, use_adaptive: bool):
+        out = []
+        piece = pieces_local[pick_idx]
+        for rr in range(GRID_SIZE):
+            for cc in range(GRID_SIZE):
+                if not can_place(base_grid, piece.shape, rr, cc):
+                    continue
+                d = base_move_score(base_grid, pieces_local, pick_idx, rr, cc, cap_override=cap_override)
+                sc = score_adaptive(d) if use_adaptive else score_survival(d)
+                out.append((sc, rr, cc, d))
+        out.sort(key=lambda x: x[0], reverse=True)
+        return out[:limit]
+
+    def best_second_step(first_detail: dict, remain_pieces: List[Piece], alive_after_first: List[Mole]) -> float:
+        second_best = -1e9
+        for j, p2 in enumerate(remain_pieces):
+            if p2 is None:
+                continue
+            for r2 in range(GRID_SIZE):
+                for c2 in range(GRID_SIZE):
+                    if not can_place(first_detail["grid_after"], p2.shape, r2, c2):
+                        continue
+                    after2, rows2, cols2, clear2 = apply_shape_and_clear(first_detail["grid_after"], p2.shape, r2, c2)
+                    cap2 = sum(1 for mol in alive_after_first if mol.r in rows2 or mol.c in cols2)
+                    rem2 = [pp if idx != j else None for idx, pp in enumerate(remain_pieces)]
+                    rem2 = [x for x in rem2 if x is not None]
+                    mobility2 = 0
+                    min_fit2 = 12
+                    for rp in rem2:
+                        cnt = count_piece_placements(after2, rp)
+                        mobility2 += cnt
+                        min_fit2 = min(min_fit2, cnt)
+                    free2 = sum(1 for r3 in range(GRID_SIZE) for c3 in range(GRID_SIZE) if after2[r3][c3] == 0)
+                    second_score = (
+                        cap2 * 1400
+                        + (len(rows2) + len(cols2)) * 160
+                        + clear2 * 2
+                        + mobility2 * 2
+                        + min_fit2 * 8
+                        + free2
+                    )
+                    if second_score > second_best:
+                        second_best = second_score
+        return second_best
+
+    def best_triplet_continuation(first_detail: dict, remain_pieces: List[Piece]) -> float:
+        pieces_left = [p for p in remain_pieces if p is not None]
+        if not pieces_left:
+            return 0.0
+
+        best = -1e9
+        for first_idx in range(len(pieces_left)):
+            first_moves = top_piece_moves(
+                first_detail["grid_after"],
+                pieces_left,
+                first_idx,
+                cap_override=0,
+                limit=9,
+                use_adaptive=True,
+            )
+            if not first_moves:
+                continue
+            for sc_a, _, _, d_a in first_moves:
+                remaining_after_a = [p for idx, p in enumerate(pieces_left) if idx != first_idx]
+                if not remaining_after_a:
+                    best = max(best, sc_a)
+                    continue
+                second_moves = top_piece_moves(
+                    d_a["grid_after"],
+                    remaining_after_a,
+                    0,
+                    cap_override=0,
+                    limit=9,
+                    use_adaptive=True,
+                )
+                if not second_moves:
+                    total = sc_a - 2200
+                else:
+                    total = sc_a + 0.88 * second_moves[0][0]
+                best = max(best, total)
+        return best
+
+    def all_moves(pieces: List[Piece], policy_mode: str = DEFAULT_POLICY):
+        mode = normalize_policy(policy_mode)
         moves = []
+
         for i, p in enumerate(pieces):
             if p is None:
                 continue
             for r in range(GRID_SIZE):
                 for c in range(GRID_SIZE):
-                    if can_place(grid, p.shape, r, c):
-                        cap, cells, lines = predict(p, r, c)
-                        fill = count_active_cells(p.shape)
+                    if not can_place(grid, p.shape, r, c):
+                        continue
+                    cap, cells, lines = predict(p, r, c)
+                    fill = count_active_cells(p.shape)
+                    detail = base_move_score(grid, pieces, i, r, c, cap_override=cap)
+
+                    if mode == "capture_greedy":
                         score = (cap * 1000) + (lines * 100) + (cells * 2) - fill
-                        if use_improved:
-                            temp = [row[:] for row in grid]
-                            for ii, row in enumerate(p.shape):
-                                for jj, v in enumerate(row):
-                                    if v:
-                                        temp[r + ii][c + jj] = 1
-                            tr, tc = full_rows_cols(temp)
-                            if tr or tc:
-                                for rr in tr:
-                                    for cc in range(GRID_SIZE):
-                                        temp[rr][cc] = 0
-                                for cc in tc:
-                                    for rr in range(GRID_SIZE):
-                                        temp[rr][cc] = 0
+                    elif mode == "survival_mobility":
+                        score = score_survival(detail)
+                    else:
+                        score = score_survival(detail)
+                    moves.append({"score": score, "tie": rng.random(), "i": i, "r": r, "c": c, "detail": detail})
 
-                            free_after = sum(1 for rr in range(GRID_SIZE) for cc in range(GRID_SIZE) if temp[rr][cc] == 0)
-                            remain = [pp for idx, pp in enumerate(pieces) if idx != i and pp is not None]
-                            mobility = 0
-                            for rp in remain:
-                                can_count = 0
-                                for rr in range(GRID_SIZE):
-                                    for cc in range(GRID_SIZE):
-                                        if can_place(temp, rp.shape, rr, cc):
-                                            can_count += 1
-                                mobility += can_count
+        if mode in {"capture_greedy", "survival_mobility"} or not moves:
+            return [(m["score"], m["tie"], m["i"], m["r"], m["c"]) for m in moves]
 
-                            # Stronger anti-death and future-space bias than legacy policy.
-                            score = (
-                                (cap * 1800)
-                                + (lines * 180)
-                                + (cells * 3)
-                                + (mobility * 2)
-                                + free_after
-                                - (fill * 2)
-                            )
-                        moves.append((score, rng.random(), i, r, c))
-        return moves
+        moves.sort(key=lambda m: (m["score"], m["tie"]), reverse=True)
+        top = moves[: min(30, len(moves))]
+
+        for m in top:
+            i, rr, cc = m["i"], m["r"], m["c"]
+            first = m["detail"] or base_move_score(grid, pieces, i, rr, cc)
+            remain_pieces = [pp if idx != i else None for idx, pp in enumerate(pieces)]
+            alive_after_first = [mol for mol in moles if not (mol.r in first["rows"] or mol.c in first["cols"])]
+
+            if mode == "lookahead_2ply":
+                second_best = best_second_step(first, remain_pieces, alive_after_first)
+                if second_best < -1e8:
+                    second_best = first["free_after"] + first["mobility"]
+                m["score"] = m["score"] + (0.62 * second_best) + (first["min_fit"] * 18)
+            else:  # triplet_beam: newest
+                second_best = best_second_step(first, remain_pieces, alive_after_first)
+                if second_best < -1e8:
+                    second_best = first["free_after"] + first["mobility"]
+                third_best = best_triplet_continuation(first, remain_pieces)
+                if third_best < -1e8:
+                    third_best = second_best
+                m["score"] = (
+                    score_adaptive(first)
+                    + (0.58 * second_best)
+                    + (0.44 * third_best)
+                    + (first["min_fit"] * 20)
+                )
+
+        return [(m["score"], m["tie"], m["i"], m["r"], m["c"]) for m in moves]
 
     pieces = next_piece_triplet()
     actions = 0
@@ -442,9 +661,9 @@ def simulate(
             chars[m.r][m.c] = "M"
         return ["".join(row) for row in chars]
 
-    use_improved = (policy or "").lower() == "improved"
+    policy_mode = normalize_policy(policy)
     while actions < max_actions:
-        moves = all_moves(pieces, use_improved)
+        moves = all_moves(pieces, policy_mode)
         if not moves:
             break
         score, tie, i, r, c = max(moves)
@@ -484,7 +703,7 @@ def simulate(
         if time_left <= 0:
             result = "GoalWin" if captured >= goal_target else "Fail"
             break
-        if not all_moves(pieces, use_improved):
+        if not all_moves(pieces, policy_mode):
             result = "GoalWin" if captured >= goal_target else "Fail"
             break
     else:
@@ -510,7 +729,8 @@ def simulate(
         "molesSpawned": spawned,
         "molesCaptured": captured,
         "remainingTime": -1 if math.isinf(time_left) else max(0.0, time_left),
-        "policy": "improved" if use_improved else "legacy",
+        "policy": policy_display_name(policy_mode),
+        "policyKey": policy_mode,
         "goalTarget": goal_target,
         "maxMolesCap": max_moles_cap,
         "moleSpawnRate": mole_spawn_rate,
@@ -524,10 +744,21 @@ def simulate(
 def load_seed_cases(seeds_dir: Path, max_seeds: int = 0) -> List[dict]:
     if seeds_dir.name != "ExportSeeds" and (seeds_dir / "ExportSeeds").is_dir():
         seeds_dir = seeds_dir / "ExportSeeds"
+
+    def stable_name_hash(name: str) -> int:
+        # Deterministic lightweight hash; used to avoid lexicographic sampling bias.
+        x = 2166136261
+        for ch in name:
+            x ^= ord(ch)
+            x = (x * 16777619) & 0xFFFFFFFF
+        return x
+
     out = []
     files = sorted(seeds_dir.glob("*.jsonl"))
-    if max_seeds and max_seeds > 0:
-        files = files[:max_seeds]
+    if max_seeds and max_seeds > 0 and len(files) > max_seeds:
+        # Deterministically "shuffle" by filename hash before truncation so sampled seeds
+        # are not concentrated in contiguous board ranges.
+        files = sorted(files, key=lambda p: stable_name_hash(p.name))[:max_seeds]
     for p in files:
         with p.open("r", encoding="utf-8") as f:
             line = f.readline().strip()
@@ -575,7 +806,7 @@ def main():
     ap.add_argument("--entry-fee", type=float, default=1.0)
     ap.add_argument("--goal-target", type=int, default=6, help="Required mole captures to count as clear")
     ap.add_argument("--max-moles", type=int, default=10, help="Mole capture cap for max reward")
-    ap.add_argument("--mole-rate", type=float, default=0.30, help="Mole coverage rate [0,1]")
+    ap.add_argument("--mole-rate", type=float, default=0.40, help="Mole coverage rate [0,1]")
     ap.add_argument("--difficulty", default="D5", help="Difficulty filter, e.g. D5/Easy/R14/ALL")
     ap.add_argument(
         "--prefer-unique-initial",
@@ -584,13 +815,18 @@ def main():
         default=True,
         help="Prefer different initial boards first",
     )
-    ap.add_argument("--policy", choices=["legacy", "improved"], default="legacy", help="Placement policy")
+    ap.add_argument(
+        "--policy",
+        default=DEFAULT_POLICY,
+        help="策略: V1-抓鼠贪心 / V2-生存机动 / V3-双步前瞻 / V4-三块束搜索（仍支持 legacy/improved/latest）",
+    )
     ap.add_argument("--action-seconds", type=float, default=1.0, help="Seconds consumed per placement")
     ap.add_argument("--max-actions", type=int, default=500)
     ap.add_argument("--rng-seed", type=int, default=20260302)
     ap.add_argument("--max-seeds", type=int, default=0, help="Load first N seed files (0 = all)")
     ap.add_argument("--out-csv", default="", help="Optional output CSV path")
     args = ap.parse_args()
+    policy = normalize_policy(args.policy)
 
     seeds_dir = Path(args.seeds_dir)
     seed_cases = load_seed_cases(seeds_dir, args.max_seeds)
@@ -601,9 +837,9 @@ def main():
     rng = random.Random(args.rng_seed)
     rows = []
 
+    t0 = time.perf_counter()
     if args.runs and args.runs > 0:
-        for _ in range(args.runs):
-            sc = rng.choice(seed_cases)
+        for sc in build_run_seed_list(seed_cases, args.runs, rng):
             rows.append(
                 simulate(
                     sc,
@@ -614,7 +850,7 @@ def main():
                     args.goal_target,
                     args.max_moles,
                     args.mole_rate,
-                    args.policy,
+                    policy,
                 )
             )
     else:
@@ -629,11 +865,13 @@ def main():
                     args.goal_target,
                     args.max_moles,
                     args.mole_rate,
-                    args.policy,
+                    policy,
                 )
             )
 
+    elapsed = time.perf_counter() - t0
     summarize(rows)
+    print(f"duration: {elapsed:.3f}s")
 
     if args.out_csv:
         fieldnames = list(rows[0].keys())

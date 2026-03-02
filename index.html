@@ -1124,7 +1124,7 @@
             </div>
             <div class="debug-config-item">
                 <label for="debug-mole-rate-input">覆盖率(%)</label>
-                <input id="debug-mole-rate-input" type="number" min="0" max="100" step="1" value="30" />
+                <input id="debug-mole-rate-input" type="number" min="0" max="100" step="1" value="40" />
             </div>
         </div>
         <button id="debug-apply-target-btn" class="debug-mode-toggle">Apply Goal/Cap</button>
@@ -1223,7 +1223,7 @@
     let entryFee = 1;
     let goalTargetCurrent = 6;
     let maxMolesCapCurrent = 10;
-    let moleSpawnRateCurrent = 0.30;
+    let moleSpawnRateCurrent = 0.40;
     let goalReward = 1.0;
     let maxReward = 1.5;
     let rewardPerMole = 0.1;
@@ -1756,7 +1756,10 @@
         const reward = rewardPerMole;
         const moleObj = { id: moleIdCounter++, r, c, element: el, freezeTurns: 1, reward, moleType, blockId };
         moles.push(moleObj);
-        if (currentMatchLog) currentMatchLog.molesSpawned += 1;
+        if (currentMatchLog) {
+            currentMatchLog.molesSpawned += 1;
+            currentMatchLog.maxAliveMoles = Math.max(currentMatchLog.maxAliveMoles || 0, moles.length);
+        }
         positionMoleElement(moleObj);
     }
 
@@ -2340,6 +2343,7 @@
             clearedCells: 0,
             molesSpawned: 0,
             molesCaptured: 0,
+            maxAliveMoles: 0,
             earned: 0,
             result: 'Unknown',
             remainingTime: 0,
@@ -2353,12 +2357,14 @@
         if (currentMatchLog.endedAt) return;
         currentMatchLog.endedAt = new Date().toISOString();
         currentMatchLog.result = resultLabel;
-        currentMatchLog.earned = getEarnedAmount();
+        const isFail = String(resultLabel).toLowerCase() === 'fail';
+        currentMatchLog.earned = isFail ? 0 : getEarnedAmount();
         currentMatchLog.remainingTime = debugUnlimitedMode ? -1 : Math.max(0, timeLeft);
         currentMatchLog.goalTarget = goalTargetCurrent;
         currentMatchLog.maxMolesCap = maxKillsCurrent;
         currentMatchLog.moleCoverage = getCurrentMoleSpawnRate();
         currentMatchLog.maxRewardDollar = maxReward;
+        currentMatchLog.maxAliveMoles = Math.max(currentMatchLog.maxAliveMoles || 0, moles.length);
         currentMatchLog.goalReached = collectedCount >= goalTargetCurrent;
         currentMatchLog.maxRewardReached = Number.isFinite(maxReward) ? (getEarnedAmount() >= maxReward) : false;
         Object.assign(currentMatchLog, extra);
@@ -2394,6 +2400,7 @@
             ['clearedCells','消除格子数'],
             ['molesSpawned','生成鼹鼠数'],
             ['molesCaptured','捕获鼹鼠数'],
+            ['maxAliveMoles','场上同时未消除鼹鼠峰值'],
             ['earned','本局收益'],
             ['goalReached','是否达成Goal'],
             ['maxRewardReached','是否达到最大奖励'],
