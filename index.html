@@ -1721,7 +1721,18 @@
         const fixedMolePos = normalizeMolePos(shape, molePos);
         const hasMole = Boolean(fixedMolePos);
         const blockId = blockIdCounter++;
-        if (currentMatchLog) currentMatchLog.blocksPlaced += 1;
+        if (currentMatchLog) {
+            currentMatchLog.blocksPlaced += 1;
+            if (hasMole) {
+                currentMatchLog.currentNoMolePlaceStreak = 0;
+            } else {
+                currentMatchLog.currentNoMolePlaceStreak = (currentMatchLog.currentNoMolePlaceStreak || 0) + 1;
+                currentMatchLog.maxNoMolePlaceStreak = Math.max(
+                    currentMatchLog.maxNoMolePlaceStreak || 0,
+                    currentMatchLog.currentNoMolePlaceStreak
+                );
+            }
+        }
         shape.forEach((row, i) => {
             row.forEach((v, j) => {
                 if (v) {
@@ -2344,6 +2355,8 @@
             molesSpawned: 0,
             molesCaptured: 0,
             maxAliveMoles: 0,
+            maxNoMolePlaceStreak: 0,
+            currentNoMolePlaceStreak: 0,
             earned: 0,
             result: 'Unknown',
             remainingTime: 0,
@@ -2365,8 +2378,13 @@
         currentMatchLog.moleCoverage = getCurrentMoleSpawnRate();
         currentMatchLog.maxRewardDollar = maxReward;
         currentMatchLog.maxAliveMoles = Math.max(currentMatchLog.maxAliveMoles || 0, moles.length);
+        currentMatchLog.maxNoMolePlaceStreak = Math.max(
+            currentMatchLog.maxNoMolePlaceStreak || 0,
+            currentMatchLog.currentNoMolePlaceStreak || 0
+        );
         currentMatchLog.goalReached = collectedCount >= goalTargetCurrent;
         currentMatchLog.maxRewardReached = Number.isFinite(maxReward) ? (getEarnedAmount() >= maxReward) : false;
+        delete currentMatchLog.currentNoMolePlaceStreak;
         Object.assign(currentMatchLog, extra);
         matchLogs.push(currentMatchLog);
         saveMatchLogs();
@@ -2401,6 +2419,7 @@
             ['molesSpawned','生成鼹鼠数'],
             ['molesCaptured','捕获鼹鼠数'],
             ['maxAliveMoles','场上同时未消除鼹鼠峰值'],
+            ['maxNoMolePlaceStreak','连续未放置带鼠块次数峰值'],
             ['earned','本局收益'],
             ['goalReached','是否达成Goal'],
             ['maxRewardReached','是否达到最大奖励'],

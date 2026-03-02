@@ -43,6 +43,7 @@ FIELD_LABELS_ZH = {
     "molesSpawned": "生成鼹鼠数",
     "molesCaptured": "捕获鼹鼠数",
     "maxAliveMoles": "场上同时未消除鼹鼠峰值",
+    "maxNoMolePlaceStreak": "连续未放置带鼠块次数峰值",
     "earned": "本局收益",
     "goalReached": "是否达成Goal",
     "maxRewardReached": "是否达到最大奖励",
@@ -77,6 +78,7 @@ PREFERRED_FIELD_ORDER = [
     "molesSpawned",
     "molesCaptured",
     "maxAliveMoles",
+    "maxNoMolePlaceStreak",
     "earned",
     "goalReached",
     "maxRewardReached",
@@ -319,6 +321,7 @@ class Handler(BaseHTTPRequestHandler):
         self.defaults = defaults
 
         try:
+            t0 = time.perf_counter()
             seed_cases = load_seed_cases(Path(defaults["seeds_dir"]), defaults["max_seeds"])
             seed_cases = build_seed_pool(seed_cases, defaults["difficulty"], defaults["prefer_unique"])
             if not seed_cases:
@@ -326,7 +329,6 @@ class Handler(BaseHTTPRequestHandler):
 
             rng = random.Random(defaults["rng_seed"])
 
-            t0 = time.perf_counter()
             rows = []
             runs = defaults["runs"]
             if runs > 0:
@@ -373,8 +375,8 @@ def main():
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8899)
     ap.add_argument("--seeds-dir", default="/Users/chase.wang/ugx_block_seed/Data/ExportSeeds")
-    ap.add_argument("--runs", type=int, default=200)
-    ap.add_argument("--max-seeds", type=int, default=1000)
+    ap.add_argument("--runs", type=int, default=100)
+    ap.add_argument("--max-seeds", type=int, default=10000)
     ap.add_argument("--entry-fee", type=float, default=1.0)
     ap.add_argument("--goal-target", type=int, default=6)
     ap.add_argument("--max-moles", type=int, default=10)

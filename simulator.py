@@ -245,6 +245,9 @@ def simulate(
     clear_events = 0
     captured = 0
     spawned = 0
+    max_alive_moles = 0
+    max_no_mole_place_streak = 0
+    current_no_mole_place_streak = 0
     rows_cleared = 0
     cols_cleared = 0
     cells_cleared = 0
@@ -315,8 +318,13 @@ def simulate(
         return pieces
 
     def apply_piece(p: Piece, rr: int, cc: int):
-        nonlocal block_entity_id, spawned, placed
+        nonlocal block_entity_id, spawned, placed, max_alive_moles, max_no_mole_place_streak, current_no_mole_place_streak
         placed += 1
+        if p.has_mole:
+            current_no_mole_place_streak = 0
+        else:
+            current_no_mole_place_streak += 1
+            max_no_mole_place_streak = max(max_no_mole_place_streak, current_no_mole_place_streak)
         local_block_id = block_entity_id
         block_entity_id += 1
         for i, row in enumerate(p.shape):
@@ -333,6 +341,7 @@ def simulate(
             mr, mc = p.mole_pos
             moles.append(Mole(rr + mr, cc + mc, local_block_id, 1))
             spawned += 1
+            max_alive_moles = max(max_alive_moles, len(moles))
 
     def clear_and_capture():
         nonlocal clear_events, captured, rows_cleared, cols_cleared, cells_cleared
@@ -676,6 +685,7 @@ def simulate(
 
         clear_info = clear_and_capture()
         move_moles()
+        max_alive_moles = max(max_alive_moles, len(moles))
         actions += 1
         time_left -= action_seconds
         trace.append(
@@ -728,6 +738,8 @@ def simulate(
         "clearedCells": cells_cleared,
         "molesSpawned": spawned,
         "molesCaptured": captured,
+        "maxAliveMoles": max_alive_moles,
+        "maxNoMolePlaceStreak": max(max_no_mole_place_streak, current_no_mole_place_streak),
         "remainingTime": -1 if math.isinf(time_left) else max(0.0, time_left),
         "policy": policy_display_name(policy_mode),
         "policyKey": policy_mode,
@@ -802,7 +814,7 @@ def summarize(rows: List[dict]):
 def main():
     ap = argparse.ArgumentParser(description="Block+Mole simulator over ExportSeeds.")
     ap.add_argument("--seeds-dir", default="/Users/chase.wang/ugx_block_seed/Data/ExportSeeds", help="Directory containing *.jsonl seeds")
-    ap.add_argument("--runs", type=int, default=0, help="Number of simulated matches (0 = one per seed)")
+    ap.add_argument("--runs", type=int, default=100, help="Number of simulated matches (0 = one per seed)")
     ap.add_argument("--entry-fee", type=float, default=1.0)
     ap.add_argument("--goal-target", type=int, default=6, help="Required mole captures to count as clear")
     ap.add_argument("--max-moles", type=int, default=10, help="Mole capture cap for max reward")
@@ -823,11 +835,12 @@ def main():
     ap.add_argument("--action-seconds", type=float, default=1.0, help="Seconds consumed per placement")
     ap.add_argument("--max-actions", type=int, default=500)
     ap.add_argument("--rng-seed", type=int, default=20260302)
-    ap.add_argument("--max-seeds", type=int, default=0, help="Load first N seed files (0 = all)")
+    ap.add_argument("--max-seeds", type=int, default=10000, help="Load first N seed files (0 = all)")
     ap.add_argument("--out-csv", default="", help="Optional output CSV path")
     args = ap.parse_args()
     policy = normalize_policy(args.policy)
 
+    t0 = time.perf_counter()
     seeds_dir = Path(args.seeds_dir)
     seed_cases = load_seed_cases(seeds_dir, args.max_seeds)
     seed_cases = build_seed_pool(seed_cases, args.difficulty, args.prefer_unique_initial)
@@ -837,7 +850,6 @@ def main():
     rng = random.Random(args.rng_seed)
     rows = []
 
-    t0 = time.perf_counter()
     if args.runs and args.runs > 0:
         for sc in build_run_seed_list(seed_cases, args.runs, rng):
             rows.append(
