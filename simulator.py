@@ -13,8 +13,17 @@ from typing import Dict, List, Optional, Tuple
 
 GRID_SIZE = 8
 TIME_LIMIT = 180.0
-MOLE_REWARD_RATE = 0.2
+MOLE_REWARD_RATE = 0.1
 MOLE_SPAWN_RATE = 0.40
+USE_MOLE_GUARDRAILS = False
+MOLE_MODE_GUARDRAILS = "guardrails"
+MOLE_MODE_FLAT = "flat"
+MOLE_MODE_SEGMENT_V3 = "segment_35_30_20_5"
+MOLE_MODES = {MOLE_MODE_GUARDRAILS, MOLE_MODE_FLAT, MOLE_MODE_SEGMENT_V3}
+MOLE_DISTRIBUTION_FLAT = "flat"
+MOLE_DISTRIBUTION_SEGMENT_V3 = "segment_35_30_20_5"
+DEFAULT_MOLE_DISTRIBUTION = MOLE_DISTRIBUTION_SEGMENT_V3
+DEFAULT_MOLE_MODE = MOLE_MODE_SEGMENT_V3
 FORCE_SECOND_BLOCK = False
 FORCE_ONE_MOLE_IN_FIRST_THREE = True
 FIXED_RETURN_MULTIPLIER = 2.0
@@ -140,7 +149,9 @@ def policy_display_name(policy: str) -> str:
 def build_seed_pool(seed_cases: List[dict], difficulty: str = "D5", prefer_unique_initial: bool = True) -> List[dict]:
     diff = (difficulty or "ALL").strip().upper()
     if diff in ("ALL", "*"):
-        filtered = list(seed_cases)
+        filtered = [s for s in seed_cases if parse_difficulty(s.get("name", "")) != "Unknown"]
+        if not filtered:
+            filtered = list(seed_cases)
     elif diff in ("EASY", "DE"):
         filtered = [s for s in seed_cases if parse_difficulty(s.get("name", "")) == "Easy"]
     else:
@@ -163,9 +174,40 @@ def build_seed_pool(seed_cases: List[dict], difficulty: str = "D5", prefer_uniqu
     return unique + dup
 
 
-def build_run_seed_list(seed_cases: List[dict], runs: int, rng: random.Random) -> List[dict]:
+def build_run_seed_list(seed_cases: List[dict], runs: int, rng: random.Random, balance_all_difficulty: bool = False) -> List[dict]:
     if runs <= 0 or not seed_cases:
         return []
+    if balance_all_difficulty:
+        buckets: Dict[str, List[dict]] = {}
+        for sc in seed_cases:
+            d = parse_difficulty(sc.get("name", ""))
+            if d == "Unknown":
+                continue
+            buckets.setdefault(d, []).append(sc)
+        if not buckets:
+            buckets = {"ALL": list(seed_cases)}
+
+        state: Dict[str, List[dict]] = {}
+        for d, arr in buckets.items():
+            state[d] = list(arr)
+            rng.shuffle(state[d])
+
+        def refill(diff_key: str):
+            state[diff_key] = list(buckets[diff_key])
+            rng.shuffle(state[diff_key])
+
+        out = []
+        diff_keys = list(buckets.keys())
+        while len(out) < runs:
+            order = list(diff_keys)
+            rng.shuffle(order)
+            for d in order:
+                if len(out) >= runs:
+                    break
+                if not state[d]:
+                    refill(d)
+                out.append(state[d].pop())
+        return out
     # Minimize duplicates: sample without replacement per cycle, reshuffle next cycle.
     out = []
     n = len(seed_cases)
@@ -185,6 +227,14 @@ def deterministic_roll01(seq_index: int, salt: int = 0) -> float:
     return (x & 0xFFFFFFFF) / 4294967296.0
 
 
+def stable_name_hash(name: str) -> int:
+    x = 2166136261
+    for ch in name:
+        x ^= ord(ch)
+        x = (x * 16777619) & 0xFFFFFFFF
+    return x
+
+
 def get_mole_pattern_salt(multiplier: float) -> int:
     if multiplier == 2:
         return 0x2F6E2B1
@@ -201,6 +251,51 @@ def count_active_cells(shape: List[List[int]]) -> int:
 
 def is_mole_eligible(shape_id: str) -> bool:
     return shape_id in MOLE_WHITELIST and shape_id not in MOLE_BLACKLIST
+
+
+def get_mole_spawn_rate_for_index(seq_index: int, base_rate: float, mode: str) -> float:
+    m = (mode or "").strip().lower()
+    if m == MOLE_DISTRIBUTION_SEGMENT_V3:
+        if seq_index <= 2:
+            return 1.0
+        if seq_index <= 29:
+            return 0.30
+        if seq_index <= 59:
+            return 0.25
+        if seq_index <= 89:
+            return 0.20
+        return 0.05
+    return base_rate
+
+
+def resolve_mole_mode(mole_mode: str) -> Tuple[bool, str]:
+    m = (mole_mode or "").strip().lower()
+    if m not in MOLE_MODES:
+        m = DEFAULT_MOLE_MODE
+    if m == MOLE_MODE_GUARDRAILS:
+        return True, MOLE_DISTRIBUTION_FLAT
+    if m == MOLE_MODE_SEGMENT_V3:
+        return False, MOLE_DISTRIBUTION_SEGMENT_V3
+    return False, MOLE_DISTRIBUTION_FLAT
+
+
+def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guardrails: bool, mole_distribution: str) -> dict:
+    block_ids = seed_case.get("blockIds") or []
+    n = len(block_ids)
+    if n <= 0:
+        return {"has_mole": [], "pos_roll": []}
+    seed_hash = stable_name_hash(seed_case.get("name", ""))
+    salt = seed_hash ^ 0x9E3779B9
+    pos_salt = seed_hash ^ 0x85EBCA6B
+    has_mole = [False] * n
+    pos_roll = [0.0] * n
+    for i, sid in enumerate(block_ids):
+        rate_i = get_mole_spawn_rate_for_index(i, mole_spawn_rate, mole_distribution)
+        eligible = (not use_mole_guardrails) or is_mole_eligible(sid)
+        roll = deterministic_roll01(i, salt)
+        has_mole[i] = eligible and (roll < rate_i)
+        pos_roll[i] = deterministic_roll01(i, pos_salt)
+    return {"has_mole": has_mole, "pos_roll": pos_roll}
 
 
 def can_place(grid: List[List[int]], shape: List[List[int]], r: int, c: int) -> bool:
@@ -226,12 +321,13 @@ def simulate(
     entry_fee: float,
     action_seconds: float,
     max_actions: int,
-    goal_target: int = 6,
-    max_moles_cap: int = 10,
+    goal_target: int = 12,
+    max_moles_cap: int = 20,
     mole_spawn_rate: float = 0.30,
     policy: str = "legacy",
     collect_trace: bool = False,
     mole_reward_rate: float = MOLE_REWARD_RATE,
+    mole_mode: str = DEFAULT_MOLE_MODE,
 ) -> dict:
     grid = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
     holes = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
@@ -267,10 +363,15 @@ def simulate(
     max_moles_cap = max(1, int(max_moles_cap))
     mole_spawn_rate = min(1.0, max(0.0, float(mole_spawn_rate)))
     mole_reward_rate = max(0.0, float(mole_reward_rate))
+    use_mole_guardrails, mole_distribution = resolve_mole_mode(mole_mode)
+    mole_mode = MOLE_MODE_GUARDRAILS if use_mole_guardrails else (MOLE_MODE_SEGMENT_V3 if mole_distribution == MOLE_DISTRIBUTION_SEGMENT_V3 else MOLE_MODE_FLAT)
     mole_reward = entry_fee * mole_reward_rate
     max_reward = max_moles_cap * mole_reward
     salt = get_mole_pattern_salt(multiplier) ^ (1 * 131)
     pos_salt = (get_mole_pattern_salt(multiplier) >> 6) + 17
+    seed_mole_plan = build_seed_mole_plan(seed_case, mole_spawn_rate, use_mole_guardrails, mole_distribution)
+    seed_has_mole = seed_mole_plan["has_mole"]
+    seed_pos_roll = seed_mole_plan["pos_roll"]
 
     def next_piece_triplet() -> List[Piece]:
         nonlocal seq_cursor
@@ -280,15 +381,22 @@ def simulate(
             seq = seq_cursor
             sid = block_ids[idx]
             shape = SHAPE_BY_ID[sid]
-            pieces.append(Piece(shape_id=sid, shape=shape, seq_index=seq, has_mole=False, mole_pos=None))
+            if use_mole_guardrails:
+                has_mole = False
+            else:
+                has_mole = bool(seed_has_mole[idx]) if idx < len(seed_has_mole) else False
+            pieces.append(Piece(shape_id=sid, shape=shape, seq_index=seq, has_mole=has_mole, mole_pos=None))
             seq_cursor += 1
 
-        eligible_idx = [i for i, p in enumerate(pieces) if is_mole_eligible(p.shape_id)]
+        if use_mole_guardrails:
+            eligible_idx = [i for i, p in enumerate(pieces) if is_mole_eligible(p.shape_id)]
+        else:
+            eligible_idx = list(range(len(pieces)))
 
-        if FORCE_SECOND_BLOCK and len(pieces) > 1 and is_mole_eligible(pieces[1].shape_id):
+        if use_mole_guardrails and FORCE_SECOND_BLOCK and len(pieces) > 1 and is_mole_eligible(pieces[1].shape_id):
             pieces[1].has_mole = True
 
-        if FORCE_ONE_MOLE_IN_FIRST_THREE:
+        if use_mole_guardrails and FORCE_ONE_MOLE_IN_FIRST_THREE:
             has = any(p.seq_index < 3 and p.has_mole for p in pieces)
             if not has:
                 first_three = [i for i, p in enumerate(pieces) if p.seq_index < 3]
@@ -303,16 +411,22 @@ def simulate(
                     pick = min(first_three, key=lambda i: (count_active_cells(pieces[i].shape), i))
                     pieces[pick].has_mole = True
 
-        for i in eligible_idx:
-            if pieces[i].has_mole:
-                continue
-            if deterministic_roll01(pieces[i].seq_index, salt) < mole_spawn_rate:
-                pieces[i].has_mole = True
+        if use_mole_guardrails:
+            for i in eligible_idx:
+                if pieces[i].has_mole:
+                    continue
+                if deterministic_roll01(pieces[i].seq_index, salt) < mole_spawn_rate:
+                    pieces[i].has_mole = True
 
         for p in pieces:
+            seq_mod = p.seq_index % len(block_ids)
             valid = [(r, c) for r, row in enumerate(p.shape) for c, v in enumerate(row) if v]
-            if p.has_mole and (is_mole_eligible(p.shape_id) or p.seq_index < 3):
-                j = (p.seq_index + pos_salt) % len(valid)
+            if p.has_mole and (not use_mole_guardrails or is_mole_eligible(p.shape_id) or p.seq_index < 3):
+                if use_mole_guardrails:
+                    j = (p.seq_index + pos_salt) % len(valid)
+                else:
+                    roll = seed_pos_roll[seq_mod] if seq_mod < len(seed_pos_roll) else 0.0
+                    j = min(len(valid) - 1, int(roll * len(valid)))
                 p.mole_pos = valid[j]
             else:
                 p.has_mole = False
@@ -748,8 +862,11 @@ def simulate(
         "goalTarget": goal_target,
         "maxMolesCap": max_moles_cap,
         "moleSpawnRate": mole_spawn_rate,
+        "moleMode": mole_mode,
+        "moleDistribution": mole_distribution,
         "moleRewardRate": mole_reward_rate,
         "rewardPerMoleDollar": mole_reward,
+        "moleGuardrails": use_mole_guardrails,
         "maxReward": max_reward,
     }
     if collect_trace:
@@ -817,12 +934,13 @@ def summarize(rows: List[dict]):
 
 def main():
     ap = argparse.ArgumentParser(description="Block+Mole simulator over ExportSeeds.")
-    ap.add_argument("--seeds-dir", default="/Users/chase.wang/ugx_block_seed/Data/ExportSeeds", help="Directory containing *.jsonl seeds")
+    ap.add_argument("--seeds-dir", default="/Users/chase.wang/Documents/New project 13/ExportSeeds", help="Directory containing *.jsonl seeds")
     ap.add_argument("--runs", type=int, default=100, help="Number of simulated matches (0 = one per seed)")
     ap.add_argument("--entry-fee", type=float, default=1.0)
-    ap.add_argument("--goal-target", type=int, default=6, help="Required mole captures to count as clear")
-    ap.add_argument("--max-moles", type=int, default=10, help="Mole capture cap for max reward")
+    ap.add_argument("--goal-target", type=int, default=12, help="Required mole captures to count as clear")
+    ap.add_argument("--max-moles", type=int, default=20, help="Mole capture cap for max reward")
     ap.add_argument("--mole-rate", type=float, default=0.40, help="Mole coverage rate [0,1]")
+    ap.add_argument("--mole-mode", default=DEFAULT_MOLE_MODE, choices=sorted(MOLE_MODES), help="Mole generation mode")
     ap.add_argument("--mole-reward-rate", type=float, default=MOLE_REWARD_RATE, help="Single-mole reward coefficient vs entry fee")
     ap.add_argument("--difficulty", default="D5", help="Difficulty filter, e.g. D5/Easy/R14/ALL")
     ap.add_argument(
@@ -841,6 +959,13 @@ def main():
     ap.add_argument("--max-actions", type=int, default=150)
     ap.add_argument("--rng-seed", type=int, default=20260302)
     ap.add_argument("--max-seeds", type=int, default=10000, help="Load first N seed files (0 = all)")
+    ap.add_argument(
+        "--all-balanced",
+        dest="all_balanced",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="When difficulty=ALL, sample seeds with balanced difficulty buckets",
+    )
     ap.add_argument("--out-csv", default="", help="Optional output CSV path")
     args = ap.parse_args()
     policy = normalize_policy(args.policy)
@@ -856,7 +981,8 @@ def main():
     rows = []
 
     if args.runs and args.runs > 0:
-        for sc in build_run_seed_list(seed_cases, args.runs, rng):
+        balance_all = args.all_balanced and (str(args.difficulty).strip().upper() == "ALL")
+        for sc in build_run_seed_list(seed_cases, args.runs, rng, balance_all):
             rows.append(
                 simulate(
                     sc,
@@ -870,6 +996,7 @@ def main():
                     policy,
                     False,
                     args.mole_reward_rate,
+                    args.mole_mode,
                 )
             )
     else:
@@ -887,6 +1014,7 @@ def main():
                     policy,
                     False,
                     args.mole_reward_rate,
+                    args.mole_mode,
                 )
             )
 

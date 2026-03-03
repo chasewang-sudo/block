@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 import argparse
 import html
+import json
+import mimetypes
 import random
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlparse
 
 from simulator import (
     DEFAULT_POLICY,
+    DEFAULT_MOLE_MODE,
+    MOLE_MODE_FLAT,
+    MOLE_MODE_GUARDRAILS,
+    MOLE_MODE_SEGMENT_V3,
+    MOLE_MODES,
     MOLE_REWARD_RATE,
     build_run_seed_list,
     build_seed_pool,
     load_seed_cases,
+    parse_difficulty,
     normalize_policy,
     policy_display_name,
     simulate,
@@ -21,6 +29,31 @@ from simulator import (
 
 LAST_CSV = b""
 LAST_CSV_NAME = "sim_results.csv"
+
+
+def build_seed_file_index(seeds_dir: Path):
+    files_by_diff = {}
+    all_files = []
+    for p in seeds_dir.glob("*.jsonl"):
+        diff = parse_difficulty(p.stem).upper()
+        files_by_diff.setdefault(diff, []).append(p)
+        all_files.append(p)
+    return {"all": all_files, "by_diff": files_by_diff}
+
+
+def read_seed_case_from_file(path: Path):
+    with path.open("r", encoding="utf-8") as f:
+        line = f.readline().strip()
+        if not line:
+            return None
+        d = json.loads(line)
+    return {
+        "file": path.name,
+        "name": d.get("case_hash", path.stem),
+        "initialGrid": d.get("initial_grid", [0] * 8),
+        "blockIds": [x.get("block_id") for x in d.get("block_sequence", []) if x.get("block_id")],
+        "difficulty": parse_difficulty(path.stem).upper(),
+    }
 
 FIELD_LABELS_ZH = {
     "seed": "种子名",
@@ -32,9 +65,12 @@ FIELD_LABELS_ZH = {
     "goalTarget": "过关目标(地鼠数)",
     "maxMolesCap": "最大奖励上限(地鼠数)",
     "moleSpawnRate": "鼹鼠覆盖率(0~1)",
+    "moleMode": "覆盖率模式",
+    "moleDistribution": "覆盖率分布模式",
     "moleCoverage": "鼹鼠覆盖率(0~1)",
     "moleRewardRate": "单鼠奖励系数",
     "rewardPerMoleDollar": "单鼠奖励金额($)",
+    "moleGuardrails": "鼹鼠生成干预开关",
     "maxReward": "最大奖励金额($)",
     "maxRewardDollar": "最大奖励金额($)",
     "totalBlocksInSeed": "种子总块数",
@@ -70,8 +106,11 @@ PREFERRED_FIELD_ORDER = [
     "maxMolesCap",
     "moleCoverage",
     "moleSpawnRate",
+    "moleMode",
+    "moleDistribution",
     "moleRewardRate",
     "rewardPerMoleDollar",
+    "moleGuardrails",
     "maxRewardDollar",
     "maxReward",
     "totalBlocksInSeed",
@@ -155,9 +194,27 @@ def render_page(defaults, summary=None, rows=None, error=""):
     rows = rows or []
     diff_val = str(defaults.get("difficulty", "D5")).upper()
     policy_val = normalize_policy(str(defaults.get("policy", DEFAULT_POLICY)))
-    diff_options = ["D5", "Easy", "D0", "D1", "D2", "D3", "D4", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "R13", "R14", "ALL"]
+    diff_options = [
+        ("D5", "D5"),
+        ("Easy", "Easy"),
+        ("D0", "D0"),
+        ("D1", "D1"),
+        ("D2", "D2"),
+        ("D3", "D3"),
+        ("D4", "D4"),
+        ("D6", "D6"),
+        ("D7", "D7"),
+        ("D8", "D8"),
+        ("D9", "D9"),
+        ("D10", "D10"),
+        ("D11", "D11"),
+        ("D12", "D12"),
+        ("R13", "R13"),
+        ("R14", "R14"),
+        ("ALL", "全难度(ALL)"),
+    ]
     diff_select = "".join(
-        f'<option value="{d}" {"selected" if diff_val == d.upper() else ""}>{d}</option>' for d in diff_options
+        f'<option value="{val}" {"selected" if diff_val == val.upper() else ""}>{label}</option>' for val, label in diff_options
     )
     policy_options = [
         ("capture_greedy", policy_display_name("capture_greedy")),
@@ -167,6 +224,15 @@ def render_page(defaults, summary=None, rows=None, error=""):
     ]
     policy_select = "".join(
         f'<option value="{v}" {"selected" if policy_val == v else ""}>{label}</option>' for v, label in policy_options
+    )
+    mole_mode_options = [
+        (MOLE_MODE_GUARDRAILS, "干预"),
+        (MOLE_MODE_FLAT, "不干预"),
+        (MOLE_MODE_SEGMENT_V3, "segment_35_30_20_5"),
+    ]
+    mole_mode_val = str(defaults.get("mole_mode", DEFAULT_MOLE_MODE))
+    mole_mode_select = "".join(
+        f'<option value="{v}" {"selected" if mole_mode_val == v else ""}>{label}</option>' for v, label in mole_mode_options
     )
     summary_html = ""
     if summary:
@@ -246,7 +312,8 @@ def render_page(defaults, summary=None, rows=None, error=""):
           <div><label>entry_fee</label><input name="entry_fee" value="{defaults['entry_fee']}" /></div>
           <div><label>goal_target</label><input name="goal_target" value="{defaults['goal_target']}" /></div>
           <div><label>max_moles (最大奖励对应地鼠数)</label><input name="max_moles" value="{defaults['max_moles']}" /></div>
-          <div><label>mole_rate (0~1)</label><input name="mole_rate" value="{defaults['mole_rate']}" /></div>
+          <div id="mole-rate-field"><label>mole_rate (0~1)</label><input id="mole-rate-input" name="mole_rate" value="{defaults['mole_rate']}" /></div>
+          <div><label>mole_mode</label><select id="mole-mode-select" name="mole_mode">{mole_mode_select}</select></div>
           <div><label>mole_reward_rate (单鼠奖励系数)</label><input name="mole_reward_rate" value="{defaults['mole_reward_rate']}" /></div>
           <div><label>difficulty</label><select name="difficulty">{diff_select}</select></div>
           <div><label>策略版本</label><select name="policy">{policy_select}</select></div>
@@ -259,6 +326,10 @@ def render_page(defaults, summary=None, rows=None, error=""):
             <input type="checkbox" name="prefer_unique" value="1" {"checked" if defaults.get("prefer_unique") else ""} />
             优先不同初始牌面（不强制）
           </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#222;margin-top:6px;">
+            <input type="checkbox" name="all_balanced" value="1" {"checked" if defaults.get("all_balanced", True) else ""} />
+            ALL难度时按难度均衡采样
+          </label>
         </div>
         <div class="actions">
           <button class="btn" type="submit" name="mode" value="batch">运行模拟</button>
@@ -269,11 +340,29 @@ def render_page(defaults, summary=None, rows=None, error=""):
     {table_html}
   </div>
 </body>
+<script>
+(() => {{
+  const modeEl = document.getElementById('mole-mode-select');
+  const rateField = document.getElementById('mole-rate-field');
+  const rateInput = document.getElementById('mole-rate-input');
+  const sync = () => {{
+    if (!modeEl || !rateField || !rateInput) return;
+    const isSegment = modeEl.value === 'segment_35_30_20_5';
+    rateField.style.display = isSegment ? 'none' : '';
+    rateInput.disabled = isSegment;
+  }};
+  if (modeEl) modeEl.addEventListener('change', sync);
+  sync();
+}})();
+</script>
 </html>"""
 
 
 class Handler(BaseHTTPRequestHandler):
     defaults = {}
+    seed_index = None
+    seed_index_dir = None
+    workspace_dir = Path(__file__).resolve().parent
 
     def send_html(self, body: str, status=200):
         data = body.encode("utf-8")
@@ -283,9 +372,30 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def send_json(self, payload, status=200):
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    @classmethod
+    def get_seed_index(cls):
+        seeds_dir = Path(cls.defaults.get("seeds_dir", cls.workspace_dir / "ExportSeeds"))
+        if seeds_dir.name != "ExportSeeds" and (seeds_dir / "ExportSeeds").is_dir():
+            seeds_dir = seeds_dir / "ExportSeeds"
+        if cls.seed_index is None or cls.seed_index_dir != seeds_dir:
+            cls.seed_index = build_seed_file_index(seeds_dir)
+            cls.seed_index_dir = seeds_dir
+        return cls.seed_index
+
     def do_GET(self):
         global LAST_CSV, LAST_CSV_NAME
-        if self.path == "/download":
+        parsed = urlparse(self.path)
+        path = parsed.path
+
+        if path == "/download":
             if not LAST_CSV:
                 self.send_response(404)
                 self.end_headers()
@@ -297,6 +407,61 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(LAST_CSV)
             return
+        if path == "/api/seed/random":
+            q = parse_qs(parsed.query or "")
+            difficulty = (q.get("difficulty", ["D5"])[0] or "D5").strip().upper()
+            try:
+                idx = self.get_seed_index()
+                if difficulty == "ALL":
+                    diffs = [d for d, arr in idx["by_diff"].items() if d != "UNKNOWN" and arr]
+                    if diffs:
+                        pick_diff = random.choice(diffs)
+                        files = idx["by_diff"].get(pick_diff, [])
+                    else:
+                        files = idx["all"]
+                else:
+                    files = idx["by_diff"].get(difficulty, [])
+                if not files:
+                    files = idx["all"]
+                if not files:
+                    self.send_json({"error": "no seed files"}, status=404)
+                    return
+                pick = random.choice(files)
+                case = read_seed_case_from_file(pick)
+                if not case:
+                    self.send_json({"error": "empty seed file"}, status=404)
+                    return
+                self.send_json(case)
+                return
+            except Exception as e:
+                self.send_json({"error": str(e)}, status=500)
+                return
+        if path in ("/game", "/index.html"):
+            game_file = self.workspace_dir / "index.html"
+            if not game_file.exists():
+                self.send_response(404)
+                self.end_headers()
+                return
+            data = game_file.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
+        if path.startswith("/"):
+            rel = path.lstrip("/")
+            if rel:
+                target = (self.workspace_dir / rel).resolve()
+                if str(target).startswith(str(self.workspace_dir)) and target.is_file():
+                    mime, _ = mimetypes.guess_type(str(target))
+                    data = target.read_bytes()
+                    self.send_response(200)
+                    self.send_header("Content-Type", mime or "application/octet-stream")
+                    self.send_header("Content-Length", str(len(data)))
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
         self.send_html(render_page(self.defaults))
 
     def do_POST(self):
@@ -317,6 +482,7 @@ class Handler(BaseHTTPRequestHandler):
             "goal_target": to_int(form.get("goal_target", str(self.defaults["goal_target"])), self.defaults["goal_target"]),
             "max_moles": to_int(form.get("max_moles", str(self.defaults["max_moles"])), self.defaults["max_moles"]),
             "mole_rate": to_float(form.get("mole_rate", str(self.defaults["mole_rate"])), self.defaults["mole_rate"]),
+            "mole_mode": ((form.get("mole_mode", self.defaults["mole_mode"]) or DEFAULT_MOLE_MODE).strip()),
             "mole_reward_rate": to_float(form.get("mole_reward_rate", str(self.defaults["mole_reward_rate"])), self.defaults["mole_reward_rate"]),
             "difficulty": (form.get("difficulty", self.defaults["difficulty"]) or "D5").strip(),
             "policy": normalize_policy((form.get("policy", self.defaults["policy"]) or DEFAULT_POLICY).strip().lower()),
@@ -324,7 +490,10 @@ class Handler(BaseHTTPRequestHandler):
             "max_actions": to_int(form.get("max_actions", str(self.defaults["max_actions"])), self.defaults["max_actions"]),
             "rng_seed": to_int(form.get("rng_seed", str(self.defaults["rng_seed"])), self.defaults["rng_seed"]),
             "prefer_unique": form.get("prefer_unique", "0") == "1",
+            "all_balanced": form.get("all_balanced", "0") == "1",
         }
+        if defaults["mole_mode"] not in MOLE_MODES:
+            defaults["mole_mode"] = DEFAULT_MOLE_MODE
         self.defaults = defaults
 
         try:
@@ -339,7 +508,8 @@ class Handler(BaseHTTPRequestHandler):
             rows = []
             runs = defaults["runs"]
             if runs > 0:
-                for sc in build_run_seed_list(seed_cases, runs, rng):
+                balance_all = defaults["all_balanced"] and str(defaults["difficulty"]).strip().upper() == "ALL"
+                for sc in build_run_seed_list(seed_cases, runs, rng, balance_all):
                     rows.append(
                         simulate(
                             sc,
@@ -353,6 +523,7 @@ class Handler(BaseHTTPRequestHandler):
                             defaults["policy"],
                             False,
                             defaults["mole_reward_rate"],
+                            defaults["mole_mode"],
                         )
                     )
             else:
@@ -370,6 +541,7 @@ class Handler(BaseHTTPRequestHandler):
                             defaults["policy"],
                             False,
                             defaults["mole_reward_rate"],
+                            defaults["mole_mode"],
                         )
                     )
 
@@ -385,13 +557,14 @@ def main():
     ap = argparse.ArgumentParser(description="Simple local web UI for simulator.py")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8899)
-    ap.add_argument("--seeds-dir", default="/Users/chase.wang/ugx_block_seed/Data/ExportSeeds")
+    ap.add_argument("--seeds-dir", default="/Users/chase.wang/Documents/New project 13/ExportSeeds")
     ap.add_argument("--runs", type=int, default=100)
     ap.add_argument("--max-seeds", type=int, default=10000)
     ap.add_argument("--entry-fee", type=float, default=1.0)
-    ap.add_argument("--goal-target", type=int, default=6)
-    ap.add_argument("--max-moles", type=int, default=10)
+    ap.add_argument("--goal-target", type=int, default=12)
+    ap.add_argument("--max-moles", type=int, default=20)
     ap.add_argument("--mole-rate", type=float, default=0.40)
+    ap.add_argument("--mole-mode", default=DEFAULT_MOLE_MODE, choices=sorted(MOLE_MODES))
     ap.add_argument("--mole-reward-rate", type=float, default=MOLE_REWARD_RATE)
     ap.add_argument("--difficulty", default="D5")
     ap.add_argument("--policy", default=DEFAULT_POLICY)
@@ -404,6 +577,12 @@ def main():
     ap.add_argument("--action-seconds", type=float, default=2.0)
     ap.add_argument("--max-actions", type=int, default=150)
     ap.add_argument("--rng-seed", type=int, default=20260302)
+    ap.add_argument(
+        "--all-balanced",
+        dest="all_balanced",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
     args = ap.parse_args()
 
     Handler.defaults = {
@@ -414,6 +593,7 @@ def main():
         "goal_target": args.goal_target,
         "max_moles": args.max_moles,
         "mole_rate": args.mole_rate,
+        "mole_mode": args.mole_mode,
         "mole_reward_rate": args.mole_reward_rate,
         "difficulty": args.difficulty,
         "policy": normalize_policy(args.policy),
@@ -421,6 +601,7 @@ def main():
         "max_actions": args.max_actions,
         "rng_seed": args.rng_seed,
         "prefer_unique": args.prefer_unique,
+        "all_balanced": args.all_balanced,
     }
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"Simulator UI: http://{args.host}:{args.port}")
