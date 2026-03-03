@@ -306,6 +306,19 @@
             background: rgba(255, 214, 74, 0.25);
         }
 
+        .cell.line-preview::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 214, 74, 0.35);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .cell.has-hole.line-preview::before {
+            filter: saturate(1.2) brightness(1.12);
+        }
+
         .board-shake {
             animation: board-shake 0.22s ease;
         }
