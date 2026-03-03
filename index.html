@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>方块打地鼠：进阶版</title>
     <style>
         :root {
@@ -227,7 +227,7 @@
             width: 100%;
             max-width: 360px;
             aspect-ratio: 1;
-            background: linear-gradient(180deg, #dfc18d, #cda667);
+            background: #5C3222;
             padding: 5px;
             border-radius: 18px;
             box-shadow: var(--shadow);
@@ -253,9 +253,9 @@
         }
 
         .cell {
-            background: #f6e9cd;
+            background: #5C3222;
             border-radius: 8px;
-            border: 2px dashed rgba(132, 96, 52, 0.55);
+            border: 2px solid #432317;
             transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
             position: relative;
             overflow: hidden;
@@ -1405,6 +1405,16 @@
 </div>
 
 <script>
+    // Mobile: disable double-tap / pinch zoom to avoid stuck zoomed UI
+    document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+    document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+    let __lastTouchEndTs = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - __lastTouchEndTs <= 300) e.preventDefault();
+        __lastTouchEndTs = now;
+    }, { passive: false });
+
     const GRID_SIZE = 8;
     const TOUCH_LIFT_PX = 200;
     const gridEl = document.getElementById('game-grid');
