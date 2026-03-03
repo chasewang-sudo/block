@@ -1334,7 +1334,7 @@
             <div class="debug-config-item">
                 <label for="debug-difficulty-select">难度</label>
                 <select id="debug-difficulty-select">
-                    <option value="D5" selected>D5</option>
+                    <option value="D5">D5</option>
                     <option value="Easy">Easy</option>
                     <option value="D0">D0</option>
                     <option value="D1">D1</option>
@@ -1350,7 +1350,7 @@
                     <option value="D12">D12</option>
                     <option value="R13">R13</option>
                     <option value="R14">R14</option>
-                    <option id="debug-difficulty-all-option" value="ALL">全难度</option>
+                    <option id="debug-difficulty-all-option" value="ALL" selected>全难度</option>
                 </select>
             </div>
             <div class="debug-config-item">
@@ -1490,7 +1490,7 @@
     let levelNumber = 48;
     let gameAssetsReady = false;
     let gameAssetsLoadingPromise = null;
-    let selectedDifficultyFilter = 'D5';
+    let selectedDifficultyFilter = 'ALL';
     let accountBalance = 10;
     let entryFee = 1;
     let goalTargetCurrent = 12;
