@@ -58,11 +58,11 @@
         .device-shell {
             width: min(var(--device-w), 94vw);
             height: min(var(--device-h), 94vh);
-            background: url('grassbackground.jpg') center / 100% 100% no-repeat;
+            background: url('pic/grassbackground.jpg') center / cover no-repeat;
             border-radius: 34px;
             border: 4px solid rgba(110, 76, 28, 0.2);
             box-shadow: 0 24px 60px rgba(52, 34, 12, 0.35);
-            padding: 16px 14px 20px;
+            padding: 12px 14px 18px;
             position: relative;
             overflow: hidden;
         }
@@ -71,6 +71,9 @@
             content: "";
             position: absolute;
             inset: 0;
+            background:
+                radial-gradient(120% 50% at 50% -10%, rgba(255,255,255,0.24), transparent 60%),
+                radial-gradient(80% 60% at 50% 110%, rgba(0,0,0,0.12), transparent 70%);
             pointer-events: none;
         }
 
@@ -90,7 +93,7 @@
             flex-direction: column;
             align-items: center;
             gap: 6px;
-            padding: 8px 10px 12px;
+            padding: 4px 10px 10px;
         }
 
         header {
@@ -98,57 +101,124 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 4px 4px 0;
+            padding: 6px 8px;
             box-sizing: border-box;
+            background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.28));
+            border: 1px solid rgba(255,255,255,0.45);
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(46, 31, 13, 0.16);
         }
 
         .top-time {
-            font-size: 1.1rem;
+            font-size: 1.86rem;
             font-weight: 800;
             letter-spacing: 0.02em;
-            color: #2b2919;
+            color: #fff;
+            text-shadow: -2px -2px 0 #0f6e2e, 2px -2px 0 #0f6e2e, -2px 2px 0 #0f6e2e, 2px 2px 0 #0f6e2e, 0 4px 10px rgba(0,0,0,0.35);
+            min-width: 108px;
         }
 
         .top-settings {
-            font-size: 22px;
-            color: #6b5a2c;
+            font-size: 30px;
+            color: #17763a;
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #fff, #eaf7ea);
+            border: 3px solid #17853c;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
         }
 
         .goal-panel {
             width: 100%;
             background: transparent;
             border-radius: 10px;
-            padding: 4px 6px 6px;
+            padding: 4px 2px 6px;
             margin-top: 2px;
         }
 
         .goal-cards {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 10px;
+            transition: all 0.2s ease;
         }
 
         .goal-card {
-            background: rgba(255, 255, 255, 0.42);
-            border: 1px solid rgba(120, 80, 30, 0.22);
-            border-radius: 8px;
-            padding: 6px 8px;
+            background: center / 100% 100% no-repeat;
+            min-height: 76px;
+            border-radius: 12px;
+            padding: 8px 10px 6px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .goal-card.goal {
+            background-image: url('pic/goal.png');
+        }
+
+        .goal-card.earned {
+            background-image: url('pic/youearned.png');
+        }
+
+        .goal-cards.goal-passed {
+            grid-template-columns: 1fr;
+        }
+
+        .goal-cards.goal-passed .goal-card.goal {
+            display: none;
+        }
+
+        .goal-cards.goal-passed .goal-card.earned {
+            background-image: url('pic/keep earning.png');
+            min-height: 84px;
         }
 
         .goal-card-label {
-            color: #11853a;
-            font-size: 0.78rem;
-            font-weight: 900;
-            line-height: 1.1;
-            margin-bottom: 4px;
+            display: none;
         }
 
         .goal-card-value {
-            color: #11853a;
-            font-size: 1rem;
+            color: #fff;
+            font-size: 1.38rem;
             font-weight: 900;
-            line-height: 1.1;
+            line-height: 1;
+            -webkit-text-stroke: 0;
+            text-shadow:
+                0 2px 0 rgba(110, 58, 31, 0.9),
+                0 4px 8px rgba(0,0,0,0.24);
+            width: 100%;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .goal-card.goal .goal-card-value {
+            padding-left: 5ch;
+            transform: translateX(-2px);
+        }
+
+        .goal-card.earned .goal-card-value {
+            font-size: 1.34rem;
+        }
+
+        .goal-card.earned .earned-current {
+            color: #37d463;
+            -webkit-text-stroke: 0;
+            text-shadow: none;
+        }
+
+        .goal-card.earned .earned-sep,
+        .goal-card.earned .earned-max {
+            color: #fff;
+            -webkit-text-stroke: 0;
+            text-shadow: none;
         }
 
         /* 游戏主容器 */
@@ -161,7 +231,7 @@
             padding: 5px;
             border-radius: 18px;
             box-shadow: var(--shadow);
-            border: 2px solid rgba(120, 80, 30, 0.2);
+            border: 2px solid rgba(120, 80, 30, 0.28);
         }
 
         #game-grid {
@@ -192,10 +262,7 @@
         }
 
         .cell.filled {
-            background:
-                linear-gradient(90deg, #6cc24a 50%, #63b142 50%),
-                linear-gradient(0deg, #7bd157 50%, #6cc24a 50%);
-            background-size: 6px 6px, 6px 6px;
+            background: url('pic/block.png') center / cover no-repeat;
             box-shadow:
                 0 0 0 2px rgba(255,255,255,0.25) inset,
                 0 6px 12px rgba(40, 90, 30, 0.35);
@@ -210,7 +277,7 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: var(--hole-img, url('hole1.png')) center / cover no-repeat;
+            background: var(--hole-img, url('pic/hole.png?v=2')) center / cover no-repeat;
             z-index: 1;
         }
 
@@ -289,8 +356,8 @@
         }
 
         .mole-entity .mole-sprite {
-            width: calc(88% + 20px);
-            height: calc(88% + 20px);
+            width: calc(74% + 8px);
+            height: calc(74% + 8px);
             object-fit: contain;
             filter: drop-shadow(0 6px 8px rgba(120,70,20,0.35));
             animation: mole-bob 1.6s ease-in-out infinite;
@@ -305,10 +372,10 @@
 
         .hammer {
             position: absolute;
-            width: 100px;
-            height: 100px;
+            width: 82px;
+            height: 82px;
             z-index: 200;
-            background: url('hammer.png') center / contain no-repeat;
+            background: url('pic/hammer.png?v=2') center / contain no-repeat;
         }
 
         #pieces-container {
@@ -318,8 +385,11 @@
             width: 100%;
             gap: 10px;
             height: 110px;
-            padding: 8px 2px 6px;
+            padding: 9px 4px 8px;
             border-radius: 14px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.1));
+            border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(1px);
         }
 
         .piece-slot {
@@ -328,10 +398,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 224, 140, 0.65);
-            border: 1px solid rgba(120, 80, 30, 0.18);
+            background: linear-gradient(180deg, rgba(246, 236, 201, 0.9), rgba(231, 213, 166, 0.88));
+            border: 1px solid rgba(120, 80, 30, 0.26);
             border-radius: 14px;
-            box-shadow: 0 8px 18px rgba(120, 80, 30, 0.18);
+            box-shadow: 0 8px 18px rgba(120, 80, 30, 0.2), inset 0 2px 0 rgba(255,255,255,0.55);
         }
 
         .piece {
@@ -358,10 +428,7 @@
         .p-cell {
             width: 22px;
             height: 22px;
-            background:
-                linear-gradient(90deg, #74cd55 50%, #66bb4a 50%),
-                linear-gradient(0deg, #83da5f 50%, #74cd55 50%);
-            background-size: 6px 6px, 6px 6px;
+            background: url('pic/block.png') center / cover no-repeat;
             border-radius: 5px;
             box-shadow:
                 0 0 0 2px rgba(255,255,255,0.18) inset,
@@ -374,13 +441,9 @@
         .p-cell.has-range::before {
             content: '';
             position: absolute;
-            width: 70%;
-            height: 40%;
-            left: 15%;
-            bottom: 6%;
-            background: radial-gradient(ellipse at center, #5a3a16 0%, #3f2710 60%, #2a1908 100%);
-            border-radius: 50% 50% 45% 45%;
-            box-shadow: 0 2px 2px rgba(0,0,0,0.45) inset;
+            inset: 0;
+            background: url('pic/hole.png?v=2') center / cover no-repeat;
+            border-radius: 5px;
         }
 
         .p-cell.has-mole::after {
@@ -391,7 +454,7 @@
             left: 50%;
             top: 4%;
             transform: translateX(-50%);
-            background: url('mole.png') center / contain no-repeat;
+            background: url('pic/mole.png?v=2') center / contain no-repeat;
         }
 
 
@@ -568,16 +631,18 @@
 
         .toast {
             position: absolute;
-            top: 56px;
+            top: 62px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(120, 80, 30, 0.2);
-            border-radius: 14px;
-            padding: 6px 12px;
+            background: linear-gradient(180deg, rgba(126,76,44,0.95), rgba(91,54,31,0.95));
+            border: 2px solid #e6bd7a;
+            border-radius: 16px;
+            padding: 10px 16px;
             font-weight: 800;
-            color: #000;
-            box-shadow: 0 8px 18px rgba(120, 80, 30, 0.2);
+            color: #fff5d8;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.28);
+            min-width: 170px;
+            text-align: center;
             opacity: 0;
             transition: opacity 0.2s ease, transform 0.2s ease;
             pointer-events: none;
@@ -586,6 +651,63 @@
         .toast.show {
             opacity: 1;
             transform: translateX(-50%) translateY(2px);
+        }
+
+        .toast.win {
+            background: linear-gradient(180deg, rgba(28,132,66,0.96), rgba(21,94,49,0.96));
+            border-color: #a9f0b2;
+            color: #f2ffed;
+        }
+
+        .toast.fail {
+            background: linear-gradient(180deg, rgba(166,58,58,0.96), rgba(120,42,42,0.96));
+            border-color: #ffbbbb;
+            color: #fff1f1;
+        }
+
+        .toast.combo {
+            font-size: 1.42rem;
+            padding: 12px 20px;
+            min-width: 220px;
+            background: linear-gradient(180deg, rgba(255,191,77,0.98), rgba(229,132,35,0.98));
+            border-color: #ffe39f;
+            color: #fff;
+            -webkit-text-stroke: 1.4px #7b3d12;
+            text-shadow: 0 2px 0 rgba(123,61,18,0.85), 0 6px 12px rgba(0,0,0,0.28);
+        }
+
+        .result-toast {
+            position: absolute;
+            inset: 0;
+            z-index: 980;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 40%, rgba(116, 30, 149, 0.26), rgba(20, 10, 30, 0.66));
+            backdrop-filter: blur(2px);
+        }
+
+        .result-toast.show {
+            display: flex;
+            animation: result-fade 0.25s ease;
+        }
+
+        .result-toast img {
+            width: min(74vw, 340px);
+            max-width: 88%;
+            filter: drop-shadow(0 12px 24px rgba(0,0,0,0.4));
+            animation: result-pop 0.28s cubic-bezier(0.18, 0.78, 0.2, 1.25);
+        }
+
+        @keyframes result-pop {
+            from { transform: scale(0.88); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes result-fade {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         #level-gate {
@@ -887,7 +1009,7 @@
             margin-top: 58px;
             border-radius: 12px;
             border: 1px dashed rgba(0, 0, 0, 0.26);
-            background: rgba(255, 255, 255, 0.34);
+            background: rgba(255, 255, 255, 0.42);
             padding: 6px 8px;
             color: #202020;
         }
@@ -905,8 +1027,8 @@
         }
 
         .top-balance {
-            background: rgba(255, 255, 255, 0.66);
-            border: 1px solid rgba(0, 0, 0, 0.15);
+            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(242,250,242,0.82));
+            border: 1px solid rgba(18, 103, 51, 0.25);
             border-radius: 999px;
             height: 28px;
             min-width: 88px;
@@ -929,14 +1051,18 @@
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            border: 1px solid rgba(0, 0, 0, 0.18);
-            background: linear-gradient(180deg, #fff, #ddd);
-            color: #1f1f1f;
+            border: 1px solid rgba(18, 103, 51, 0.35);
+            background: linear-gradient(180deg, #ffffff, #e4f4e7);
+            color: #0f6f34;
             font-weight: 900;
             font-size: 1.1rem;
             padding: 0;
             line-height: 1;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(1px);
         }
 
         .hidden { display: none !important; }
@@ -1043,7 +1169,13 @@
 </head>
 <body>
 <div class="device-shell">
-    <img class="preload" src="hammer.png" alt="">
+    <img class="preload" src="pic/hammer.png?v=2" alt="">
+    <img class="preload" src="pic/goal.png" alt="">
+    <img class="preload" src="pic/youearned.png" alt="">
+    <img class="preload" src="pic/keep earning.png" alt="">
+    <img class="preload" src="pic/complete.png" alt="">
+    <img class="preload" src="pic/time.png" alt="">
+    <img class="preload" src="pic/move.png" alt="">
     <div class="app">
         <div id="level-gate">
             <div class="level-card">
@@ -1082,16 +1214,20 @@
         </header>
 
         <div class="goal-panel">
-            <div class="goal-cards">
-                <div class="goal-card">
+            <div id="goal-cards" class="goal-cards">
+                <div class="goal-card goal">
                     <div class="goal-card-label">Goal</div>
                     <div id="goal-status" class="goal-card-value">0/6</div>
                 </div>
-                <div class="goal-card">
+                <div class="goal-card earned">
                     <div class="goal-card-label">You Earned</div>
                     <div id="earned-status" class="goal-card-value">$0.00/$4.50</div>
                 </div>
             </div>
+        </div>
+
+        <div id="result-toast" class="result-toast hidden">
+            <img id="result-toast-img" src="" alt="result">
         </div>
 
         <div id="board-wrapper">
@@ -1203,7 +1339,10 @@
     const balancePlusBtn = document.getElementById('balance-plus-btn');
     const goalStatusEl = document.getElementById('goal-status');
     const earnedStatusEl = document.getElementById('earned-status');
+    const goalCardsEl = document.getElementById('goal-cards');
     const toastEl = document.getElementById('toast');
+    const resultToastEl = document.getElementById('result-toast');
+    const resultToastImgEl = document.getElementById('result-toast-img');
     const levelGateEl = document.getElementById('level-gate');
     const levelTitleEl = document.getElementById('level-title');
     const gateGoalMolesEl = document.getElementById('gate-goal-moles');
@@ -1873,7 +2012,7 @@
         el.className = 'mole-entity';
         const sprite = document.createElement('img');
         sprite.className = 'mole-sprite';
-        sprite.src = 'mole.png';
+        sprite.src = 'pic/mole.png?v=2';
         sprite.alt = 'mole';
         el.appendChild(sprite);
         const emoji = document.createElement('div');
@@ -1988,7 +2127,7 @@
             setTimeout(() => spawnHammerSequence(mole), delay);
         });
         if (captured.length >= 2) {
-            setTimeout(() => showToast('Perfect Timing!', 1000), 220);
+            setTimeout(() => showToast('Perfect Timing!', 1800, 'combo'), 220);
         }
 
         moles = moles.filter(mole => !captured.includes(mole));
@@ -2230,8 +2369,8 @@
     function spawnHammerSequence(mole) {
         const h = document.createElement('div');
         h.className = 'hammer';
-        h.style.left = (mole.c * 12.5) + '%';
-        h.style.top = (mole.r * 12.5) + '%';
+        h.style.left = `calc(${(mole.c * 12.5)}% - 8px)`;
+        h.style.top = `calc(${(mole.r * 12.5)}% - 8px)`;
         moleLayer.appendChild(h);
 
         const egg = document.createElement('div');
@@ -2282,7 +2421,7 @@
                 let classes = grid[r][c] ? 'cell filled' : 'cell';
                 if (holes[r][c]) {
                     classes += ' has-hole';
-                    cell.style.setProperty('--hole-img', "url('hole3.jpg')");
+                    cell.style.setProperty('--hole-img', "url('pic/hole.png?v=2')");
                 } else {
                     cell.style.removeProperty('--hole-img');
                 }
@@ -2420,10 +2559,31 @@
         balanceEl.innerText = `$${accountBalance.toFixed(2)}`;
     }
 
-    function showToast(message, delay = 1200) {
+    function showToast(message, delay = 1200, tone = 'info') {
         toastEl.innerText = message;
+        toastEl.classList.remove('win', 'fail', 'combo');
+        toastEl.style.left = '';
+        toastEl.style.top = '';
+        toastEl.style.transform = '';
+        if (tone === 'win') toastEl.classList.add('win');
+        if (tone === 'fail') toastEl.classList.add('fail');
+        if (tone === 'combo') {
+            toastEl.classList.add('combo');
+            const board = document.getElementById('board-wrapper');
+            if (board) {
+                const rect = board.getBoundingClientRect();
+                toastEl.style.left = `${rect.left + rect.width / 2}px`;
+                toastEl.style.top = `${rect.top + rect.height / 2}px`;
+                toastEl.style.transform = 'translate(-50%, -50%)';
+            }
+        }
         toastEl.classList.add('show');
-        setTimeout(() => toastEl.classList.remove('show'), delay);
+        setTimeout(() => {
+            toastEl.classList.remove('show', 'win', 'fail', 'combo');
+            toastEl.style.left = '';
+            toastEl.style.top = '';
+            toastEl.style.transform = '';
+        }, delay);
     }
 
     function updateLogMeta() {
@@ -2589,12 +2749,33 @@
     function updateTopStats() {
         const total = getEarnedAmount();
         const maxText = Number.isFinite(maxReward) ? `$${maxReward.toFixed(2)}` : '∞';
-        earnedStatusEl.innerText = `$${total.toFixed(2)}/${maxText}`;
+        earnedStatusEl.innerHTML = `<span class="earned-current">$${total.toFixed(2)}</span><span class="earned-sep">/</span><span class="earned-max">${maxText}</span>`;
         if (collectedCount >= goalTargetCurrent) {
             goalStatusEl.innerText = '✅';
+            goalCardsEl.classList.add('goal-passed');
         } else {
             goalStatusEl.innerText = `${collectedCount}/${goalTargetCurrent}`;
+            goalCardsEl.classList.remove('goal-passed');
         }
+    }
+
+    function showResultToast(kind = 'complete', duration = 1200) {
+        const map = {
+            complete: 'pic/complete.png',
+            time: 'pic/time.png',
+            move: 'pic/move.png',
+        };
+        const src = map[kind] || map.complete;
+        resultToastImgEl.src = src;
+        resultToastEl.classList.remove('hidden');
+        resultToastEl.classList.add('show');
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resultToastEl.classList.remove('show');
+                resultToastEl.classList.add('hidden');
+                resolve();
+            }, duration);
+        });
     }
 
     function normalizeMolePos(shape, molePos) {
@@ -2882,13 +3063,14 @@
         if (timeLeft <= 0) endGame(false, '时间到');
     }, 1000);
 
-    function endGame(win, message, meta = {}) {
+    async function endGame(win, message, meta = {}) {
         gameActive = false;
         const earned = getEarnedAmount();
         const reachedGoal = collectedCount >= goalTargetCurrent;
         const reachedMax = earned >= maxReward || meta.type === 'max_win';
 
         if (reachedMax) {
+            await showResultToast('complete', 1300);
             accountBalance += earned;
             updateBalanceView();
             finalizeMatchLog('MaxWin');
@@ -2902,20 +3084,19 @@
         }
 
         if (!reachedGoal) {
-            showToast('挑战失败', 900);
+            await showResultToast(message === '没有空格了' ? 'move' : 'time', 1300);
             finalizeMatchLog('Fail');
-            setTimeout(() => {
-                openSettlement(
-                    '未达成Goal',
-                    '本局没有获得钱',
-                    accountBalance <= 0 ? '去充值' : '返回关卡',
-                    () => returnToLevelGate(false)
-                );
-                if (accountBalance <= 0) openRechargeModal();
-            }, 950);
+            openSettlement(
+                '未达成Goal',
+                '本局没有获得钱',
+                accountBalance <= 0 ? '去充值' : '返回关卡',
+                () => returnToLevelGate(false)
+            );
+            if (accountBalance <= 0) openRechargeModal();
             return;
         }
 
+        await showResultToast('complete', 1300);
         accountBalance += earned;
         updateBalanceView();
         finalizeMatchLog('GoalWin');
