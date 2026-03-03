@@ -231,6 +231,7 @@ def simulate(
     mole_spawn_rate: float = 0.30,
     policy: str = "legacy",
     collect_trace: bool = False,
+    mole_reward_rate: float = MOLE_REWARD_RATE,
 ) -> dict:
     grid = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
     holes = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
@@ -265,7 +266,8 @@ def simulate(
     multiplier = FIXED_RETURN_MULTIPLIER
     max_moles_cap = max(1, int(max_moles_cap))
     mole_spawn_rate = min(1.0, max(0.0, float(mole_spawn_rate)))
-    mole_reward = entry_fee * MOLE_REWARD_RATE
+    mole_reward_rate = max(0.0, float(mole_reward_rate))
+    mole_reward = entry_fee * mole_reward_rate
     max_reward = max_moles_cap * mole_reward
     salt = get_mole_pattern_salt(multiplier) ^ (1 * 131)
     pos_salt = (get_mole_pattern_salt(multiplier) >> 6) + 17
@@ -746,6 +748,8 @@ def simulate(
         "goalTarget": goal_target,
         "maxMolesCap": max_moles_cap,
         "moleSpawnRate": mole_spawn_rate,
+        "moleRewardRate": mole_reward_rate,
+        "rewardPerMoleDollar": mole_reward,
         "maxReward": max_reward,
     }
     if collect_trace:
@@ -819,6 +823,7 @@ def main():
     ap.add_argument("--goal-target", type=int, default=6, help="Required mole captures to count as clear")
     ap.add_argument("--max-moles", type=int, default=10, help="Mole capture cap for max reward")
     ap.add_argument("--mole-rate", type=float, default=0.40, help="Mole coverage rate [0,1]")
+    ap.add_argument("--mole-reward-rate", type=float, default=MOLE_REWARD_RATE, help="Single-mole reward coefficient vs entry fee")
     ap.add_argument("--difficulty", default="D5", help="Difficulty filter, e.g. D5/Easy/R14/ALL")
     ap.add_argument(
         "--prefer-unique-initial",
@@ -863,6 +868,8 @@ def main():
                     args.max_moles,
                     args.mole_rate,
                     policy,
+                    False,
+                    args.mole_reward_rate,
                 )
             )
     else:
@@ -878,6 +885,8 @@ def main():
                     args.max_moles,
                     args.mole_rate,
                     policy,
+                    False,
+                    args.mole_reward_rate,
                 )
             )
 

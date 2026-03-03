@@ -9,6 +9,7 @@ from urllib.parse import parse_qs
 
 from simulator import (
     DEFAULT_POLICY,
+    MOLE_REWARD_RATE,
     build_run_seed_list,
     build_seed_pool,
     load_seed_cases,
@@ -32,6 +33,8 @@ FIELD_LABELS_ZH = {
     "maxMolesCap": "最大奖励上限(地鼠数)",
     "moleSpawnRate": "鼹鼠覆盖率(0~1)",
     "moleCoverage": "鼹鼠覆盖率(0~1)",
+    "moleRewardRate": "单鼠奖励系数",
+    "rewardPerMoleDollar": "单鼠奖励金额($)",
     "maxReward": "最大奖励金额($)",
     "maxRewardDollar": "最大奖励金额($)",
     "totalBlocksInSeed": "种子总块数",
@@ -67,6 +70,8 @@ PREFERRED_FIELD_ORDER = [
     "maxMolesCap",
     "moleCoverage",
     "moleSpawnRate",
+    "moleRewardRate",
+    "rewardPerMoleDollar",
     "maxRewardDollar",
     "maxReward",
     "totalBlocksInSeed",
@@ -242,6 +247,7 @@ def render_page(defaults, summary=None, rows=None, error=""):
           <div><label>goal_target</label><input name="goal_target" value="{defaults['goal_target']}" /></div>
           <div><label>max_moles (最大奖励对应地鼠数)</label><input name="max_moles" value="{defaults['max_moles']}" /></div>
           <div><label>mole_rate (0~1)</label><input name="mole_rate" value="{defaults['mole_rate']}" /></div>
+          <div><label>mole_reward_rate (单鼠奖励系数)</label><input name="mole_reward_rate" value="{defaults['mole_reward_rate']}" /></div>
           <div><label>difficulty</label><select name="difficulty">{diff_select}</select></div>
           <div><label>策略版本</label><select name="policy">{policy_select}</select></div>
           <div><label>action_seconds</label><input name="action_seconds" value="{defaults['action_seconds']}" /></div>
@@ -311,6 +317,7 @@ class Handler(BaseHTTPRequestHandler):
             "goal_target": to_int(form.get("goal_target", str(self.defaults["goal_target"])), self.defaults["goal_target"]),
             "max_moles": to_int(form.get("max_moles", str(self.defaults["max_moles"])), self.defaults["max_moles"]),
             "mole_rate": to_float(form.get("mole_rate", str(self.defaults["mole_rate"])), self.defaults["mole_rate"]),
+            "mole_reward_rate": to_float(form.get("mole_reward_rate", str(self.defaults["mole_reward_rate"])), self.defaults["mole_reward_rate"]),
             "difficulty": (form.get("difficulty", self.defaults["difficulty"]) or "D5").strip(),
             "policy": normalize_policy((form.get("policy", self.defaults["policy"]) or DEFAULT_POLICY).strip().lower()),
             "action_seconds": to_float(form.get("action_seconds", str(self.defaults["action_seconds"])), self.defaults["action_seconds"]),
@@ -344,6 +351,8 @@ class Handler(BaseHTTPRequestHandler):
                             defaults["max_moles"],
                             defaults["mole_rate"],
                             defaults["policy"],
+                            False,
+                            defaults["mole_reward_rate"],
                         )
                     )
             else:
@@ -359,6 +368,8 @@ class Handler(BaseHTTPRequestHandler):
                             defaults["max_moles"],
                             defaults["mole_rate"],
                             defaults["policy"],
+                            False,
+                            defaults["mole_reward_rate"],
                         )
                     )
 
@@ -381,6 +392,7 @@ def main():
     ap.add_argument("--goal-target", type=int, default=6)
     ap.add_argument("--max-moles", type=int, default=10)
     ap.add_argument("--mole-rate", type=float, default=0.40)
+    ap.add_argument("--mole-reward-rate", type=float, default=MOLE_REWARD_RATE)
     ap.add_argument("--difficulty", default="D5")
     ap.add_argument("--policy", default=DEFAULT_POLICY)
     ap.add_argument(
@@ -402,6 +414,7 @@ def main():
         "goal_target": args.goal_target,
         "max_moles": args.max_moles,
         "mole_rate": args.mole_rate,
+        "mole_reward_rate": args.mole_reward_rate,
         "difficulty": args.difficulty,
         "policy": normalize_policy(args.policy),
         "action_seconds": args.action_seconds,

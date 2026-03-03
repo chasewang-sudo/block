@@ -1126,8 +1126,12 @@
                 <label for="debug-mole-rate-input">覆盖率(%)</label>
                 <input id="debug-mole-rate-input" type="number" min="0" max="100" step="1" value="40" />
             </div>
+            <div class="debug-config-item">
+                <label for="debug-mole-reward-rate-input">单鼠奖励系数</label>
+                <input id="debug-mole-reward-rate-input" type="number" min="0" step="0.01" value="0.2" />
+            </div>
         </div>
-        <button id="debug-apply-target-btn" class="debug-mode-toggle">Apply Goal/Cap</button>
+        <button id="debug-apply-target-btn" class="debug-mode-toggle">Apply Config</button>
         <div class="debug-log-row">
             <button id="export-logs-btn" class="debug-log-btn">Export CSV</button>
             <button id="clear-logs-btn" class="debug-log-btn">Clear Logs</button>
@@ -1184,6 +1188,7 @@
     const debugGoalInputEl = document.getElementById('debug-goal-input');
     const debugMaxMolesInputEl = document.getElementById('debug-max-moles-input');
     const debugMoleRateInputEl = document.getElementById('debug-mole-rate-input');
+    const debugMoleRewardRateInputEl = document.getElementById('debug-mole-reward-rate-input');
     const debugApplyTargetBtn = document.getElementById('debug-apply-target-btn');
     const playEntryBtn = document.getElementById('play-entry-btn');
     const stakeBtns = Array.from(document.querySelectorAll('.stake-btn'));
@@ -1224,6 +1229,7 @@
     let goalTargetCurrent = 6;
     let maxMolesCapCurrent = 10;
     let moleSpawnRateCurrent = 0.40;
+    let moleRewardRateCurrent = 0.20;
     let goalReward = 1.0;
     let maxReward = 1.5;
     let rewardPerMole = 0.1;
@@ -1295,7 +1301,6 @@
     const DEFAULT_GOAL_TARGET = 6;
     const DEFAULT_MAX_MOLES_CAP = 10;
     const HOLE_COLORS = ['#6b4b2a', '#4a7b3e', '#2f5f8a', '#8a5a2f', '#6b2f6b', '#2f6b6b'];
-    const MOLE_REWARD_RATE = 0.20;
     const FORCE_SECOND_BLOCK = false;
     const FORCE_ONE_MOLE_IN_FIRST_THREE = true;
     const DEBUG_RETURN_OPTIONS = [
@@ -2344,6 +2349,8 @@
             goalTarget: goalTargetCurrent,
             maxMolesCap: maxKillsCurrent,
             moleCoverage: getCurrentMoleSpawnRate(),
+            moleRewardRate: moleRewardRateCurrent,
+            rewardPerMoleDollar: rewardPerMole,
             maxRewardDollar: maxReward,
             mode: debugUnlimitedMode ? 'Unlimited' : 'Normal',
             totalBlocksInSeed: (currentSeedCase?.blockIds || []).length,
@@ -2376,6 +2383,8 @@
         currentMatchLog.goalTarget = goalTargetCurrent;
         currentMatchLog.maxMolesCap = maxKillsCurrent;
         currentMatchLog.moleCoverage = getCurrentMoleSpawnRate();
+        currentMatchLog.moleRewardRate = moleRewardRateCurrent;
+        currentMatchLog.rewardPerMoleDollar = rewardPerMole;
         currentMatchLog.maxRewardDollar = maxReward;
         currentMatchLog.maxAliveMoles = Math.max(currentMatchLog.maxAliveMoles || 0, moles.length);
         currentMatchLog.maxNoMolePlaceStreak = Math.max(
@@ -2409,6 +2418,8 @@
             ['goalTarget','过关目标(地鼠数)'],
             ['maxMolesCap','最大奖励上限(地鼠数)'],
             ['moleCoverage','鼹鼠覆盖率(0~1)'],
+            ['moleRewardRate','单鼠奖励系数'],
+            ['rewardPerMoleDollar','单鼠奖励金额($)'],
             ['maxRewardDollar','最大奖励金额($)'],
             ['totalBlocksInSeed','种子总块数'],
             ['blocksPlaced','放置块数'],
@@ -2505,11 +2516,11 @@
             ? `${currentSeedName} | RNG:${runSeed ?? '--'}`
             : currentSeedName;
         const moleRate = `${Math.round(getCurrentMoleSpawnRate() * 100)}%`;
-        ingameDebugMultiEl.innerText = `Mode: ${mode} | Return: ${label} | Mole: ${moleRate} | Goal:${goalTargetCurrent} | Cap:${maxKillsCurrent} | Diff: ${currentDifficulty} | Seed: ${seedText}`;
+        ingameDebugMultiEl.innerText = `Mode: ${mode} | Return: ${label} | Mole: ${moleRate} | RewardRate:${moleRewardRateCurrent.toFixed(2)} | Goal:${goalTargetCurrent} | Cap:${maxKillsCurrent} | Diff: ${currentDifficulty} | Seed: ${seedText}`;
     }
 
     function recalcRewards() {
-        rewardPerMole = entryFee * MOLE_REWARD_RATE;
+        rewardPerMole = entryFee * moleRewardRateCurrent;
         goalReward = goalTargetCurrent * rewardPerMole;
         maxKillsCurrent = debugUnlimitedMode ? Infinity : Math.max(goalTargetCurrent, Math.floor(maxMolesCapCurrent));
         maxReward = debugUnlimitedMode ? Infinity : (maxKillsCurrent * rewardPerMole);
@@ -2523,6 +2534,7 @@
         if (debugGoalInputEl) debugGoalInputEl.value = String(goalTargetCurrent);
         if (debugMaxMolesInputEl) debugMaxMolesInputEl.value = String(maxKillsCurrent);
         if (debugMoleRateInputEl) debugMoleRateInputEl.value = String(Math.round(getCurrentMoleSpawnRate() * 100));
+        if (debugMoleRewardRateInputEl) debugMoleRewardRateInputEl.value = String(Number(moleRewardRateCurrent.toFixed(2)));
         debugMultiBtns.forEach((btn) => {
             btn.classList.toggle('active', Number(btn.dataset.multi) === FIXED_RETURN_MULTIPLIER);
         });
@@ -2545,9 +2557,15 @@
         const nextGoal = Math.max(1, Number(debugGoalInputEl?.value || goalTargetCurrent));
         const nextCap = Math.max(nextGoal, Number(debugMaxMolesInputEl?.value || maxMolesCapCurrent));
         const nextCoveragePct = Number(debugMoleRateInputEl?.value ?? (getCurrentMoleSpawnRate() * 100));
+        const rawRewardRate = String(debugMoleRewardRateInputEl?.value ?? '').trim();
+        const parsedRewardRate = Number(rawRewardRate);
+        const nextRewardRate = (rawRewardRate !== '' && Number.isFinite(parsedRewardRate))
+            ? parsedRewardRate
+            : moleRewardRateCurrent;
         goalTargetCurrent = Math.floor(nextGoal);
         maxMolesCapCurrent = Math.floor(nextCap);
         moleSpawnRateCurrent = Math.min(1, Math.max(0, nextCoveragePct / 100));
+        moleRewardRateCurrent = Math.min(10, Math.max(0, nextRewardRate));
         recalcRewards();
         updateGateSummary();
         updateTopStats();
