@@ -401,8 +401,8 @@ def main():
         action=argparse.BooleanOptionalAction,
         default=True,
     )
-    ap.add_argument("--action-seconds", type=float, default=1.0)
-    ap.add_argument("--max-actions", type=int, default=500)
+    ap.add_argument("--action-seconds", type=float, default=2.0)
+    ap.add_argument("--max-actions", type=int, default=150)
     ap.add_argument("--rng-seed", type=int, default=20260302)
     args = ap.parse_args()
 

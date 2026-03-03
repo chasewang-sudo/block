@@ -837,8 +837,8 @@ def main():
         default=DEFAULT_POLICY,
         help="策略: V1-抓鼠贪心 / V2-生存机动 / V3-双步前瞻 / V4-三块束搜索（仍支持 legacy/improved/latest）",
     )
-    ap.add_argument("--action-seconds", type=float, default=1.0, help="Seconds consumed per placement")
-    ap.add_argument("--max-actions", type=int, default=500)
+    ap.add_argument("--action-seconds", type=float, default=2.0, help="Seconds consumed per placement")
+    ap.add_argument("--max-actions", type=int, default=150)
     ap.add_argument("--rng-seed", type=int, default=20260302)
     ap.add_argument("--max-seeds", type=int, default=10000, help="Load first N seed files (0 = all)")
     ap.add_argument("--out-csv", default="", help="Optional output CSV path")
