@@ -2331,7 +2331,10 @@
             setTimeout(() => spawnHammerSequence(mole), delay);
         });
         if (captured.length >= PERFECT_TIMING_MIN_HIT) {
-            setTimeout(() => showComboToast('Perfect Timing!', 1000), 220);
+            const comboText = captured.length === 2
+                ? 'Double Mole!'
+                : (captured.length === 3 ? 'Triple Mole!' : 'Multi Mole!');
+            setTimeout(() => showComboToast(comboText, 1000), 220);
         }
 
         moles = moles.filter(mole => !captured.includes(mole));
