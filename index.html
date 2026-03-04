@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>方块打地鼠：进阶版</title>
+    <title>Block Rise: Whack-a-mole</title>
     <style>
         :root {
             --bg-0: #d9f6b9;
@@ -1063,6 +1063,7 @@
             font-size: 0.82rem;
             font-weight: 800;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+            touch-action: manipulation;
         }
 
         .debug-drawer {
@@ -1448,12 +1449,6 @@
     // Mobile: disable double-tap / pinch zoom to avoid stuck zoomed UI
     document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
     document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
-    let __lastTouchEndTs = 0;
-    document.addEventListener('touchend', (e) => {
-        const now = Date.now();
-        if (now - __lastTouchEndTs <= 300) e.preventDefault();
-        __lastTouchEndTs = now;
-    }, { passive: false });
 
     const GRID_SIZE = 8;
     const TOUCH_LIFT_PX = 200;
@@ -3212,10 +3207,12 @@
         updateTopStats();
         updateIngameDebugView();
     });
-    debugToggleBtn.addEventListener('click', () => {
+    const onToggleDebugDrawer = (e) => {
+        if (e) e.preventDefault();
         if (gameActive) return;
         debugDrawerEl.classList.toggle('hidden');
-    });
+    };
+    debugToggleBtn.addEventListener('pointerup', onToggleDebugDrawer);
     exportLogsBtn.addEventListener('click', exportLogsAsCsv);
     clearLogsBtn.addEventListener('click', () => {
         matchLogs = [];
