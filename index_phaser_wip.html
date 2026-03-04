@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Block Rise: Whack-a-mole</title>
+  <style>
+    :root {
+      --device-w: 402px;
+      --device-h: 874px;
+      --panel: rgba(255,255,255,0.42);
+      --line: #432317;
+      --cell: #5C3222;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 10% 10%, #def7bc, #9dd176 60%, #6fa953);
+      font-family: "Baloo 2", "PingFang SC", sans-serif;
+      user-select: none;
+      overflow: hidden;
+    }
+    .device-shell {
+      width: min(var(--device-w), 94vw);
+      height: min(var(--device-h), 94vh);
+      border-radius: 34px;
+      border: 4px solid rgba(100,70,30,.25);
+      background: url('pic/grassbackground.jpg') center / cover no-repeat;
+      box-shadow: 0 26px 60px rgba(0,0,0,.35);
+      overflow: hidden;
+      position: relative;
+      padding: 8px 10px 14px;
+    }
+    .app { position: relative; height: 100%; display: flex; flex-direction: column; gap: 8px; }
+    header {
+      display:flex; justify-content:space-between; align-items:center;
+      background: linear-gradient(180deg, rgba(255,255,255,.58), rgba(255,255,255,.26));
+      border-radius: 14px; border:1px solid rgba(255,255,255,.5);
+      padding: 6px 8px;
+    }
+    .top-time { font-size: 1.75rem; font-weight: 900; color: #fff; text-shadow: -2px -2px #126e30, 2px 2px #126e30; }
+    .top-balance { background:#ffffffd9; border-radius:999px; padding:2px 10px; color:#11853a; font-weight:900; border:1px solid rgba(0,0,0,.12); }
+    .top-settings { width:44px;height:44px;display:grid;place-items:center;border-radius:50%; background:#fff; border:3px solid #17853c; color:#17763a; font-size:28px; }
+
+    .goal-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .goal-cards.goal-passed { grid-template-columns: 1fr; }
+    .goal-card { min-height:80px; background:center/100% 100% no-repeat; border-radius:12px; display:grid; place-items:center; }
+    .goal-card.goal { background-image:url('pic/goal.png'); }
+    .goal-card.earned { background-image:url('pic/youearned.png'); }
+    .goal-cards.goal-passed .goal-card.goal { display:none; }
+    .goal-cards.goal-passed .goal-card.earned { background-image:url('pic/keep_earning.png'); background-size: contain; background-repeat:no-repeat; background-position:center; }
+    .goal-value { font-size:1.34rem; font-weight:900; color:#fff; text-shadow:0 2px 0 rgba(110,58,31,.9),0 4px 8px rgba(0,0,0,.24); }
+    .goal-value.goal { padding-left:5ch; transform:translateX(-2px); }
+    .goal-value .current { color:#37d463; text-shadow:none; }
+    .goal-value .rest { color:#fff; text-shadow:none; }
+
+    #game-root {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      aspect-ratio: 1;
+      border-radius: 18px;
+      background: #5C3222;
+      border: 2px solid rgba(120, 80, 30, 0.28);
+      overflow: hidden;
+      margin: 0 auto;
+    }
+    #phaser-mount { width:100%; height:100%; }
+
+    #pieces {
+      margin-top: 40px;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      padding:10px 4px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.14));
+      border: 1px solid rgba(255,255,255,.38);
+    }
+    .piece-slot {
+      height: 98px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(246,236,201,.92), rgba(231,213,166,.9));
+      border: 1px solid rgba(120,80,30,.3);
+      display:grid;place-items:center;
+      position:relative;
+      overflow:visible;
+    }
+    .piece-canvas { pointer-events:none; }
+    .piece-slot.selected { outline:2px solid rgba(255,230,130,.95); outline-offset:2px; }
+
+    #combo-toast {
+      position:fixed; z-index: 4200; left:50%; top:50%; transform:translate(-50%,-50%) scale(.94);
+      padding:14px 24px; border-radius:18px; border:2px solid #ffe39f;
+      background: linear-gradient(180deg, rgba(255,191,77,.99), rgba(229,132,35,.99));
+      color:#fff; font-size:1.52rem; font-weight:1000; -webkit-text-stroke:1.6px #7b3d12;
+      text-shadow:0 2px 0 rgba(123,61,18,.85),0 8px 18px rgba(0,0,0,.32);
+      opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease;
+    }
+    #combo-toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+    .gate {
+      position:absolute; inset:0; z-index:30; display:flex; align-items:center; justify-content:center;
+      background: linear-gradient(180deg, rgba(8,26,12,.55), rgba(10,28,14,.68));
+      backdrop-filter: blur(3px);
+    }
+    .gate-card {
+      width:min(92%,360px); border-radius:24px; padding:14px;
+      background: linear-gradient(180deg, rgba(255,247,220,.98), rgba(246,230,189,.96));
+      border:2px solid rgba(122,82,30,.42); color:#2e1c06;
+      box-shadow:0 22px 46px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.8);
+    }
+    .gate-title { text-align:center; font-size:1.6rem; font-weight:900; color:#5b3516; margin:2px 0 8px; }
+    .gate-info { border-radius:16px; padding:10px; background:rgba(255,255,255,.58); text-align:center; border:1px solid rgba(112,78,30,.22); }
+    .gate-atmo { height:88px; border-radius:14px; margin:8px 0; border:1px solid rgba(98,66,23,.24); background:linear-gradient(180deg, rgba(118,178,78,.86), rgba(86,137,52,.82)); }
+    .stake-row { display:flex; gap:8px; margin-top:10px; }
+    .stake { flex:1; height:48px; border-radius:12px; border:1px solid rgba(102,70,22,.38); background: linear-gradient(180deg, #fff8df, #f2d99d); font-weight:900; }
+    .stake.active { background: linear-gradient(180deg, #ffe9a9, #ffc965); }
+    .play { width:100%; height:54px; margin-top:10px; border-radius:999px; font-size:1.2rem; font-weight:900; background:linear-gradient(180deg,#ffe89e,#ffcc64); border:1px solid rgba(124,79,21,.55); }
+    .debug-toggle {
+      width: 100%;
+      height: 38px;
+      margin-top: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(88, 58, 20, .45);
+      background: rgba(0,0,0,.12);
+      color: #5a3312;
+      font-weight: 900;
+    }
+    .debug-panel {
+      margin-top: 8px;
+      border-radius: 12px;
+      border: 1px dashed rgba(88,58,20,.35);
+      background: rgba(255,255,255,.46);
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .debug-panel.hidden { display: none; }
+    .debug-panel label { font-size: .72rem; font-weight: 800; color: #5a3312; display:block; margin-bottom: 2px; }
+    .debug-panel input, .debug-panel select {
+      width: 100%;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid rgba(88,58,20,.3);
+      padding: 0 8px;
+      font-weight: 800;
+      color: #4f2d10;
+      background: rgba(255,255,255,.82);
+    }
+    .debug-row-span { grid-column: 1 / -1; }
+    .debug-seed { font-size:.74rem; font-weight:800; color:#5a3312; opacity:.85; }
+
+    .toast { position:absolute; left:50%; top:62px; transform:translateX(-50%); z-index:25; background:#0008; color:#fff; border-radius:14px; padding:8px 14px; opacity:0; transition:.2s; }
+    .toast.show { opacity:1; }
+
+    .result-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      place-items: center;
+      background: radial-gradient(circle at 50% 35%, rgba(120,20,150,.26), rgba(10,10,20,.62));
+      backdrop-filter: blur(2px);
+    }
+    .result-overlay.show { display: grid; }
+    .result-overlay img {
+      width: min(78vw, 340px);
+      max-width: 88%;
+      filter: drop-shadow(0 12px 24px rgba(0,0,0,.35));
+      animation: pop .25s ease;
+    }
+    @keyframes pop {
+      from { transform: scale(.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-height: 780px) {
+      #pieces { margin-top: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="device-shell">
+    <div class="app">
+      <div id="toast" class="toast"></div>
+      <header>
+        <div id="timer" class="top-time">03:00</div>
+        <div id="earned-top" class="top-balance">$0.00</div>
+        <div class="top-settings">⚙</div>
+      </header>
+
+      <div id="goal-cards" class="goal-cards">
+        <div class="goal-card goal"><div id="goal-status" class="goal-value goal">0/12</div></div>
+        <div class="goal-card earned"><div id="earned-status" class="goal-value"><span class="current">$0.00</span><span class="rest">/$2.00</span></div></div>
+      </div>
+
+      <div id="game-root"><div id="phaser-mount"></div></div>
+
+      <div id="pieces"></div>
+    </div>
+
+    <div id="gate" class="gate">
+      <div class="gate-card">
+        <div class="gate-title">Level 48</div>
+        <div class="gate-atmo"></div>
+        <div class="gate-info">
+          <div style="font-weight:900;">Goal</div>
+          <div>Whack <span id="gate-goal">12</span> Moles</div>
+          <div style="margin-top:6px; font-weight:900;">Rewards up to</div>
+          <div id="gate-max" style="font-size:1.9rem; font-weight:900; color:#0c8e44;">$2.00</div>
+        </div>
+        <div class="stake-row">
+          <button class="stake active" data-stake="1">1x</button>
+          <button class="stake" data-stake="3">3x</button>
+          <button class="stake" data-stake="5">5x</button>
+        </div>
+        <button id="play" class="play" disabled>Loading...</button>
+        <button id="debug-toggle" class="debug-toggle">Debug</button>
+        <div id="debug-panel" class="debug-panel hidden">
+          <div>
+            <label for="dbg-difficulty">Difficulty</label>
+            <select id="dbg-difficulty">
+              <option value="ALL" selected>ALL</option>
+              <option value="Easy">Easy</option>
+              <option value="D0">D0</option><option value="D1">D1</option><option value="D2">D2</option><option value="D3">D3</option><option value="D4">D4</option><option value="D5">D5</option><option value="D6">D6</option><option value="D7">D7</option><option value="D8">D8</option><option value="D9">D9</option><option value="D10">D10</option><option value="D11">D11</option><option value="D12">D12</option><option value="R13">R13</option><option value="R14">R14</option>
+            </select>
+          </div>
+          <div>
+            <label for="dbg-mode">Mole Dist</label>
+            <select id="dbg-mode">
+              <option value="guardrails">干预</option>
+              <option value="flat">不干预</option>
+              <option value="segment_35_30_20_5" selected>segment_35_30_20_5</option>
+            </select>
+          </div>
+          <div>
+            <label for="dbg-rate">Rate(%)</label>
+            <input id="dbg-rate" type="number" value="40" min="0" max="100" step="1" />
+          </div>
+          <div>
+            <label for="dbg-goal">Goal</label>
+            <input id="dbg-goal" type="number" value="12" min="1" step="1" />
+          </div>
+          <div>
+            <label for="dbg-cap">Cap</label>
+            <input id="dbg-cap" type="number" value="20" min="1" step="1" />
+          </div>
+          <div>
+            <label for="dbg-reward">Reward Rate</label>
+            <input id="dbg-reward" type="number" value="0.1" min="0" step="0.01" />
+          </div>
+          <button id="dbg-refresh-seed" class="debug-toggle debug-row-span">Refresh Seed</button>
+          <div id="dbg-seed" class="debug-seed debug-row-span">Seed: - | Diff: -</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="combo-toast">Double Mole!</div>
+  <div id="result-overlay" class="result-overlay"><img id="result-image" src="" alt="result"></div>
+
+  <script src="lib/phaser.min.js" onerror="window.location.href='index_legacy_dom.html'"></script>
+  <script>
+    if (!window.Phaser) {
+      window.location.href = 'index_legacy_dom.html';
+    }
+    const GRID_SIZE = 8;
+    const TOUCH_LIFT_PX = 200;
+    const PERFECT_TIMING_MIN_HIT = 2;
+    const DEFAULT_GOAL = 12;
+    const DEFAULT_CAP = 20;
+    const DEFAULT_MOLE_RATE = 0.40;
+    const DEFAULT_MOLE_MODE = 'segment_35_30_20_5';
+    const DEFAULT_MOLE_REWARD_RATE = 0.1;
+
+    const SHAPES = [
+      { id:'1111001', s:[[1]] },
+      { id:'1122003', s:[[1,1]] },
+      { id:'1212003', s:[[1],[1]] },
+      { id:'1222009', s:[[1,0],[0,1]] },
+      { id:'1222006', s:[[0,1],[1,0]] },
+      { id:'1133007', s:[[1,1,1]] },
+      { id:'1313007', s:[[1],[1],[1]] },
+      { id:'1223007', s:[[0,1],[1,1]] },
+      { id:'1223013', s:[[1,1],[0,1]] },
+      { id:'1223014', s:[[1,1],[1,0]] },
+      { id:'1223011', s:[[1,0],[1,1]] },
+      { id:'1224015', s:[[1,1],[1,1]] },
+      { id:'1234058', s:[[1,1,1],[0,1,0]] },
+      { id:'1324046', s:[[1,0],[1,1],[1,0]] },
+      { id:'1234023', s:[[0,1,0],[1,1,1]] },
+      { id:'1324029', s:[[0,1],[1,1],[0,1]] },
+      { id:'1234015', s:[[0,0,1],[1,1,1]] },
+      { id:'1324053', s:[[1,1],[0,1],[0,1]] },
+      { id:'1234060', s:[[1,1,1],[1,0,0]] },
+      { id:'1324043', s:[[1,0],[1,0],[1,1]] },
+      { id:'1234039', s:[[1,0,0],[1,1,1]] },
+      { id:'1324023', s:[[0,1],[0,1],[1,1]] },
+      { id:'1234057', s:[[1,1,1],[0,0,1]] },
+      { id:'1324058', s:[[1,1],[1,0],[1,0]] },
+      { id:'1234030', s:[[0,1,1],[1,1,0]] },
+      { id:'1234051', s:[[1,1,0],[0,1,1]] },
+      { id:'1324045', s:[[1,0],[1,1],[0,1]] },
+      { id:'1324030', s:[[0,1],[1,1],[1,0]] },
+      { id:'1333273', s:[[1,0,0],[0,1,0],[0,0,1]] },
+      { id:'1333084', s:[[0,0,1],[0,1,0],[1,0,0]] },
+      { id:'1144015', s:[[1,1,1,1]] },
+      { id:'1414015', s:[[1],[1],[1],[1]] },
+      { id:'1326063', s:[[1,1],[1,1],[1,1]] },
+      { id:'1236063', s:[[1,1,1],[1,1,1]] },
+      { id:'1155031', s:[[1,1,1,1,1]] },
+      { id:'1515031', s:[[1],[1],[1],[1],[1]] },
+      { id:'1335079', s:[[0,0,1],[0,0,1],[1,1,1]] },
+      { id:'1335457', s:[[1,1,1],[0,0,1],[0,0,1]] },
+      { id:'1335484', s:[[1,1,1],[1,0,0],[1,0,0]] },
+      { id:'1335295', s:[[1,0,0],[1,0,0],[1,1,1]] },
+      { id:'1339511', s:[[1,1,1],[1,1,1],[1,1,1]] },
+    ];
+
+    const SHAPE_BY_ID = new Map(SHAPES.map(s => [s.id, s]));
+    const MOLE_WHITELIST = new Set(['1224015','1133007','1313007','1223007','1223013','1223014','1223011','1234058','1234023','1324046','1324029','1234060','1234039','1234015','1234057','1324043','1324023','1324053','1324058']);
+    const MOLE_BLACKLIST = new Set(['1236063','1144015','1414015','1222009','1222006']);
+
+    const FALLBACK_SEEDS = [
+      { name:'B_001-V4_B_001_DE_001', difficulty:'Easy', initialGrid:[0,0,0,0,0,0,0,0], blockIds:['1224015','1133007','1223013','1234058','1324046','1212003','1122003','1313007','1234060','1223014','1223011','1234057'] },
+      { name:'B_080-V4_B_080_D5_001', difficulty:'D5', initialGrid:[0,24,60,126,60,24,0,0], blockIds:['1223011','1223007','1223014','1223013','1313007','1313007','1224015','1133007','1224015','1212003','1236063','1212003'] },
+      { name:'B_143-V4_B_143_R13_013', difficulty:'R13', initialGrid:[28,62,62,28,28,8,16,0], blockIds:['1324046','1234023','1324045','1234058','1234030','1133007','1111001','1212003','1324043','1223011','1335484','1324030'] },
+    ];
+
+    const ui = {
+      gate: document.getElementById('gate'),
+      play: document.getElementById('play'),
+      timer: document.getElementById('timer'),
+      earnedTop: document.getElementById('earned-top'),
+      goalStatus: document.getElementById('goal-status'),
+      earnedStatus: document.getElementById('earned-status'),
+      goalCards: document.getElementById('goal-cards'),
+      comboToast: document.getElementById('combo-toast'),
+      pieces: document.getElementById('pieces'),
+      gateGoal: document.getElementById('gate-goal'),
+      gateMax: document.getElementById('gate-max'),
+      toast: document.getElementById('toast'),
+      resultOverlay: document.getElementById('result-overlay'),
+      resultImage: document.getElementById('result-image'),
+      debugToggle: document.getElementById('debug-toggle'),
+      debugPanel: document.getElementById('debug-panel'),
+      dbgDifficulty: document.getElementById('dbg-difficulty'),
+      dbgMode: document.getElementById('dbg-mode'),
+      dbgRate: document.getElementById('dbg-rate'),
+      dbgGoal: document.getElementById('dbg-goal'),
+      dbgCap: document.getElementById('dbg-cap'),
+      dbgReward: document.getElementById('dbg-reward'),
+      dbgRefreshSeed: document.getElementById('dbg-refresh-seed'),
+      dbgSeed: document.getElementById('dbg-seed'),
+    };
+
+    const state = {
+      running: false,
+      timeLeft: 180,
+      stake: 1,
+      earned: 0,
+      collected: 0,
+      goal: DEFAULT_GOAL,
+      cap: DEFAULT_CAP,
+      rewardRate: DEFAULT_MOLE_REWARD_RATE,
+      rewardPerMole: 0.1,
+      maxReward: 2,
+      moleMode: DEFAULT_MOLE_MODE,
+      moleRate: DEFAULT_MOLE_RATE,
+      difficultyFilter: 'ALL',
+      currentSeedCase: null,
+      currentSeedName: '-',
+      currentDifficulty: '-',
+      currentSeedMolePlan: {hasMole:[], posRoll:[]},
+      grid: Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(0)),
+      holes: Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(0)),
+      holeBlock: Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(-1)),
+      holeVisits: Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(0)),
+      moles: [],
+      blockIdCounter: 0,
+      blockCursor: 0,
+      piecePool: [],
+      drag: null,
+      moveBlocked: false,
+      comboTimer: null,
+      externalSeedApi: (location.protocol === 'http:' || location.protocol === 'https:'),
+      gameReady: false,
+    };
+
+    function deterministicRoll01(seqIndex, salt = 0) {
+      let x = (seqIndex + 1) ^ salt;
+      x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+      x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+      x = x ^ (x >>> 16);
+      return (x >>> 0) / 4294967296;
+    }
+
+    function stableNameHash(name) {
+      let x = 2166136261 >>> 0;
+      for (let i = 0; i < name.length; i++) {
+        x ^= name.charCodeAt(i);
+        x = Math.imul(x, 16777619) >>> 0;
+      }
+      return x >>> 0;
+    }
+
+    function isMoleEligibleByList(shapeId) {
+      return MOLE_WHITELIST.has(shapeId) && !MOLE_BLACKLIST.has(shapeId);
+    }
+
+    function getMoleSpawnRateForIndex(seqIndex) {
+      if (state.moleMode === 'segment_35_30_20_5') {
+        if (seqIndex <= 2) return 1.0;
+        if (seqIndex <= 29) return 0.30;
+        if (seqIndex <= 59) return 0.25;
+        if (seqIndex <= 89) return 0.20;
+        return 0.05;
+      }
+      return state.moleRate;
+    }
+
+    function buildSeedMolePlan(seedCase) {
+      const blockIds = seedCase?.blockIds || [];
+      const n = blockIds.length;
+      const hasMole = new Array(n).fill(false);
+      const posRoll = new Array(n).fill(0);
+      const seedHash = stableNameHash(seedCase?.name || 'fallback');
+      const salt = (seedHash ^ 0x9e3779b9) >>> 0;
+      const posSalt = (seedHash ^ 0x85ebca6b) >>> 0;
+      for (let i = 0; i < n; i++) {
+        const sid = blockIds[i];
+        const eligible = state.moleMode !== 'guardrails' || isMoleEligibleByList(sid);
+        hasMole[i] = eligible && (deterministicRoll01(i, salt) < getMoleSpawnRateForIndex(i));
+        posRoll[i] = deterministicRoll01(i, posSalt);
+      }
+      if (state.moleMode === 'guardrails' && n >= 3) {
+        let any = false;
+        for (let i = 0; i < 3 && i < n; i++) any = any || hasMole[i];
+        if (!any) {
+          let chosen = 0;
+          let best = -1;
+          for (let i = 0; i < 3 && i < n; i++) {
+            const sid = blockIds[i];
+            const shape = SHAPE_BY_ID.get(sid);
+            const cells = shape ? shape.s.flat().filter(Boolean).length : 0;
+            if (cells > best) { best = cells; chosen = i; }
+          }
+          hasMole[chosen] = true;
+        }
+      }
+      return { hasMole, posRoll };
+    }
+
+    function applyDebugConfig() {
+      state.difficultyFilter = (ui.dbgDifficulty.value || 'ALL').trim();
+      state.moleMode = ui.dbgMode.value || DEFAULT_MOLE_MODE;
+      state.moleRate = Math.max(0, Math.min(1, (Number(ui.dbgRate.value) || 40) / 100));
+      state.goal = Math.max(1, Math.floor(Number(ui.dbgGoal.value) || DEFAULT_GOAL));
+      state.cap = Math.max(state.goal, Math.floor(Number(ui.dbgCap.value) || DEFAULT_CAP));
+      state.rewardRate = Math.max(0, Number(ui.dbgReward.value) || DEFAULT_MOLE_REWARD_RATE);
+      state.rewardPerMole = state.stake * state.rewardRate;
+      state.maxReward = state.cap * state.rewardPerMole;
+      ui.dbgRate.parentElement.style.display = state.moleMode === 'segment_35_30_20_5' ? 'none' : '';
+      updateHud();
+    }
+
+    function updateHud() {
+      const maxText = `$${state.maxReward.toFixed(2)}`;
+      ui.earnedTop.textContent = `$${state.earned.toFixed(2)}`;
+      ui.earnedStatus.innerHTML = `<span class="current">$${state.earned.toFixed(2)}</span><span class="rest">/${maxText}</span>`;
+      ui.goalStatus.textContent = state.collected >= state.goal ? '✅' : `${state.collected}/${state.goal}`;
+      ui.goalCards.classList.toggle('goal-passed', state.collected >= state.goal);
+      ui.gateGoal.textContent = `${state.goal}`;
+      ui.gateMax.textContent = `${maxText}`;
+      ui.play.textContent = `Play for $${state.stake}`;
+      ui.dbgSeed.textContent = `Seed: ${state.currentSeedName} | Diff: ${state.currentDifficulty}`;
+    }
+
+    function resetRuntimeState() {
+      state.grid = Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(0));
+      state.holes = Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(0));
+      state.holeBlock = Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(-1));
+      state.holeVisits = Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(0));
+      state.moles.length = 0;
+      state.collected = 0;
+      state.earned = 0;
+      state.timeLeft = 180;
+      state.blockIdCounter = 0;
+      state.blockCursor = 0;
+      state.piecePool = [];
+      const initialGrid = state.currentSeedCase?.initialGrid || Array(GRID_SIZE).fill(0);
+      for (let r = 0; r < GRID_SIZE; r++) {
+        const rowBits = initialGrid[r] || 0;
+        for (let c = 0; c < GRID_SIZE; c++) {
+          state.grid[r][c] = ((rowBits >> (GRID_SIZE - 1 - c)) & 1) ? 1 : 0;
+        }
+      }
+      updateHud();
+    }
+
+    async function rollSeedCase() {
+      const diff = String(state.difficultyFilter || 'ALL');
+      if (state.externalSeedApi) {
+        try {
+          const r = await fetch(`/api/seed/random?difficulty=${encodeURIComponent(diff)}`);
+          if (r.ok) {
+            const d = await r.json();
+            state.currentSeedCase = {
+              name: d.name || d.file || 'api-seed',
+              difficulty: d.difficulty || 'Unknown',
+              initialGrid: Array.isArray(d.initialGrid) ? d.initialGrid : Array(GRID_SIZE).fill(0),
+              blockIds: Array.isArray(d.blockIds) ? d.blockIds : [],
+            };
+          }
+        } catch (_) {}
+      }
+      if (!state.currentSeedCase) {
+        const list = diff === 'ALL' ? FALLBACK_SEEDS : FALLBACK_SEEDS.filter(s => String(s.difficulty).toUpperCase() === String(diff).toUpperCase());
+        const pick = list.length ? list[Math.floor(Math.random() * list.length)] : FALLBACK_SEEDS[0];
+        state.currentSeedCase = JSON.parse(JSON.stringify(pick));
+      }
+      state.currentSeedName = state.currentSeedCase.name || '-';
+      state.currentDifficulty = state.currentSeedCase.difficulty || '-';
+      state.currentSeedMolePlan = buildSeedMolePlan(state.currentSeedCase);
+      updateHud();
+    }
+
+    function showToast(msg, ms = 1200) {
+      ui.toast.textContent = msg;
+      ui.toast.classList.add('show');
+      setTimeout(() => ui.toast.classList.remove('show'), ms);
+    }
+
+    function showCombo(text, tier='double') {
+      ui.comboToast.textContent = text;
+      ui.comboToast.style.background = tier === 'triple'
+        ? 'linear-gradient(180deg, rgba(120,227,120,.99), rgba(45,163,72,.99))'
+        : tier === 'multi'
+          ? 'linear-gradient(180deg, rgba(118,196,255,.99), rgba(50,124,226,.99))'
+          : 'linear-gradient(180deg, rgba(255,191,77,.99), rgba(229,132,35,.99))';
+      const rect = document.getElementById('game-root').getBoundingClientRect();
+      ui.comboToast.style.left = `${rect.left + rect.width / 2}px`;
+      ui.comboToast.style.top = `${rect.top + rect.height * .22}px`;
+      ui.comboToast.classList.add('show');
+      if (state.comboTimer) clearTimeout(state.comboTimer);
+      state.comboTimer = setTimeout(() => ui.comboToast.classList.remove('show'), 1000);
+    }
+
+    function showResultCard(kind='complete', ms=1200) {
+      const map = { complete:'pic/complete.png', time:'pic/time.png', move:'pic/move.png' };
+      ui.resultImage.src = map[kind] || map.complete;
+      ui.resultOverlay.classList.add('show');
+      return new Promise(resolve => {
+        setTimeout(() => {
+          ui.resultOverlay.classList.remove('show');
+          resolve();
+        }, ms);
+      });
+    }
+
+    class GameScene extends Phaser.Scene {
+      constructor(){ super('game'); }
+      preload() {
+        this.load.image('block','pic/block.png');
+        this.load.image('hole','pic/hole.png?v=2');
+        this.load.image('mole','pic/mole.png?v=2');
+        this.load.image('hammer','pic/hammer.png?v=2');
+      }
+      create() {
+        this.cellSize = this.scale.width / GRID_SIZE;
+        this.board = this.add.container(0,0);
+        this.gridSprites = [];
+        for (let r=0;r<GRID_SIZE;r++) {
+          this.gridSprites[r] = [];
+          for (let c=0;c<GRID_SIZE;c++) {
+            const g = this.add.rectangle(c*this.cellSize+this.cellSize/2, r*this.cellSize+this.cellSize/2, this.cellSize-4, this.cellSize-4, 0x5C3222).setStrokeStyle(2, 0x432317);
+            this.board.add(g);
+            this.gridSprites[r][c] = { bg:g, block:null, hole:null };
+          }
+        }
+        this.moleLayer = this.add.container(0,0);
+        this.board.add(this.moleLayer);
+        this.input.on('pointermove', p => this.onPointerMove(p));
+        this.input.on('pointerup', p => this.onPointerUp(p));
+        this.boundWinMove = (e) => this.onWindowPointerMove(e);
+        this.boundWinUp = (e) => this.onWindowPointerUp(e);
+        this.refreshBoard();
+        state.gameReady = true;
+        ui.play.disabled = false;
+        ui.play.textContent = `Play for $${state.stake}`;
+      }
+
+      nextSequenceShape() {
+        const blockIds = state.currentSeedCase?.blockIds || [];
+        const idx = state.blockCursor;
+        const id = blockIds.length ? blockIds[idx % blockIds.length] : SHAPES[Math.floor(Math.random()*SHAPES.length)].id;
+        state.blockCursor += 1;
+        return { seqIndex: idx, shapeObj: SHAPE_BY_ID.get(id) || SHAPES[0] };
+      }
+
+      drawPieces() {
+        state.piecePool = [];
+        ui.pieces.innerHTML = '';
+        for (let i=0;i<3;i++) {
+          const seq = this.nextSequenceShape();
+          const shapeObj = seq.shapeObj;
+          const shape = shapeObj.s.map(x => x.slice());
+          const valid = [];
+          shape.forEach((row,r)=>row.forEach((v,c)=> v && valid.push({r,c})));
+          const blockIds = state.currentSeedCase?.blockIds || [];
+          const seqMod = blockIds.length ? (seq.seqIndex % blockIds.length) : 0;
+          const seeded = state.currentSeedMolePlan?.hasMole?.[seqMod] === true;
+          const allow = state.moleMode === 'guardrails' ? (seeded && isMoleEligibleByList(shapeObj.id)) : seeded;
+          const posRoll = state.currentSeedMolePlan?.posRoll?.[seqMod] ?? Math.random();
+          const fixedIdx = valid.length ? Math.min(valid.length - 1, Math.floor(posRoll * valid.length)) : 0;
+          const molePos = allow && valid.length ? valid[fixedIdx] : null;
+          state.piecePool.push({ shape, molePos, hasMole:Boolean(molePos), seqIndex: seq.seqIndex, shapeId: shapeObj.id });
+
+          const slot = document.createElement('div');
+          slot.className = 'piece-slot';
+          slot.dataset.idx = String(i);
+          const cols = shape[0].length, rows = shape.length;
+          const cvs = document.createElement('canvas');
+          cvs.className = 'piece-canvas';
+          cvs.width = cols * 24;
+          cvs.height = rows * 24;
+          const ctx = cvs.getContext('2d');
+          for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) if (shape[r][c]) {
+            ctx.fillStyle = '#7ccf5d'; ctx.fillRect(c*24+1, r*24+1, 22, 22);
+            ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.strokeRect(c*24+1, r*24+1, 22, 22);
+            if (allow) { ctx.fillStyle = 'rgba(80,60,30,.6)'; ctx.beginPath(); ctx.ellipse(c*24+12, r*24+14, 8, 4, 0, 0, Math.PI*2); ctx.fill(); }
+            if (molePos && molePos.r === r && molePos.c === c) { ctx.fillStyle = '#ffe69a'; ctx.beginPath(); ctx.arc(c*24+12, r*24+8, 4, 0, Math.PI*2); ctx.fill(); }
+          }
+          slot.appendChild(cvs);
+          slot.addEventListener('pointerdown', e => this.startDrag(e, i, slot));
+          ui.pieces.appendChild(slot);
+        }
+      }
+
+      startDrag(e, idx, slot) {
+        if (!state.running || state.moveBlocked) return;
+        const piece = state.piecePool[idx];
+        if (!piece) return;
+        const shape = piece.shape;
+        const rows = shape.length, cols = shape[0].length;
+        const rect = slot.getBoundingClientRect();
+        const cellW = rect.width / cols;
+        const cellH = rect.height / rows;
+        const ox = e.clientX - rect.left;
+        const oy = e.clientY - rect.top;
+        const offsetC = Phaser.Math.Clamp(Math.floor(ox / cellW), 0, cols - 1);
+        const offsetR = Phaser.Math.Clamp(Math.floor(oy / cellH), 0, rows - 1);
+        slot.classList.add('selected');
+        state.drag = {
+          idx, slot, shape, molePos: piece.molePos, hasMole: piece.hasMole,
+          offsetR, offsetC,
+          pointerX: e.clientX,
+          pointerY: e.clientY,
+          lastValid: null,
+        };
+        window.addEventListener('pointermove', this.boundWinMove, { passive: false });
+        window.addEventListener('pointerup', this.boundWinUp, { passive: false });
+      }
+
+      onPointerMove(p) {
+        const rect = this.game.canvas.getBoundingClientRect();
+        this.updateDragFromClient(p.x + rect.left, p.y + rect.top);
+      }
+
+      onPointerUp() {
+        if (!state.drag) return;
+        this.releaseDragFromClient(state.drag.pointerX, state.drag.pointerY);
+      }
+
+      onWindowPointerMove(e) {
+        if (!state.drag) return;
+        e.preventDefault();
+        this.updateDragFromClient(e.clientX, e.clientY);
+      }
+
+      onWindowPointerUp(e) {
+        if (!state.drag) return;
+        e.preventDefault();
+        this.releaseDragFromClient(e.clientX, e.clientY);
+      }
+
+      updateDragFromClient(clientX, clientY) {
+        if (!state.drag) return;
+        state.drag.pointerX = clientX;
+        state.drag.pointerY = clientY;
+        const place = this.calcPlacement(clientX, clientY, state.drag.shape, state.drag.offsetR, state.drag.offsetC);
+        this.clearPreview();
+        this.drawPreview(place.snapR, place.snapC, state.drag.shape, place.valid);
+        if (place.valid) state.drag.lastValid = { r: place.snapR, c: place.snapC };
+      }
+
+      releaseDragFromClient(clientX, clientY) {
+        if (!state.drag || !state.running || state.moveBlocked) return;
+        const d = state.drag;
+        const place = this.calcPlacement(clientX, clientY, d.shape, d.offsetR, d.offsetC);
+        if (place.valid) {
+          this.commitPlacement(d.shape, place.snapR, place.snapC, d.molePos, d.hasMole, d.idx);
+        } else {
+          const rb = d.lastValid || this.findNearestPlacement(d.shape, place.rawR, place.rawC, GRID_SIZE);
+          if (rb && this.canPlace(d.shape, rb.r, rb.c)) {
+            this.time.delayedCall(90, () => this.commitPlacement(d.shape, rb.r, rb.c, d.molePos, d.hasMole, d.idx));
+          } else {
+            this.cameras.main.shake(120, 0.004);
+          }
+        }
+        d.slot.classList.remove('selected');
+        state.drag = null;
+        this.clearPreview();
+        window.removeEventListener('pointermove', this.boundWinMove);
+        window.removeEventListener('pointerup', this.boundWinUp);
+      }
+
+      calcPlacement(px, py, shape, offsetR, offsetC) {
+        const rect = this.game.canvas.getBoundingClientRect();
+        const cell = this.cellSize;
+        const rawC = Math.floor((px - rect.left) / cell) - offsetC;
+        const rawR = Math.floor((py - rect.top) / cell) - offsetR;
+        const snap = this.getSnapPlacement(shape, rawR, rawC, 2);
+        return { rawR, rawC, snapR: snap.r, snapC: snap.c, valid: this.canPlace(shape, snap.r, snap.c) };
+      }
+
+      canPlace(shape, r, c) {
+        for (let i=0;i<shape.length;i++) for (let j=0;j<shape[i].length;j++) if (shape[i][j]) {
+          const nr = r + i, nc = c + j;
+          if (nr < 0 || nc < 0 || nr >= GRID_SIZE || nc >= GRID_SIZE || state.grid[nr][nc]) return false;
+        }
+        return true;
+      }
+
+      getSnapPlacement(shape, r, c, radius = 2) {
+        if (this.canPlace(shape, r, c)) return { r, c };
+        return this.findNearestPlacement(shape, r, c, radius) || { r, c };
+      }
+
+      findNearestPlacement(shape, r, c, radius) {
+        let best = null;
+        let bestDist = Infinity;
+        for (let dr = -radius; dr <= radius; dr++) {
+          for (let dc = -radius; dc <= radius; dc++) {
+            const nr = r + dr;
+            const nc = c + dc;
+            if (!this.canPlace(shape, nr, nc)) continue;
+            const dist = Math.abs(dr) + Math.abs(dc);
+            if (dist < bestDist) { bestDist = dist; best = { r: nr, c: nc }; }
+          }
+        }
+        return best;
+      }
+
+      drawPreview(r, c, shape, valid) {
+        const occupied = [];
+        for (let i=0;i<shape.length;i++) for (let j=0;j<shape[i].length;j++) if (shape[i][j]) {
+          const nr = r + i, nc = c + j;
+          if (nr >= 0 && nc >= 0 && nr < GRID_SIZE && nc < GRID_SIZE) {
+            this.gridSprites[nr][nc].bg.setFillStyle(valid ? 0x78c85a : 0xff5a6c, 0.45);
+            occupied.push({ r: nr, c: nc });
+          }
+        }
+        const lines = this.predictClearance(occupied);
+        lines.forEach(p => this.gridSprites[p.r][p.c].bg.setFillStyle(0xffd64a, 0.52));
+      }
+
+      clearPreview() {
+        for (let r=0;r<GRID_SIZE;r++) for (let c=0;c<GRID_SIZE;c++) this.gridSprites[r][c].bg.setFillStyle(0x5C3222, 1);
+      }
+
+      predictClearance(occupied) {
+        const temp = state.grid.map(row => row.slice());
+        occupied.forEach(p => temp[p.r][p.c] = 1);
+        const rows = [], cols = [], out = [];
+        for (let i=0;i<GRID_SIZE;i++) {
+          if (temp[i].every(v => v === 1)) rows.push(i);
+          if (temp.every(row => row[i] === 1)) cols.push(i);
+        }
+        for (let r=0;r<GRID_SIZE;r++) for (let c=0;c<GRID_SIZE;c++) if (rows.includes(r) || cols.includes(c)) out.push({ r, c });
+        return out;
+      }
+
+      commitPlacement(shape, r, c, molePos, hasMole, pieceIdx) {
+        state.moveBlocked = true;
+        const blockId = state.blockIdCounter++;
+        for (let i=0;i<shape.length;i++) for (let j=0;j<shape[i].length;j++) if (shape[i][j]) {
+          const nr = r + i, nc = c + j;
+          state.grid[nr][nc] = 1;
+          if (hasMole) { state.holes[nr][nc] = 1; state.holeBlock[nr][nc] = blockId; state.holeVisits[nr][nc] = 0; }
+        }
+        if (hasMole && molePos) {
+          const mr = r + molePos.r;
+          const mc = c + molePos.c;
+          const sprite = this.add.image(mc * this.cellSize + this.cellSize / 2, mr * this.cellSize + this.cellSize / 2, 'mole').setDisplaySize(this.cellSize * 0.9, this.cellSize * 0.9);
+          this.moleLayer.add(sprite);
+          state.moles.push({ r: mr, c: mc, sprite, freeze: 1, reward: state.rewardPerMole, blockId });
+        }
+
+        state.piecePool[pieceIdx] = null;
+        if (state.piecePool.every(p => !p)) this.drawPieces();
+        this.refreshBoard();
+
+        this.tweens.add({ targets: this.cameras.main, zoom: 0.992, yoyo: true, duration: 52, onComplete: () => this.runClearThenMove() });
+      }
+
+      runClearThenMove() {
+        const rows = [], cols = [];
+        for (let i=0;i<GRID_SIZE;i++) {
+          if (state.grid[i].every(v => v === 1)) rows.push(i);
+          if (state.grid.every(row => row[i] === 1)) cols.push(i);
+        }
+        if (!rows.length && !cols.length) {
+          this.moveMoles();
+          state.moveBlocked = false;
+          this.endCheck();
+          return;
+        }
+
+        const captured = state.moles.filter(m => rows.includes(m.r) || cols.includes(m.c));
+        for (let r=0;r<GRID_SIZE;r++) for (let c=0;c<GRID_SIZE;c++) {
+          if (rows.includes(r) || cols.includes(c)) {
+            this.tweens.add({ targets: this.gridSprites[r][c].bg, alpha: 0.35, yoyo: true, duration: 120 });
+          }
+        }
+
+        this.time.delayedCall(220, () => {
+          rows.forEach(r => {
+            state.grid[r].fill(0); state.holes[r].fill(0); state.holeBlock[r].fill(-1); state.holeVisits[r].fill(0);
+          });
+          cols.forEach(c => {
+            state.grid.forEach(row => row[c] = 0);
+            state.holes.forEach(row => row[c] = 0);
+            state.holeBlock.forEach(row => row[c] = -1);
+            state.holeVisits.forEach(row => row[c] = 0);
+          });
+          this.refreshBoard();
+
+          captured.forEach((m, idx) => this.time.delayedCall(240 + idx * 70, () => this.hammerMole(m)));
+          if (captured.length >= PERFECT_TIMING_MIN_HIT) {
+            const tier = captured.length === 2 ? 'double' : captured.length === 3 ? 'triple' : 'multi';
+            const text = tier === 'double' ? 'Double Mole!' : tier === 'triple' ? 'Triple Mole!' : 'Multi Mole!';
+            showCombo(text, tier);
+          }
+          state.moles = state.moles.filter(m => !captured.includes(m));
+          this.time.delayedCall(420, () => {
+            this.moveMoles();
+            state.moveBlocked = false;
+            this.endCheck();
+          });
+        });
+      }
+
+      hammerMole(m) {
+        const hx = m.c * this.cellSize + this.cellSize * 0.34;
+        const hy = m.r * this.cellSize + this.cellSize * 0.34;
+        const h = this.add.image(hx, hy, 'hammer').setDisplaySize(80, 80).setDepth(10);
+        this.moleLayer.add(h);
+        this.tweens.add({ targets: h, scale: 0.75, y: hy - 8, duration: 300, onComplete: () => h.destroy() });
+        m.sprite.setTint(0xffd080);
+        this.time.delayedCall(260, () => {
+          m.sprite.destroy();
+          state.collected += 1;
+          state.earned = Math.min(state.collected * state.rewardPerMole, state.maxReward);
+          updateHud();
+        });
+      }
+
+      moveMoles() {
+        const dirs = [{dr:0,dc:1}, {dr:1,dc:0}, {dr:0,dc:-1}, {dr:-1,dc:0}];
+        state.moles.forEach(m => {
+          if (m.freeze > 0) { m.freeze -= 1; return; }
+          const cand = [];
+          dirs.forEach((d, idx) => {
+            const nr = m.r + d.dr;
+            const nc = m.c + d.dc;
+            if (nr < 0 || nc < 0 || nr >= GRID_SIZE || nc >= GRID_SIZE) return;
+            if (!state.holes[nr][nc]) return;
+            if (state.holeBlock[nr][nc] !== m.blockId) return;
+            cand.push({ r: nr, c: nc, v: state.holeVisits[nr][nc], ord: idx });
+          });
+          if (cand.length) {
+            cand.sort((a,b)=>(a.v-b.v)||(a.ord-b.ord));
+            const n = cand[0];
+            m.r = n.r;
+            m.c = n.c;
+            state.holeVisits[m.r][m.c] += 1;
+          }
+          this.tweens.add({ targets: m.sprite, x: m.c * this.cellSize + this.cellSize / 2, y: m.r * this.cellSize + this.cellSize / 2, duration: 180 });
+        });
+      }
+
+      refreshBoard() {
+        for (let r=0;r<GRID_SIZE;r++) for (let c=0;c<GRID_SIZE;c++) {
+          const cell = this.gridSprites[r][c];
+          if (cell.block) { cell.block.destroy(); cell.block = null; }
+          if (cell.hole) { cell.hole.destroy(); cell.hole = null; }
+          if (state.grid[r][c]) cell.block = this.add.image(c*this.cellSize + this.cellSize/2, r*this.cellSize + this.cellSize/2, 'block').setDisplaySize(this.cellSize-4, this.cellSize-4);
+          if (state.holes[r][c]) cell.hole = this.add.image(c*this.cellSize + this.cellSize/2, r*this.cellSize + this.cellSize/2, 'hole').setDisplaySize(this.cellSize-4, this.cellSize-4);
+          if (cell.block) this.board.add(cell.block);
+          if (cell.hole) this.board.add(cell.hole);
+          this.board.sendToBack(cell.bg);
+        }
+        this.moleLayer.each(s => this.board.bringToTop(s));
+      }
+
+      hasAnyMoves() {
+        const pool = state.piecePool.filter(Boolean);
+        if (!pool.length) return true;
+        for (const p of pool) {
+          for (let r=0;r<GRID_SIZE;r++) for (let c=0;c<GRID_SIZE;c++) if (this.canPlace(p.shape, r, c)) return true;
+        }
+        return false;
+      }
+
+      async finish(win, reasonKind) {
+        if (!state.running) return;
+        state.running = false;
+        const passedGoal = state.collected >= state.goal;
+        const winFinal = win || passedGoal;
+        if (winFinal) {
+          await showResultCard('complete', 1200);
+          showToast('Victory!', 1200);
+        } else {
+          await showResultCard(reasonKind === 'move' ? 'move' : 'time', 1200);
+          showToast(reasonKind === 'move' ? 'No Moves' : 'Time Up', 1200);
+        }
+        ui.gate.style.display = 'flex';
+      }
+
+      endCheck() {
+        if (!state.running) return;
+        if (state.earned >= state.maxReward || state.collected >= state.cap) {
+          this.finish(true, 'complete');
+          return;
+        }
+        if (!this.hasAnyMoves()) this.finish(false, 'move');
+      }
+    }
+
+    const game = new Phaser.Game({
+      type: Phaser.AUTO,
+      parent: 'phaser-mount',
+      width: 360,
+      height: 360,
+      transparent: true,
+      scene: [GameScene],
+      input: { touch: true, mouse: true },
+      audio: { noAudio: true },
+    });
+
+    function bindUi() {
+      ui.debugToggle.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        ui.debugPanel.classList.toggle('hidden');
+      });
+      ui.dbgMode.addEventListener('change', applyDebugConfig);
+      ui.dbgRate.addEventListener('change', applyDebugConfig);
+      ui.dbgGoal.addEventListener('change', applyDebugConfig);
+      ui.dbgCap.addEventListener('change', applyDebugConfig);
+      ui.dbgReward.addEventListener('change', applyDebugConfig);
+      ui.dbgDifficulty.addEventListener('change', applyDebugConfig);
+      ui.dbgRefreshSeed.addEventListener('pointerup', async (e) => {
+        e.preventDefault();
+        state.currentSeedCase = null;
+        await rollSeedCase();
+        showToast('Seed refreshed', 900);
+      });
+
+      document.querySelectorAll('.stake').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.stake').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          state.stake = Number(btn.dataset.stake) || 1;
+          state.rewardPerMole = state.stake * state.rewardRate;
+          state.maxReward = state.cap * state.rewardPerMole;
+          updateHud();
+        });
+      });
+
+      ui.play.addEventListener('click', async () => {
+        if (!state.gameReady) {
+          showToast('Loading engine...', 900);
+          return;
+        }
+        applyDebugConfig();
+        state.currentSeedCase = null;
+        await rollSeedCase();
+        resetRuntimeState();
+        state.rewardPerMole = state.stake * state.rewardRate;
+        state.maxReward = state.cap * state.rewardPerMole;
+        updateHud();
+        state.running = true;
+        ui.gate.style.display = 'none';
+        const scene = game.scene.getScene('game');
+        scene.drawPieces();
+        scene.refreshBoard();
+      });
+    }
+
+    setInterval(() => {
+      if (!state.running) return;
+      state.timeLeft -= 1;
+      const m = String(Math.floor(state.timeLeft / 60)).padStart(2, '0');
+      const s = String(state.timeLeft % 60).padStart(2, '0');
+      ui.timer.textContent = `${m}:${s}`;
+      if (state.timeLeft <= 0) {
+        const scene = game.scene.getScene('game');
+        scene.finish(false, 'time');
+      }
+    }, 1000);
+
+    (async () => {
+      bindUi();
+      applyDebugConfig();
+      await rollSeedCase();
+      resetRuntimeState();
+      const scene = game.scene.getScene('game');
+      if (scene && scene.scene.isActive()) scene.refreshBoard();
+    })();
+</script>
+</body>
+</html>

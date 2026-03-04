@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Block Rise: Phaser Migration</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="device-shell">
+    <div class="app">
+      <header>
+        <div id="timer" class="top-time">03:00</div>
+        <div id="earned" class="top-balance">$0.00</div>
+        <div class="top-settings">⚙</div>
+      </header>
+
+      <div class="goal-cards">
+        <div class="goal-card goal"><div id="goal-status" class="goal-value">0/12</div></div>
+        <div class="goal-card earned"><div id="earned-status" class="goal-value">$0.00/$2.00</div></div>
+      </div>
+
+      <div id="game-root">
+        <div id="phaser-mount"></div>
+      </div>
+
+      <div id="piece-zone" class="piece-zone"></div>
+      <div id="migration-note" class="migration-note">Phaser scaffold running. Gameplay migration starts next.</div>
+    </div>
+
+    <div id="gate" class="gate">
+      <div class="gate-card">
+        <div class="gate-title">Level 48</div>
+        <div class="gate-info">
+          <div>Goal</div>
+          <div>Whack <span id="gate-goal">12</span> Moles</div>
+          <div>Rewards up to</div>
+          <div id="gate-max">$2.00</div>
+        </div>
+        <button id="play" class="play">Play (Scaffold)</button>
+      </div>
+    </div>
+
+    <div id="result-overlay" class="result-overlay hidden">
+      <div class="result-card">
+        <img id="result-image" class="result-image" src="../pic/move.png" alt="result" />
+        <button id="result-restart" class="play">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../lib/phaser.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

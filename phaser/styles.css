@@ -1,0 +1,131 @@
+:root {
+  --device-w: 402px;
+  --device-h: 874px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 10% 10%, #def7bc, #9dd176 60%, #6fa953);
+  font-family: "Baloo 2", "PingFang SC", sans-serif;
+}
+.device-shell {
+  width: min(var(--device-w), 94vw);
+  height: min(var(--device-h), 94vh);
+  border-radius: 34px;
+  border: 4px solid rgba(100,70,30,.25);
+  background: url('../pic/grassbackground.jpg') center/cover no-repeat;
+  box-shadow: 0 26px 60px rgba(0,0,0,.35);
+  position: relative;
+  overflow: hidden;
+  padding: 8px 10px 14px;
+}
+.app { height: 100%; display: flex; flex-direction: column; gap: 8px; }
+header {
+  display:flex; justify-content:space-between; align-items:center;
+  background: linear-gradient(180deg, rgba(255,255,255,.58), rgba(255,255,255,.26));
+  border-radius: 14px; border:1px solid rgba(255,255,255,.5);
+  padding: 6px 8px;
+}
+.top-time { font-size: 1.75rem; font-weight: 900; color: #fff; text-shadow: -2px -2px #126e30, 2px 2px #126e30; }
+.top-balance { background:#ffffffd9; border-radius:999px; padding:2px 10px; color:#11853a; font-weight:900; }
+.top-settings { width:44px; height:44px; border-radius:50%; background:#fff; display:grid; place-items:center; font-size:28px; }
+.goal-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.goal-card { min-height:80px; border-radius:12px; display:grid; place-items:center; background: rgba(255,255,255,.45); }
+.goal-card.goal { background: url('../pic/goal.png') center/100% 100% no-repeat; }
+.goal-card.earned { background: url('../pic/youearned.png') center/100% 100% no-repeat; }
+.goal-value { color:#fff; font-weight:900; text-shadow:0 2px 0 rgba(110,58,31,.9),0 4px 8px rgba(0,0,0,.24); }
+#game-root { width:100%; max-width:360px; aspect-ratio:1; margin: 0 auto; border-radius:18px; background:#5C3222; border:2px solid rgba(120,80,30,.28); overflow:hidden; }
+#phaser-mount { width:100%; height:100%; }
+.piece-zone {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+.piece-slot {
+  min-height: 92px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.38);
+  border: 1px solid rgba(255,255,255,.55);
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  transition: transform .14s ease, box-shadow .14s ease, opacity .14s ease;
+}
+.piece-slot.selected {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.2);
+}
+.piece-slot.used {
+  opacity: .25;
+}
+.piece-canvas {
+  width: auto;
+  height: auto;
+  max-width: 86px;
+  max-height: 86px;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.drag-ghost {
+  position: fixed;
+  width: 92px;
+  height: 92px;
+  pointer-events: none;
+  z-index: 80;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+}
+.migration-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.55);
+  border: 1px dashed rgba(80,50,20,.35);
+  font-size: .84rem;
+  font-weight: 800;
+  color: #4f2d10;
+}
+.gate {
+  position:absolute; inset:0; z-index:30; display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(180deg, rgba(8,26,12,.55), rgba(10,28,14,.68));
+  backdrop-filter: blur(3px);
+}
+.gate.hidden { display:none; }
+.hidden { display: none !important; }
+.gate-card {
+  width:min(92%,360px); border-radius:24px; padding:14px;
+  background: linear-gradient(180deg, rgba(255,247,220,.98), rgba(246,230,189,.96));
+  border:2px solid rgba(122,82,30,.42); color:#2e1c06;
+}
+.gate-title { text-align:center; font-size:1.6rem; font-weight:900; margin:2px 0 8px; }
+.gate-info { border-radius:16px; padding:10px; background:rgba(255,255,255,.58); text-align:center; }
+#gate-max { font-size:1.9rem; font-weight:900; color:#0c8e44; }
+.play {
+  width:100%; height:54px; margin-top:10px; border-radius:999px;
+  font-size:1.2rem; font-weight:900;
+  background:linear-gradient(180deg,#ffe89e,#ffcc64);
+  border:1px solid rgba(124,79,21,.55);
+}
+.result-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(12,20,12,.55), rgba(10,14,8,.72));
+}
+.result-card {
+  width: min(88%, 340px);
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+.result-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
