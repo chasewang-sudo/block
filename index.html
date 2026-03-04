@@ -94,6 +94,12 @@
             align-items: center;
             gap: 6px;
             padding: 4px 10px 10px;
+            transition: transform 0.06s linear, filter 0.06s linear;
+        }
+
+        .app.hit-stop {
+            transform: scale(0.992);
+            filter: saturate(1.05) brightness(1.03);
         }
 
         header {
@@ -437,6 +443,27 @@
             display: grid;
             gap: 4px;
             filter: drop-shadow(0 6px 8px rgba(0,0,0,0.25));
+            will-change: left, top, transform, opacity;
+        }
+
+        .drag-ghost.magnetic {
+            transition: left 110ms cubic-bezier(0.22, 0.78, 0.2, 1), top 110ms cubic-bezier(0.22, 0.78, 0.2, 1);
+        }
+
+        .drag-ghost.rebound {
+            transition: left 120ms cubic-bezier(0.22, 0.78, 0.2, 1), top 120ms cubic-bezier(0.22, 0.78, 0.2, 1);
+        }
+
+        .drag-ghost.invalid-flash {
+            animation: ghost-invalid 0.16s ease;
+        }
+
+        @keyframes ghost-invalid {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-3px); }
+            100% { transform: translateX(0); }
         }
 
         .piece:active { cursor: grabbing; transform: scale(1.02); }
@@ -713,9 +740,56 @@
             white-space: nowrap;
         }
 
+        .combo-toast.combo-double {
+            background: linear-gradient(180deg, rgba(255,191,77,0.99), rgba(229,132,35,0.99));
+            border-color: #ffe39f;
+        }
+
+        .combo-toast.combo-triple {
+            background: linear-gradient(180deg, rgba(120,227,120,0.99), rgba(45,163,72,0.99));
+            border-color: #d8ffd8;
+            -webkit-text-stroke: 1.6px #1f6e2f;
+            text-shadow: 0 2px 0 rgba(31,110,47,0.85), 0 8px 18px rgba(0,0,0,0.32);
+        }
+
+        .combo-toast.combo-multi {
+            background: linear-gradient(180deg, rgba(118,196,255,0.99), rgba(50,124,226,0.99));
+            border-color: #d4ecff;
+            -webkit-text-stroke: 1.6px #214b93;
+            text-shadow: 0 2px 0 rgba(33,75,147,0.85), 0 8px 18px rgba(0,0,0,0.32);
+        }
+
         .combo-toast.show {
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
+        }
+
+        .combo-particle {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            background: var(--pc, #ffd76a);
+            z-index: 4199;
+            pointer-events: none;
+            opacity: 0;
+            animation: combo-burst 0.7s ease-out forwards;
+        }
+
+        @keyframes combo-burst {
+            0% {
+                transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
+                opacity: 0;
+            }
+            14% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, -40px))) scale(1.05) rotate(var(--rot, 90deg));
+                opacity: 0;
+            }
         }
 
         .result-toast {
@@ -1648,6 +1722,10 @@
     const FORCE_SECOND_BLOCK = false;
     const FORCE_ONE_MOLE_IN_FIRST_THREE = true;
     const PERFECT_TIMING_MIN_HIT = 2;
+    const HIT_STOP_MS = 52;
+    const SOFT_SNAP_MS = 110;
+    const DROP_SNAP_RADIUS = 2;
+    const REBOUND_SNAP_RADIUS = GRID_SIZE;
     const DEBUG_RETURN_OPTIONS = [
         { value: 2, chance: 0.40 },
         { value: 2.5, chance: 0.50 },
@@ -2052,17 +2130,18 @@
                 const oy = e.clientY - rect.top;
                 const offsetC = Math.max(0, Math.min(shapeW - 1, Math.floor(ox / cellW)));
                 const offsetR = Math.max(0, Math.min(shapeH - 1, Math.floor(oy / cellH)));
-                touchDrag = { data, offsetR, offsetC, sourceEl: pieceEl, lift: TOUCH_LIFT_PX };
+                touchDrag = {
+                    data, offsetR, offsetC, sourceEl: pieceEl, lift: TOUCH_LIFT_PX,
+                    lastSnapKey: '', lastValidPlacement: null
+                };
                 // Keep only the moving ghost visible; hide source tile while dragging.
                 pieceEl.style.opacity = '0';
                 pieceEl.style.filter = 'none';
                 pieceEl.style.transform = '';
                 createDragGhost(shapeCopy, fixedMolePos);
-                moveDragGhost(e.clientX, e.clientY);
-                updatePreviewFromPointer(e.clientX, e.clientY);
+                updateDragFeedbackFromPointer(e.clientX, e.clientY);
                 const onMove = (ev) => {
-                    updatePreviewFromPointer(ev.clientX, ev.clientY);
-                    moveDragGhost(ev.clientX, ev.clientY);
+                    updateDragFeedbackFromPointer(ev.clientX, ev.clientY);
                 };
                 const onUp = (ev) => {
                     finalizeTouchDrop(ev.clientX, ev.clientY);
@@ -2086,21 +2165,22 @@
                 const oy = t.clientY - rect.top;
                 const offsetC = Math.max(0, Math.min(shapeW - 1, Math.floor(ox / cellW)));
                 const offsetR = Math.max(0, Math.min(shapeH - 1, Math.floor(oy / cellH)));
-                touchDrag = { data, offsetR, offsetC, sourceEl: pieceEl, lift: TOUCH_LIFT_PX };
+                touchDrag = {
+                    data, offsetR, offsetC, sourceEl: pieceEl, lift: TOUCH_LIFT_PX,
+                    lastSnapKey: '', lastValidPlacement: null
+                };
                 // Hide source piece during touch drag to avoid a static translucent "shadow".
                 pieceEl.style.opacity = '0';
                 pieceEl.style.filter = 'none';
                 pieceEl.style.transform = '';
                 createDragGhost(shapeCopy, fixedMolePos);
-                moveDragGhost(t.clientX, t.clientY);
-                updatePreviewFromPointer(t.clientX, t.clientY);
+                updateDragFeedbackFromPointer(t.clientX, t.clientY);
             }, { passive: false });
             pieceEl.addEventListener('touchmove', (e) => {
                 if (!touchDrag) return;
                 e.preventDefault();
                 const t = e.touches[0];
-                moveDragGhost(t.clientX, t.clientY);
-                updatePreviewFromPointer(t.clientX, t.clientY);
+                updateDragFeedbackFromPointer(t.clientX, t.clientY);
             }, { passive: false });
             pieceEl.addEventListener('touchend', (e) => {
                 if (!touchDrag) return;
@@ -2130,7 +2210,7 @@
         const cellSize = rect.width / GRID_SIZE;
         const targetR = Math.floor((e.clientY - rect.top) / cellSize) - dragInfo.offsetR;
         const targetC = Math.floor((e.clientX - rect.left) / cellSize) - dragInfo.offsetC;
-        const snap = getSnapPlacement(data.shape, targetR, targetC);
+        const snap = getSnapPlacement(data.shape, targetR, targetC, DROP_SNAP_RADIUS);
         updatePreview(data.shape, snap.r, snap.c);
     });
     gridEl.addEventListener('drop', e => {
@@ -2141,23 +2221,10 @@
         const cellSize = rect.width / GRID_SIZE;
         const targetR = Math.floor((e.clientY - rect.top) / cellSize) - dragInfo.offsetR;
         const targetC = Math.floor((e.clientX - rect.left) / cellSize) - dragInfo.offsetC;
-        const snap = getSnapPlacement(data.shape, targetR, targetC);
+        const snap = getSnapPlacement(data.shape, targetR, targetC, DROP_SNAP_RADIUS);
         const ok = canPlace(data.shape, snap.r, snap.c);
         if (ok) {
-            placeBlock(data.shape, snap.r, snap.c, data.molePos, data.moleType);
-            if (dragInfo.sourceEl && dragInfo.sourceEl.parentElement) {
-                dragInfo.sourceEl.parentElement.innerHTML = '';
-            }
-
-            if (isAllSlotsEmpty()) generatePieces();
-
-            setTimeout(() => {
-                checkClearance();
-                setTimeout(moveMoles, 360);
-            }, 50);
-            setTimeout(() => {
-                if (!hasAnyMoves()) endGame(false, '没有空格了');
-            }, 520);
+            commitPlacement(data, snap.r, snap.c, dragInfo.sourceEl);
         } else {
             boardShake();
         }
@@ -2175,6 +2242,34 @@
             }
         }
         return true;
+    }
+
+    function runHitStop(then) {
+        const app = document.querySelector('.app');
+        if (!app) {
+            then();
+            return;
+        }
+        app.classList.add('hit-stop');
+        setTimeout(() => {
+            app.classList.remove('hit-stop');
+            then();
+        }, HIT_STOP_MS);
+    }
+
+    function commitPlacement(data, r, c, sourceEl) {
+        placeBlock(data.shape, r, c, data.molePos, data.moleType);
+        if (sourceEl && sourceEl.parentElement) {
+            sourceEl.parentElement.innerHTML = '';
+        }
+        if (isAllSlotsEmpty()) generatePieces();
+        runHitStop(() => {
+            checkClearance();
+            setTimeout(moveMoles, 360);
+            setTimeout(() => {
+                if (!hasAnyMoves()) endGame(false, '没有空格了');
+            }, 520);
+        });
     }
 
     function placeBlock(shape, r, c, molePos, moleType) {
@@ -2331,10 +2426,13 @@
             setTimeout(() => spawnHammerSequence(mole), delay);
         });
         if (captured.length >= PERFECT_TIMING_MIN_HIT) {
-            const comboText = captured.length === 2
+            const comboTier = captured.length === 2
+                ? 'double'
+                : (captured.length === 3 ? 'triple' : 'multi');
+            const comboText = comboTier === 'double'
                 ? 'Double Mole!'
-                : (captured.length === 3 ? 'Triple Mole!' : 'Multi Mole!');
-            setTimeout(() => showComboToast(comboText, 1000), 220);
+                : (comboTier === 'triple' ? 'Triple Mole!' : 'Multi Mole!');
+            setTimeout(() => showComboToast(comboText, 1000, comboTier), 220);
         }
 
         moles = moles.filter(mole => !captured.includes(mole));
@@ -2410,33 +2508,70 @@
     function updatePreviewFromPointer(x, y) {
         if (!touchDrag) return;
         const { targetR, targetC } = getPlacementFromPointer(x, y);
-        const snap = getSnapPlacement(touchDrag.data.shape, targetR, targetC);
+        const snap = getSnapPlacement(touchDrag.data.shape, targetR, targetC, DROP_SNAP_RADIUS);
         updatePreview(touchDrag.data.shape, snap.r, snap.c);
+    }
+
+    function updateDragFeedbackFromPointer(x, y) {
+        if (!touchDrag) return;
+        const { targetR, targetC } = getPlacementFromPointer(x, y);
+        const rawValid = canPlace(touchDrag.data.shape, targetR, targetC);
+        const snap = getSnapPlacement(touchDrag.data.shape, targetR, targetC, DROP_SNAP_RADIUS);
+        const snapValid = canPlace(touchDrag.data.shape, snap.r, snap.c);
+        updatePreview(touchDrag.data.shape, snap.r, snap.c);
+
+        if (!dragGhost) return;
+        const raw = getGhostTopLeft(x, y);
+        moveDragGhost(raw.left, raw.top, { magnetic: false });
+        if (snapValid) {
+            touchDrag.lastSnapKey = `${snap.r},${snap.c}`;
+            touchDrag.lastValidPlacement = { r: snap.r, c: snap.c };
+        } else {
+            touchDrag.lastSnapKey = '';
+        }
     }
 
     function finalizeTouchDrop(x, y) {
         if (!touchDrag) return;
         const { targetR, targetC } = getPlacementFromPointer(x, y);
-        const snap = getSnapPlacement(touchDrag.data.shape, targetR, targetC);
+        const snap = getSnapPlacement(touchDrag.data.shape, targetR, targetC, DROP_SNAP_RADIUS);
         const ok = canPlace(touchDrag.data.shape, snap.r, snap.c);
         if (ok) {
-            placeBlock(touchDrag.data.shape, snap.r, snap.c, touchDrag.data.molePos, touchDrag.data.moleType);
-            if (touchDrag.sourceEl && touchDrag.sourceEl.parentElement) {
-                touchDrag.sourceEl.parentElement.innerHTML = '';
+            const pos = getGhostTopLeftFromPlacement(snap.r, snap.c);
+            if (dragGhost) {
+                dragGhost.classList.add('magnetic');
+                dragGhost.style.left = `${pos.left}px`;
+                dragGhost.style.top = `${pos.top}px`;
             }
-            if (isAllSlotsEmpty()) generatePieces();
             setTimeout(() => {
-                checkClearance();
-                setTimeout(moveMoles, 360);
-            }, 50);
-            setTimeout(() => {
-                if (!hasAnyMoves()) endGame(false, '没有空格了');
-            }, 520);
+                commitPlacement(touchDrag.data, snap.r, snap.c, touchDrag.sourceEl);
+                clearPreview();
+                resetTouchDrag();
+            }, 70);
         } else {
+            triggerInvalidDragFeedback();
+            const rebound = touchDrag.lastValidPlacement
+                || findNearestPlacement(touchDrag.data.shape, targetR, targetC, REBOUND_SNAP_RADIUS);
+            if (rebound && canPlace(touchDrag.data.shape, rebound.r, rebound.c)) {
+                const pos = getGhostTopLeftFromPlacement(rebound.r, rebound.c);
+                if (dragGhost) {
+                    dragGhost.classList.add('rebound');
+                    dragGhost.style.left = `${pos.left}px`;
+                    dragGhost.style.top = `${pos.top}px`;
+                }
+                clearPreview();
+                updatePreview(touchDrag.data.shape, rebound.r, rebound.c);
+                setTimeout(() => {
+                    commitPlacement(touchDrag.data, rebound.r, rebound.c, touchDrag.sourceEl);
+                    clearPreview();
+                    resetTouchDrag();
+                }, Math.max(90, SOFT_SNAP_MS));
+                return;
+            }
             boardShake();
+            clearPreview();
+            setTimeout(() => resetTouchDrag(), 120);
         }
-        clearPreview();
-        resetTouchDrag();
     }
 
     function resetTouchDrag() {
@@ -2451,6 +2586,16 @@
         touchDrag = null;
     }
 
+    function triggerInvalidDragFeedback() {
+        if (!dragGhost) return;
+        dragGhost.classList.remove('invalid-flash');
+        dragGhost.offsetWidth;
+        dragGhost.classList.add('invalid-flash');
+        setTimeout(() => {
+            if (dragGhost) dragGhost.classList.remove('invalid-flash');
+        }, 180);
+    }
+
     window.addEventListener('blur', () => resetTouchDrag());
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) resetTouchDrag();
@@ -2461,6 +2606,7 @@
         const ghost = document.createElement('div');
         ghost.className = 'drag-ghost';
         ghost.style.gridTemplateColumns = `repeat(${shape[0].length}, 1fr)`;
+        ghost.style.transition = 'none';
         shape.forEach((row, r) => {
             row.forEach((v, c) => {
                 const cEl = document.createElement('div');
@@ -2475,11 +2621,17 @@
         dragGhost = ghost;
     }
 
-    function moveDragGhost(x, y) {
+    function moveDragGhost(x, y, opts = {}) {
         if (!dragGhost) return;
-        const { left, top } = getGhostTopLeft(x, y);
-        dragGhost.style.left = `${left}px`;
-        dragGhost.style.top = `${top}px`;
+        const { magnetic = false } = opts;
+        dragGhost.classList.remove('rebound');
+        if (magnetic) {
+            dragGhost.classList.add('magnetic');
+        } else {
+            dragGhost.classList.remove('magnetic');
+        }
+        dragGhost.style.left = `${x}px`;
+        dragGhost.style.top = `${y}px`;
     }
 
     function removeDragGhost() {
@@ -2495,6 +2647,14 @@
         const left = x - (touchDrag.offsetC + 0.5) * cellSize;
         const top = y - (touchDrag.offsetR + 0.5) * cellSize - (touchDrag.lift || 0);
         return { left, top, cellSize, gridTop: rect.top, gridLeft: rect.left };
+    }
+
+    function getGhostTopLeftFromPlacement(r, c) {
+        const rect = gridEl.getBoundingClientRect();
+        const cellSize = rect.width / GRID_SIZE;
+        const left = rect.left + c * cellSize;
+        const top = rect.top + r * cellSize;
+        return { left, top };
     }
 
     function getPlacementFromPointer(x, y) {
@@ -2527,9 +2687,9 @@
         shell.classList.add('screen-shake');
     }
 
-    function getSnapPlacement(shape, r, c) {
+    function getSnapPlacement(shape, r, c, radius = DROP_SNAP_RADIUS) {
         if (canPlace(shape, r, c)) return { r, c };
-        return findNearestPlacement(shape, r, c, 2);
+        return findNearestPlacement(shape, r, c, radius);
     }
 
     function findNearestPlacement(shape, r, c, radius) {
@@ -2793,10 +2953,11 @@
         }, delay);
     }
 
-    function showComboToast(message = 'Perfect Timing!', delay = 1000) {
+    function showComboToast(message = 'Perfect Timing!', delay = 1000, tier = 'double') {
         if (!comboToastEl) return;
         comboToastEl.innerText = message;
-        comboToastEl.classList.remove('show');
+        comboToastEl.classList.remove('show', 'combo-double', 'combo-triple', 'combo-multi');
+        comboToastEl.classList.add(`combo-${tier}`);
         const board = document.getElementById('board-wrapper');
         if (board) {
             const rect = board.getBoundingClientRect();
@@ -2804,11 +2965,40 @@
             comboToastEl.style.top = `${rect.top + rect.height * 0.22}px`;
             comboToastEl.style.transform = 'translate(-50%, -50%) scale(0.94)';
         }
+        spawnComboParticles(tier);
         if (comboToastTimer) clearTimeout(comboToastTimer);
         requestAnimationFrame(() => comboToastEl.classList.add('show'));
         comboToastTimer = setTimeout(() => {
             comboToastEl.classList.remove('show');
         }, delay);
+    }
+
+    function spawnComboParticles(tier = 'double') {
+        const count = tier === 'double' ? 8 : (tier === 'triple' ? 14 : 20);
+        const palette = tier === 'double'
+            ? ['#ffd76a', '#ffbe57', '#ffe9a8']
+            : (tier === 'triple'
+                ? ['#98f6a5', '#5ee07b', '#dafbe1']
+                : ['#8acbff', '#5b9bff', '#dcecff']);
+        const board = document.getElementById('board-wrapper');
+        if (!board) return;
+        const rect = board.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height * 0.22;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            p.className = 'combo-particle';
+            p.style.left = `${cx}px`;
+            p.style.top = `${cy}px`;
+            p.style.setProperty('--pc', palette[i % palette.length]);
+            const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.4 - 0.2);
+            const dist = 34 + Math.random() * (tier === 'multi' ? 76 : tier === 'triple' ? 62 : 48);
+            p.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+            p.style.setProperty('--dy', `${Math.sin(angle) * dist - 26}px`);
+            p.style.setProperty('--rot', `${Math.floor(Math.random() * 260 - 130)}deg`);
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 760);
+        }
     }
 
     function updateLogMeta() {
