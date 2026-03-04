@@ -65,15 +65,11 @@ header {
 .piece-canvas {
   width: auto;
   height: auto;
-  max-width: 86px;
-  max-height: 86px;
   image-rendering: pixelated;
   pointer-events: none;
 }
 .drag-ghost {
   position: fixed;
-  width: 92px;
-  height: 92px;
   pointer-events: none;
   z-index: 80;
   transform: translate(-50%, -50%);

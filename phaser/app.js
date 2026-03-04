@@ -283,10 +283,19 @@
           const x = c * this.cellSize + this.cellSize / 2;
           const y = r * this.cellSize + this.cellSize / 2;
           if (state.grid[r][c]) {
-            cell.block = this.add.image(x, y, 'block').setDisplaySize(this.cellSize - 4, this.cellSize - 4).setDepth(8);
+            const fallback = this.add.rectangle(x, y, this.cellSize - 6, this.cellSize - 6, 0x54b943, 0.95).setDepth(7);
+            cell.block = fallback;
+            if (this.textures.exists('block')) {
+              const blockSp = this.add.image(x, y, 'block').setDisplaySize(this.cellSize - 4, this.cellSize - 4).setDepth(8);
+              cell.block = this.add.container(0, 0, [fallback, blockSp]).setDepth(8);
+            }
           }
           if (state.holes[r][c]) {
-            cell.hole = this.add.image(x, y, 'hole').setDisplaySize(this.cellSize - 4, this.cellSize - 4).setAlpha(0.9).setDepth(9);
+            if (this.textures.exists('hole')) {
+              cell.hole = this.add.image(x, y, 'hole').setDisplaySize(this.cellSize - 10, this.cellSize - 10).setAlpha(0.95).setDepth(10);
+            } else {
+              cell.hole = this.add.ellipse(x, y + this.cellSize * 0.1, this.cellSize * 0.42, this.cellSize * 0.24, 0x5a3a1d, 0.85).setDepth(10);
+            }
           }
         }
       }
@@ -408,11 +417,11 @@
     return out;
   }
 
-  function drawPieceOnCanvas(piece, canvas) {
+  function drawPieceOnCanvas(piece, canvas, cellSize = 22) {
     const ctx = canvas.getContext('2d');
     const rows = piece.shape.length;
     const cols = piece.shape[0].length;
-    const cell = Math.floor(Math.min(canvas.width / cols, canvas.height / rows));
+    const cell = cellSize;
     const padX = Math.floor((canvas.width - cols * cell) / 2);
     const padY = Math.floor((canvas.height - rows * cell) / 2);
 
@@ -455,6 +464,17 @@
     }
   }
 
+  function buildPieceCanvas(piece, cellSize = 22, padding = 8) {
+    const rows = piece.shape.length;
+    const cols = piece.shape[0].length;
+    const canvas = document.createElement('canvas');
+    canvas.className = 'piece-canvas';
+    canvas.width = cols * cellSize + padding * 2;
+    canvas.height = rows * cellSize + padding * 2;
+    drawPieceOnCanvas(piece, canvas, cellSize);
+    return canvas;
+  }
+
   function renderPieceSlots() {
     ui.pieceZone.innerHTML = '';
     state.pieces.forEach((piece) => {
@@ -463,11 +483,7 @@
       slot.dataset.pieceId = piece.id;
       slot.type = 'button';
 
-      const cv = document.createElement('canvas');
-      cv.className = 'piece-canvas';
-      cv.width = 86;
-      cv.height = 86;
-      drawPieceOnCanvas(piece, cv);
+      const cv = buildPieceCanvas(piece, 22, 8);
       slot.appendChild(cv);
 
       slot.addEventListener('pointerdown', (e) => {
@@ -546,9 +562,10 @@
 
     const ghost = document.createElement('canvas');
     ghost.className = 'drag-ghost';
-    ghost.width = 92;
-    ghost.height = 92;
-    drawPieceOnCanvas(piece, ghost);
+    const ghostCanvas = buildPieceCanvas(piece, 22, 8);
+    ghost.width = ghostCanvas.width;
+    ghost.height = ghostCanvas.height;
+    ghost.getContext('2d').drawImage(ghostCanvas, 0, 0);
     document.body.appendChild(ghost);
     drag.ghost = ghost;
 
