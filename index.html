@@ -174,8 +174,11 @@
         }
 
         .goal-cards.goal-passed .goal-card.earned {
-            background-image: url('pic/keep earning.png');
+            background-image: url('pic/keep_earning.png');
             min-height: 84px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
 
         .goal-card-label {
@@ -730,8 +733,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(16, 16, 16, 0.58);
-            backdrop-filter: blur(2px);
+            background:
+                radial-gradient(120% 80% at 50% -10%, rgba(255,255,255,0.22), transparent 58%),
+                linear-gradient(180deg, rgba(8, 26, 12, 0.55), rgba(10, 28, 14, 0.68));
+            backdrop-filter: blur(3px);
         }
 
         .gate-loading {
@@ -786,12 +791,15 @@
 
         .level-card {
             width: min(92%, 360px);
-            background: linear-gradient(180deg, rgba(241, 241, 241, 0.97), rgba(219, 219, 219, 0.96));
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            border-radius: 26px;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+            background:
+                linear-gradient(180deg, rgba(255, 247, 220, 0.98), rgba(246, 230, 189, 0.96));
+            border: 2px solid rgba(122, 82, 30, 0.42);
+            border-radius: 24px;
+            box-shadow:
+                0 22px 46px rgba(0, 0, 0, 0.35),
+                inset 0 2px 0 rgba(255,255,255,0.8);
             padding: 14px 14px 14px;
-            color: #202020;
+            color: #2e1c06;
         }
 
         .level-title {
@@ -800,22 +808,25 @@
             font-weight: 900;
             letter-spacing: 0.02em;
             margin: 2px 0 8px;
+            color: #5b3516;
+            text-shadow: 0 2px 0 rgba(255,255,255,0.75);
         }
 
         .level-rules {
             margin: 0 0 8px;
             padding: 8px 10px;
             border-radius: 12px;
-            border: 1px solid rgba(0, 0, 0, 0.12);
-            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(109, 74, 25, 0.28);
+            background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.45));
             font-size: 0.8rem;
             line-height: 1.35;
             font-weight: 700;
+            color: #5a3a17;
         }
 
         .level-info {
-            background: rgba(255, 255, 255, 0.78);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.5));
+            border: 1px solid rgba(112, 78, 30, 0.22);
             border-radius: 18px;
             padding: 10px 10px 12px;
             text-align: center;
@@ -847,25 +858,39 @@
 
         .gate-atmosphere {
             margin: 8px 0;
-            height: 86px;
+            height: 96px;
             border-radius: 16px;
-            border: 1px solid rgba(0, 0, 0, 0.13);
+            border: 1px solid rgba(98, 66, 23, 0.24);
             background:
-                radial-gradient(90px 50px at 20% 70%, rgba(94, 73, 47, 0.35), transparent 70%),
-                radial-gradient(110px 64px at 82% 30%, rgba(72, 113, 43, 0.35), transparent 72%),
-                linear-gradient(180deg, rgba(151, 196, 100, 0.72), rgba(112, 153, 69, 0.64));
+                radial-gradient(130px 80px at 70% 20%, rgba(181, 228, 132, 0.32), transparent 72%),
+                linear-gradient(180deg, rgba(118, 178, 78, 0.86), rgba(86, 137, 52, 0.82));
             position: relative;
             overflow: hidden;
+            box-shadow: inset 0 -10px 18px rgba(62, 93, 37, 0.25);
         }
 
         .gate-atmosphere::before {
-            content: '🕳️   🐹   🕳️   🐹';
+            content: '';
             position: absolute;
-            bottom: 8px;
-            left: 10px;
-            font-size: 24px;
-            letter-spacing: 8px;
-            opacity: 0.78;
+            inset: 0;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.12), transparent 48%),
+                url('pic/mole.png') 18% 70% / 56px 56px no-repeat,
+                url('pic/mole.png') 76% 58% / 52px 52px no-repeat,
+                url('pic/hole.png') 34% 78% / 34px 34px no-repeat,
+                url('pic/hole.png') 58% 72% / 32px 32px no-repeat,
+                url('pic/hammer.png') 90% 18% / 34px 34px no-repeat;
+            opacity: 0.94;
+        }
+
+        .gate-atmosphere::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 22px;
+            background: linear-gradient(180deg, rgba(97, 68, 34, 0.1), rgba(95, 50, 26, 0.45));
         }
 
         .stake-scroll {
@@ -887,21 +912,21 @@
 
         .stake-btn {
             min-width: 90px;
-            border: 1px solid rgba(0, 0, 0, 0.18);
-            background: linear-gradient(180deg, #ffffff, #dcdcdc);
-            color: #1f1f1f;
+            border: 1px solid rgba(102, 70, 22, 0.38);
+            background: linear-gradient(180deg, #fff8df, #f2d99d);
+            color: #5b3515;
             border-radius: 14px;
             height: 50px;
             font-size: 1.02rem;
             font-weight: 900;
             padding: 0;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 12px rgba(86, 53, 19, 0.18);
         }
 
         .stake-btn.active {
-            background: linear-gradient(180deg, #fff4d4, #ffd98a);
-            border-color: rgba(128, 92, 24, 0.45);
-            color: #3d2b08;
+            background: linear-gradient(180deg, #ffe9a9, #ffc965);
+            border-color: rgba(138, 89, 24, 0.7);
+            color: #4d2e08;
             transform: translateY(-1px);
         }
 
@@ -1062,10 +1087,12 @@
             font-size: 1.3rem;
             font-weight: 900;
             letter-spacing: 0.01em;
-            background: linear-gradient(180deg, #ffffff, #d9d9d9);
-            color: #1d1d1d;
-            border: 1px solid rgba(0, 0, 0, 0.25);
-            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.95), 0 10px 18px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(180deg, #ffe89e, #ffcc64);
+            color: #4a2a06;
+            border: 1px solid rgba(124, 79, 21, 0.55);
+            box-shadow:
+                inset 0 2px 0 rgba(255, 255, 255, 0.85),
+                0 10px 18px rgba(108, 64, 17, 0.3);
         }
 
         .play-entry-btn:disabled {
@@ -1254,7 +1281,7 @@
     <img class="preload" src="pic/hammer.png?v=2" alt="">
     <img class="preload" src="pic/goal.png" alt="">
     <img class="preload" src="pic/youearned.png" alt="">
-    <img class="preload" src="pic/keep earning.png" alt="">
+    <img class="preload" src="pic/keep_earning.png" alt="">
     <img class="preload" src="pic/complete.png" alt="">
     <img class="preload" src="pic/time.png" alt="">
     <img class="preload" src="pic/move.png" alt="">
@@ -1481,7 +1508,7 @@
         'pic/hammer.png?v=2',
         'pic/goal.png',
         'pic/youearned.png',
-        'pic/keep earning.png',
+        'pic/keep_earning.png',
         'pic/complete.png',
         'pic/time.png',
         'pic/move.png'
@@ -1596,6 +1623,7 @@
     const HOLE_COLORS = ['#6b4b2a', '#4a7b3e', '#2f5f8a', '#8a5a2f', '#6b2f6b', '#2f6b6b'];
     const FORCE_SECOND_BLOCK = false;
     const FORCE_ONE_MOLE_IN_FIRST_THREE = true;
+    const PERFECT_TIMING_MIN_HIT = 2;
     const DEBUG_RETURN_OPTIONS = [
         { value: 2, chance: 0.40 },
         { value: 2.5, chance: 0.50 },
@@ -2278,7 +2306,7 @@
             const delay = 260 + idx * 80;
             setTimeout(() => spawnHammerSequence(mole), delay);
         });
-        if (captured.length >= 2) {
+        if (captured.length >= PERFECT_TIMING_MIN_HIT) {
             setTimeout(() => showToast('Perfect Timing!', 1800, 'combo'), 220);
         }
 
