@@ -1152,7 +1152,7 @@
             left: 50%;
             bottom: 8px;
             transform: translateX(-50%);
-            z-index: 910;
+            z-index: 2001;
             border: 1px solid rgba(255, 255, 255, 0.35);
             background: rgba(20, 20, 20, 0.35);
             color: #fff;
@@ -1164,6 +1164,8 @@
             font-weight: 800;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
             touch-action: manipulation;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .debug-drawer {
@@ -1630,6 +1632,7 @@
     let selectedDebugMultiplier = FIXED_RETURN_MULTIPLIER;
     let activeReturnMultiplier = FIXED_RETURN_MULTIPLIER;
     let debugUnlimitedMode = false;
+    let lastDebugToggleTs = 0;
     let runSeed = null;
     let runRandom = Math.random;
     let currentSeedName = 'B_001-V4_B_001_DE_001';
@@ -3448,11 +3451,18 @@
         updateIngameDebugView();
     });
     const onToggleDebugDrawer = (e) => {
-        if (e) e.preventDefault();
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         if (gameActive) return;
+        const now = Date.now();
+        if (now - lastDebugToggleTs < 180) return;
+        lastDebugToggleTs = now;
         debugDrawerEl.classList.toggle('hidden');
     };
-    debugToggleBtn.addEventListener('pointerup', onToggleDebugDrawer);
+    debugToggleBtn.addEventListener('pointerdown', onToggleDebugDrawer);
+    debugToggleBtn.addEventListener('click', onToggleDebugDrawer);
     exportLogsBtn.addEventListener('click', exportLogsAsCsv);
     clearLogsBtn.addEventListener('click', () => {
         matchLogs = [];
