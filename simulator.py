@@ -19,9 +19,15 @@ USE_MOLE_GUARDRAILS = False
 MOLE_MODE_GUARDRAILS = "guardrails"
 MOLE_MODE_FLAT = "flat"
 MOLE_MODE_SEGMENT_V3 = "segment_35_30_20_5"
-MOLE_MODES = {MOLE_MODE_GUARDRAILS, MOLE_MODE_FLAT, MOLE_MODE_SEGMENT_V3}
+MOLE_MODE_SEGMENT_V4 = "segment_25_20_15_5"
+MOLE_MODE_SEGMENT_V5 = "segment_28_20_12_5"
+MOLE_MODE_SEGMENT_CUSTOM = "segment_custom"
+MOLE_MODES = {MOLE_MODE_GUARDRAILS, MOLE_MODE_FLAT, MOLE_MODE_SEGMENT_V3, MOLE_MODE_SEGMENT_V4, MOLE_MODE_SEGMENT_V5, MOLE_MODE_SEGMENT_CUSTOM}
 MOLE_DISTRIBUTION_FLAT = "flat"
 MOLE_DISTRIBUTION_SEGMENT_V3 = "segment_35_30_20_5"
+MOLE_DISTRIBUTION_SEGMENT_V4 = "segment_25_20_15_5"
+MOLE_DISTRIBUTION_SEGMENT_V5 = "segment_28_20_12_5"
+MOLE_DISTRIBUTION_SEGMENT_CUSTOM = "segment_custom"
 DEFAULT_MOLE_DISTRIBUTION = MOLE_DISTRIBUTION_SEGMENT_V3
 DEFAULT_MOLE_MODE = MOLE_MODE_SEGMENT_V3
 FORCE_SECOND_BLOCK = False
@@ -253,7 +259,7 @@ def is_mole_eligible(shape_id: str) -> bool:
     return shape_id in MOLE_WHITELIST and shape_id not in MOLE_BLACKLIST
 
 
-def get_mole_spawn_rate_for_index(seq_index: int, base_rate: float, mode: str) -> float:
+def get_mole_spawn_rate_for_index(seq_index: int, base_rate: float, mode: str, segment_rates: Optional[Dict[str, float]] = None) -> float:
     m = (mode or "").strip().lower()
     if m == MOLE_DISTRIBUTION_SEGMENT_V3:
         if seq_index <= 2:
@@ -265,6 +271,42 @@ def get_mole_spawn_rate_for_index(seq_index: int, base_rate: float, mode: str) -
         if seq_index <= 89:
             return 0.20
         return 0.05
+    if m == MOLE_DISTRIBUTION_SEGMENT_V4:
+        if seq_index <= 2:
+            return 1.0
+        if seq_index <= 29:
+            return 0.25
+        if seq_index <= 59:
+            return 0.20
+        if seq_index <= 89:
+            return 0.15
+        return 0.05
+    if m == MOLE_DISTRIBUTION_SEGMENT_V5:
+        if seq_index <= 2:
+            return 1.0
+        if seq_index <= 29:
+            return 0.28
+        if seq_index <= 59:
+            return 0.20
+        if seq_index <= 89:
+            return 0.12
+        return 0.05
+    if m == MOLE_DISTRIBUTION_SEGMENT_CUSTOM:
+        rates = segment_rates or {}
+        r0_2 = min(1.0, max(0.0, float(rates.get("r0_2", 1.0))))
+        r3_29 = min(1.0, max(0.0, float(rates.get("r3_29", base_rate))))
+        r30_59 = min(1.0, max(0.0, float(rates.get("r30_59", base_rate))))
+        r60_89 = min(1.0, max(0.0, float(rates.get("r60_89", base_rate))))
+        r90p = min(1.0, max(0.0, float(rates.get("r90p", base_rate))))
+        if seq_index <= 2:
+            return r0_2
+        if seq_index <= 29:
+            return r3_29
+        if seq_index <= 59:
+            return r30_59
+        if seq_index <= 89:
+            return r60_89
+        return r90p
     return base_rate
 
 
@@ -276,10 +318,16 @@ def resolve_mole_mode(mole_mode: str) -> Tuple[bool, str]:
         return True, MOLE_DISTRIBUTION_FLAT
     if m == MOLE_MODE_SEGMENT_V3:
         return False, MOLE_DISTRIBUTION_SEGMENT_V3
+    if m == MOLE_MODE_SEGMENT_V4:
+        return False, MOLE_DISTRIBUTION_SEGMENT_V4
+    if m == MOLE_MODE_SEGMENT_V5:
+        return False, MOLE_DISTRIBUTION_SEGMENT_V5
+    if m == MOLE_MODE_SEGMENT_CUSTOM:
+        return False, MOLE_DISTRIBUTION_SEGMENT_CUSTOM
     return False, MOLE_DISTRIBUTION_FLAT
 
 
-def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guardrails: bool, mole_distribution: str) -> dict:
+def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guardrails: bool, mole_distribution: str, segment_rates: Optional[Dict[str, float]] = None) -> dict:
     block_ids = seed_case.get("blockIds") or []
     n = len(block_ids)
     if n <= 0:
@@ -290,7 +338,7 @@ def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guard
     has_mole = [False] * n
     pos_roll = [0.0] * n
     for i, sid in enumerate(block_ids):
-        rate_i = get_mole_spawn_rate_for_index(i, mole_spawn_rate, mole_distribution)
+        rate_i = get_mole_spawn_rate_for_index(i, mole_spawn_rate, mole_distribution, segment_rates)
         eligible = (not use_mole_guardrails) or is_mole_eligible(sid)
         roll = deterministic_roll01(i, salt)
         has_mole[i] = eligible and (roll < rate_i)
@@ -328,6 +376,7 @@ def simulate(
     collect_trace: bool = False,
     mole_reward_rate: float = MOLE_REWARD_RATE,
     mole_mode: str = DEFAULT_MOLE_MODE,
+    segment_rates: Optional[Dict[str, float]] = None,
 ) -> dict:
     grid = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
     holes = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
@@ -364,12 +413,24 @@ def simulate(
     mole_spawn_rate = min(1.0, max(0.0, float(mole_spawn_rate)))
     mole_reward_rate = max(0.0, float(mole_reward_rate))
     use_mole_guardrails, mole_distribution = resolve_mole_mode(mole_mode)
-    mole_mode = MOLE_MODE_GUARDRAILS if use_mole_guardrails else (MOLE_MODE_SEGMENT_V3 if mole_distribution == MOLE_DISTRIBUTION_SEGMENT_V3 else MOLE_MODE_FLAT)
+    segment_rates = segment_rates or {}
+    if use_mole_guardrails:
+        mole_mode = MOLE_MODE_GUARDRAILS
+    elif mole_distribution == MOLE_DISTRIBUTION_SEGMENT_V3:
+        mole_mode = MOLE_MODE_SEGMENT_V3
+    elif mole_distribution == MOLE_DISTRIBUTION_SEGMENT_V4:
+        mole_mode = MOLE_MODE_SEGMENT_V4
+    elif mole_distribution == MOLE_DISTRIBUTION_SEGMENT_V5:
+        mole_mode = MOLE_MODE_SEGMENT_V5
+    elif mole_distribution == MOLE_DISTRIBUTION_SEGMENT_CUSTOM:
+        mole_mode = MOLE_MODE_SEGMENT_CUSTOM
+    else:
+        mole_mode = MOLE_MODE_FLAT
     mole_reward = entry_fee * mole_reward_rate
     max_reward = max_moles_cap * mole_reward
     salt = get_mole_pattern_salt(multiplier) ^ (1 * 131)
     pos_salt = (get_mole_pattern_salt(multiplier) >> 6) + 17
-    seed_mole_plan = build_seed_mole_plan(seed_case, mole_spawn_rate, use_mole_guardrails, mole_distribution)
+    seed_mole_plan = build_seed_mole_plan(seed_case, mole_spawn_rate, use_mole_guardrails, mole_distribution, segment_rates)
     seed_has_mole = seed_mole_plan["has_mole"]
     seed_pos_roll = seed_mole_plan["pos_roll"]
 
@@ -941,6 +1002,11 @@ def main():
     ap.add_argument("--max-moles", type=int, default=20, help="Mole capture cap for max reward")
     ap.add_argument("--mole-rate", type=float, default=0.40, help="Mole coverage rate [0,1]")
     ap.add_argument("--mole-mode", default=DEFAULT_MOLE_MODE, choices=sorted(MOLE_MODES), help="Mole generation mode")
+    ap.add_argument("--seg-rate-0-2", type=float, default=1.0, help="Custom segment rate for seq 0-2 [0,1]")
+    ap.add_argument("--seg-rate-3-29", type=float, default=0.28, help="Custom segment rate for seq 3-29 [0,1]")
+    ap.add_argument("--seg-rate-30-59", type=float, default=0.20, help="Custom segment rate for seq 30-59 [0,1]")
+    ap.add_argument("--seg-rate-60-89", type=float, default=0.12, help="Custom segment rate for seq 60-89 [0,1]")
+    ap.add_argument("--seg-rate-90p", type=float, default=0.05, help="Custom segment rate for seq 90+ [0,1]")
     ap.add_argument("--mole-reward-rate", type=float, default=MOLE_REWARD_RATE, help="Single-mole reward coefficient vs entry fee")
     ap.add_argument("--difficulty", default="D5", help="Difficulty filter, e.g. D5/Easy/R14/ALL")
     ap.add_argument(
@@ -979,6 +1045,13 @@ def main():
 
     rng = random.Random(args.rng_seed)
     rows = []
+    segment_rates = {
+        "r0_2": min(1.0, max(0.0, float(args.seg_rate_0_2))),
+        "r3_29": min(1.0, max(0.0, float(args.seg_rate_3_29))),
+        "r30_59": min(1.0, max(0.0, float(args.seg_rate_30_59))),
+        "r60_89": min(1.0, max(0.0, float(args.seg_rate_60_89))),
+        "r90p": min(1.0, max(0.0, float(args.seg_rate_90p))),
+    }
 
     if args.runs and args.runs > 0:
         balance_all = args.all_balanced and (str(args.difficulty).strip().upper() == "ALL")
@@ -997,6 +1070,7 @@ def main():
                     False,
                     args.mole_reward_rate,
                     args.mole_mode,
+                    segment_rates,
                 )
             )
     else:
@@ -1015,6 +1089,7 @@ def main():
                     False,
                     args.mole_reward_rate,
                     args.mole_mode,
+                    segment_rates,
                 )
             )
 

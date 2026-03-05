@@ -15,6 +15,9 @@ from simulator import (
     MOLE_MODE_FLAT,
     MOLE_MODE_GUARDRAILS,
     MOLE_MODE_SEGMENT_V3,
+    MOLE_MODE_SEGMENT_V4,
+    MOLE_MODE_SEGMENT_V5,
+    MOLE_MODE_SEGMENT_CUSTOM,
     MOLE_MODES,
     MOLE_REWARD_RATE,
     build_run_seed_list,
@@ -133,6 +136,16 @@ PREFERRED_FIELD_ORDER = [
     "rtp",
 ]
 
+CONCISE_FIELDS = [
+    "seed",
+    "difficulty",
+    "maxAliveMoles",
+    "maxNoMolePlaceStreak",
+    "earned",
+    "remainingTime",
+    "result",
+]
+
 
 def to_int(val: str, default: int) -> int:
     try:
@@ -148,19 +161,22 @@ def to_float(val: str, default: float) -> float:
         return default
 
 
-def ordered_fields(rows):
+def ordered_fields(rows, concise_report: bool = False):
     if not rows:
         return []
+    if concise_report:
+        keys = list(rows[0].keys())
+        return [k for k in CONCISE_FIELDS if k in keys]
     keys = list(rows[0].keys())
     ordered = [k for k in PREFERRED_FIELD_ORDER if k in keys]
     ordered.extend([k for k in keys if k not in ordered])
     return ordered
 
 
-def build_csv(rows):
+def build_csv(rows, concise_report: bool = False):
     if not rows:
         return b""
-    header = ordered_fields(rows)
+    header = ordered_fields(rows, concise_report)
     zh = [FIELD_LABELS_ZH.get(k, k) for k in header]
     lines = [",".join(header), ",".join(zh)]
     for row in rows:
@@ -229,6 +245,9 @@ def render_page(defaults, summary=None, rows=None, error=""):
         (MOLE_MODE_GUARDRAILS, "干预"),
         (MOLE_MODE_FLAT, "不干预"),
         (MOLE_MODE_SEGMENT_V3, "segment_35_30_20_5"),
+        (MOLE_MODE_SEGMENT_V4, "segment_25_20_15_5"),
+        (MOLE_MODE_SEGMENT_V5, "segment_28_20_12_5"),
+        (MOLE_MODE_SEGMENT_CUSTOM, "segment_custom"),
     ]
     mole_mode_val = str(defaults.get("mole_mode", DEFAULT_MOLE_MODE))
     mole_mode_select = "".join(
@@ -251,9 +270,10 @@ def render_page(defaults, summary=None, rows=None, error=""):
         </div>
         """
 
+    concise_report = bool(defaults.get("concise_report", False))
     table_html = ""
     if rows:
-        header_fields = ordered_fields(rows)
+        header_fields = ordered_fields(rows, concise_report)
         head = "".join(
             f"<th>{html.escape(k)}<br><small>{html.escape(FIELD_LABELS_ZH.get(k, ''))}</small></th>"
             for k in header_fields
@@ -315,6 +335,11 @@ def render_page(defaults, summary=None, rows=None, error=""):
           <div id="mole-rate-field"><label>mole_rate (0~1)</label><input id="mole-rate-input" name="mole_rate" value="{defaults['mole_rate']}" /></div>
           <div><label>mole_mode</label><select id="mole-mode-select" name="mole_mode">{mole_mode_select}</select></div>
           <div><label>mole_reward_rate (单鼠奖励系数)</label><input name="mole_reward_rate" value="{defaults['mole_reward_rate']}" /></div>
+          <div id="seg-0-2-field"><label>seg_rate_0_2</label><input name="seg_rate_0_2" value="{defaults.get('seg_rate_0_2', 1.0)}" /></div>
+          <div id="seg-3-29-field"><label>seg_rate_3_29</label><input name="seg_rate_3_29" value="{defaults.get('seg_rate_3_29', 0.28)}" /></div>
+          <div id="seg-30-59-field"><label>seg_rate_30_59</label><input name="seg_rate_30_59" value="{defaults.get('seg_rate_30_59', 0.20)}" /></div>
+          <div id="seg-60-89-field"><label>seg_rate_60_89</label><input name="seg_rate_60_89" value="{defaults.get('seg_rate_60_89', 0.12)}" /></div>
+          <div id="seg-90p-field"><label>seg_rate_90p</label><input name="seg_rate_90p" value="{defaults.get('seg_rate_90p', 0.05)}" /></div>
           <div><label>difficulty</label><select name="difficulty">{diff_select}</select></div>
           <div><label>策略版本</label><select name="policy">{policy_select}</select></div>
           <div><label>action_seconds</label><input name="action_seconds" value="{defaults['action_seconds']}" /></div>
@@ -329,6 +354,10 @@ def render_page(defaults, summary=None, rows=None, error=""):
           <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#222;margin-top:6px;">
             <input type="checkbox" name="all_balanced" value="1" {"checked" if defaults.get("all_balanced", True) else ""} />
             ALL难度时按难度均衡采样
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#222;margin-top:6px;">
+            <input type="checkbox" name="concise_report" value="1" {"checked" if defaults.get("concise_report", False) else ""} />
+            精简报表模式（仅保留：场上同鼠峰值、连续未出鼠、本局收益、剩余时间、比赛结果）
           </label>
         </div>
         <div class="actions">
@@ -345,11 +374,20 @@ def render_page(defaults, summary=None, rows=None, error=""):
   const modeEl = document.getElementById('mole-mode-select');
   const rateField = document.getElementById('mole-rate-field');
   const rateInput = document.getElementById('mole-rate-input');
+  const segFields = [
+    document.getElementById('seg-0-2-field'),
+    document.getElementById('seg-3-29-field'),
+    document.getElementById('seg-30-59-field'),
+    document.getElementById('seg-60-89-field'),
+    document.getElementById('seg-90p-field'),
+  ];
   const sync = () => {{
     if (!modeEl || !rateField || !rateInput) return;
-    const isSegment = modeEl.value === 'segment_35_30_20_5';
+    const isSegment = modeEl.value === 'segment_35_30_20_5' || modeEl.value === 'segment_25_20_15_5' || modeEl.value === 'segment_28_20_12_5' || modeEl.value === 'segment_custom';
+    const isCustom = modeEl.value === 'segment_custom';
     rateField.style.display = isSegment ? 'none' : '';
     rateInput.disabled = isSegment;
+    segFields.forEach((el) => {{ if (el) el.style.display = isCustom ? '' : 'none'; }});
   }};
   if (modeEl) modeEl.addEventListener('change', sync);
   sync();
@@ -483,6 +521,11 @@ class Handler(BaseHTTPRequestHandler):
             "max_moles": to_int(form.get("max_moles", str(self.defaults["max_moles"])), self.defaults["max_moles"]),
             "mole_rate": to_float(form.get("mole_rate", str(self.defaults["mole_rate"])), self.defaults["mole_rate"]),
             "mole_mode": ((form.get("mole_mode", self.defaults["mole_mode"]) or DEFAULT_MOLE_MODE).strip()),
+            "seg_rate_0_2": to_float(form.get("seg_rate_0_2", str(self.defaults.get("seg_rate_0_2", 1.0))), self.defaults.get("seg_rate_0_2", 1.0)),
+            "seg_rate_3_29": to_float(form.get("seg_rate_3_29", str(self.defaults.get("seg_rate_3_29", 0.28))), self.defaults.get("seg_rate_3_29", 0.28)),
+            "seg_rate_30_59": to_float(form.get("seg_rate_30_59", str(self.defaults.get("seg_rate_30_59", 0.20))), self.defaults.get("seg_rate_30_59", 0.20)),
+            "seg_rate_60_89": to_float(form.get("seg_rate_60_89", str(self.defaults.get("seg_rate_60_89", 0.12))), self.defaults.get("seg_rate_60_89", 0.12)),
+            "seg_rate_90p": to_float(form.get("seg_rate_90p", str(self.defaults.get("seg_rate_90p", 0.05))), self.defaults.get("seg_rate_90p", 0.05)),
             "mole_reward_rate": to_float(form.get("mole_reward_rate", str(self.defaults["mole_reward_rate"])), self.defaults["mole_reward_rate"]),
             "difficulty": (form.get("difficulty", self.defaults["difficulty"]) or "D5").strip(),
             "policy": normalize_policy((form.get("policy", self.defaults["policy"]) or DEFAULT_POLICY).strip().lower()),
@@ -491,6 +534,7 @@ class Handler(BaseHTTPRequestHandler):
             "rng_seed": to_int(form.get("rng_seed", str(self.defaults["rng_seed"])), self.defaults["rng_seed"]),
             "prefer_unique": form.get("prefer_unique", "0") == "1",
             "all_balanced": form.get("all_balanced", "0") == "1",
+            "concise_report": form.get("concise_report", "0") == "1",
         }
         if defaults["mole_mode"] not in MOLE_MODES:
             defaults["mole_mode"] = DEFAULT_MOLE_MODE
@@ -504,6 +548,13 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("没有可用seed（请检查目录/难度筛选）")
 
             rng = random.Random(defaults["rng_seed"])
+            segment_rates = {
+                "r0_2": min(1.0, max(0.0, float(defaults.get("seg_rate_0_2", 1.0)))),
+                "r3_29": min(1.0, max(0.0, float(defaults.get("seg_rate_3_29", 0.28)))),
+                "r30_59": min(1.0, max(0.0, float(defaults.get("seg_rate_30_59", 0.20)))),
+                "r60_89": min(1.0, max(0.0, float(defaults.get("seg_rate_60_89", 0.12)))),
+                "r90p": min(1.0, max(0.0, float(defaults.get("seg_rate_90p", 0.05)))),
+            }
 
             rows = []
             runs = defaults["runs"]
@@ -524,6 +575,7 @@ class Handler(BaseHTTPRequestHandler):
                             False,
                             defaults["mole_reward_rate"],
                             defaults["mole_mode"],
+                            segment_rates,
                         )
                     )
             else:
@@ -542,12 +594,14 @@ class Handler(BaseHTTPRequestHandler):
                             False,
                             defaults["mole_reward_rate"],
                             defaults["mole_mode"],
+                            segment_rates,
                         )
                     )
 
             elapsed = time.perf_counter() - t0
-            LAST_CSV = build_csv(rows)
-            LAST_CSV_NAME = "sim_results.csv"
+            concise_report = bool(defaults.get("concise_report", False))
+            LAST_CSV = build_csv(rows, concise_report)
+            LAST_CSV_NAME = "sim_results_concise.csv" if concise_report else "sim_results.csv"
             self.send_html(render_page(defaults, summarize(rows, elapsed), rows))
         except Exception as e:
             self.send_html(render_page(defaults, error=str(e)), status=400)
@@ -565,6 +619,11 @@ def main():
     ap.add_argument("--max-moles", type=int, default=20)
     ap.add_argument("--mole-rate", type=float, default=0.40)
     ap.add_argument("--mole-mode", default=DEFAULT_MOLE_MODE, choices=sorted(MOLE_MODES))
+    ap.add_argument("--seg-rate-0-2", type=float, default=1.0)
+    ap.add_argument("--seg-rate-3-29", type=float, default=0.28)
+    ap.add_argument("--seg-rate-30-59", type=float, default=0.20)
+    ap.add_argument("--seg-rate-60-89", type=float, default=0.12)
+    ap.add_argument("--seg-rate-90p", type=float, default=0.05)
     ap.add_argument("--mole-reward-rate", type=float, default=MOLE_REWARD_RATE)
     ap.add_argument("--difficulty", default="D5")
     ap.add_argument("--policy", default=DEFAULT_POLICY)
@@ -594,6 +653,11 @@ def main():
         "max_moles": args.max_moles,
         "mole_rate": args.mole_rate,
         "mole_mode": args.mole_mode,
+        "seg_rate_0_2": args.seg_rate_0_2,
+        "seg_rate_3_29": args.seg_rate_3_29,
+        "seg_rate_30_59": args.seg_rate_30_59,
+        "seg_rate_60_89": args.seg_rate_60_89,
+        "seg_rate_90p": args.seg_rate_90p,
         "mole_reward_rate": args.mole_reward_rate,
         "difficulty": args.difficulty,
         "policy": normalize_policy(args.policy),
@@ -602,6 +666,7 @@ def main():
         "rng_seed": args.rng_seed,
         "prefer_unique": args.prefer_unique,
         "all_balanced": args.all_balanced,
+        "concise_report": False,
     }
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"Simulator UI: http://{args.host}:{args.port}")

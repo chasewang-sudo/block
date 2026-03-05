@@ -352,6 +352,19 @@
             100% { transform: translate(0, 0); }
         }
 
+        .screen-shake-strong {
+            animation: screen-shake-strong 0.38s cubic-bezier(0.22, 0.78, 0.2, 1);
+        }
+
+        @keyframes screen-shake-strong {
+            0% { transform: translate(0, 0) scale(1); }
+            18% { transform: translate(-7px, 4px) scale(1.005); }
+            36% { transform: translate(7px, -4px) scale(1.005); }
+            54% { transform: translate(-5px, -3px) scale(1.003); }
+            72% { transform: translate(4px, 2px) scale(1.002); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
         .cell.pulse {
             animation: cell-pulse 0.4s ease;
         }
@@ -360,6 +373,16 @@
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(110,243,194,0.0); }
             50% { transform: scale(1.03); box-shadow: 0 0 0 8px rgba(110,243,194,0.15); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(110,243,194,0.0); }
+        }
+
+        .cell.hit-stop-local {
+            animation: local-hit-stop 0.08s ease;
+        }
+
+        @keyframes local-hit-stop {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(0.95); filter: brightness(1.12); }
+            100% { transform: scale(1); filter: brightness(1); }
         }
 
         /* 地鼠动画逻辑 */
@@ -1347,6 +1370,97 @@
             padding: 0;
         }
 
+        .revive-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1250;
+            background: rgba(0, 0, 0, 0.62);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .revive-card {
+            width: min(88vw, 340px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.42);
+            background: linear-gradient(180deg, #3f4437, #2d3127);
+            color: #fff;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+            padding: 14px 14px 12px;
+            text-align: center;
+        }
+
+        .revive-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            letter-spacing: 0.01em;
+        }
+
+        .revive-subtitle {
+            margin-top: 6px;
+            font-size: 0.88rem;
+            opacity: 0.9;
+        }
+
+        .revive-loss {
+            margin-top: 10px;
+            border-radius: 12px;
+            background: rgba(255, 102, 102, 0.16);
+            border: 1px solid rgba(255, 132, 132, 0.45);
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 0.82rem;
+            line-height: 1.35;
+        }
+
+        .revive-loss b {
+            color: #ffd2d2;
+            font-size: 0.9rem;
+        }
+
+        .revive-progress {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            opacity: 0.95;
+        }
+
+        .revive-actions {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .revive-btn {
+            height: 42px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.28);
+            font-weight: 900;
+            font-size: 0.95rem;
+            padding: 0;
+        }
+
+        .revive-btn.end {
+            background: rgba(255,255,255,0.14);
+            color: #fff;
+        }
+
+        .revive-btn.pay {
+            background: linear-gradient(180deg, #ffe494, #ffbf4d);
+            color: #3a2500;
+        }
+
+        @keyframes revive-pop {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .revive-card {
+            animation: revive-pop 0.2s ease;
+        }
+
         button {
             padding: 12px 40px;
             font-size: 1.1rem;
@@ -1510,7 +1624,21 @@
                     <option value="guardrails">干预</option>
                     <option value="flat">不干预</option>
                     <option value="segment_35_30_20_5" selected>segment_35_30_20_5</option>
+                    <option value="segment_25_20_15_5">segment_25_20_15_5</option>
+                    <option value="segment_28_20_12_5">segment_28_20_12_5</option>
+                    <option value="segment_custom">segment_custom</option>
                 </select>
+            </div>
+            <div class="debug-config-item" id="debug-segment-rates-item">
+                <label>分段覆盖率(%)</label>
+                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;">
+                    <input id="debug-seg-0-2" type="number" min="0" max="100" step="1" value="100" title="0-2" />
+                    <input id="debug-seg-3-29" type="number" min="0" max="100" step="1" value="28" title="3-29" />
+                    <input id="debug-seg-30-59" type="number" min="0" max="100" step="1" value="20" title="30-59" />
+                    <input id="debug-seg-60-89" type="number" min="0" max="100" step="1" value="12" title="60-89" />
+                    <input id="debug-seg-90p" type="number" min="0" max="100" step="1" value="5" title="90+" />
+                </div>
+                <div style="margin-top:4px;font-size:.72rem;opacity:.78;">顺序: 0-2 / 3-29 / 30-59 / 60-89 / 90+</div>
             </div>
             <div class="debug-config-item">
                 <label for="debug-mole-reward-rate-input">单鼠奖励系数</label>
@@ -1544,6 +1672,18 @@
             <button class="recharge-pack" data-amount="20">+$20</button>
         </div>
         <button id="recharge-close-btn" class="recharge-close-btn">Close</button>
+    </div>
+</div>
+<div id="revive-modal" class="revive-modal hidden">
+    <div class="revive-card">
+        <div id="revive-title" class="revive-title">Revive?</div>
+        <div id="revive-subtitle" class="revive-subtitle">Spend to revive and continue.</div>
+        <div id="revive-loss" class="revive-loss"></div>
+        <div id="revive-progress" class="revive-progress"></div>
+        <div class="revive-actions">
+            <button id="revive-end-btn" class="revive-btn end">End</button>
+            <button id="revive-pay-btn" class="revive-btn pay">Revive</button>
+        </div>
     </div>
 </div>
 <div id="combo-toast" class="combo-toast">Perfect Timing!</div>
@@ -1588,6 +1728,12 @@
     const debugMaxMolesInputEl = document.getElementById('debug-max-moles-input');
     const debugMoleRateInputEl = document.getElementById('debug-mole-rate-input');
     const debugMoleDistSelectEl = document.getElementById('debug-mole-dist-select');
+    const debugSegmentRatesItemEl = document.getElementById('debug-segment-rates-item');
+    const debugSeg02InputEl = document.getElementById('debug-seg-0-2');
+    const debugSeg329InputEl = document.getElementById('debug-seg-3-29');
+    const debugSeg3059InputEl = document.getElementById('debug-seg-30-59');
+    const debugSeg6089InputEl = document.getElementById('debug-seg-60-89');
+    const debugSeg90pInputEl = document.getElementById('debug-seg-90p');
     const debugMoleRewardRateInputEl = document.getElementById('debug-mole-reward-rate-input');
     const debugApplyTargetBtn = document.getElementById('debug-apply-target-btn');
     const playEntryBtn = document.getElementById('play-entry-btn');
@@ -1599,6 +1745,13 @@
     const rechargeModalEl = document.getElementById('recharge-modal');
     const rechargeCloseBtn = document.getElementById('recharge-close-btn');
     const rechargePackBtns = Array.from(document.querySelectorAll('.recharge-pack'));
+    const reviveModalEl = document.getElementById('revive-modal');
+    const reviveTitleEl = document.getElementById('revive-title');
+    const reviveSubtitleEl = document.getElementById('revive-subtitle');
+    const reviveLossEl = document.getElementById('revive-loss');
+    const reviveProgressEl = document.getElementById('revive-progress');
+    const reviveEndBtn = document.getElementById('revive-end-btn');
+    const revivePayBtn = document.getElementById('revive-pay-btn');
     const GAME_ASSET_URLS = [
         'pic/grassbackground.jpg',
         'pic/block.png',
@@ -1647,6 +1800,7 @@
     let maxMolesCapCurrent = 20;
     let moleSpawnRateCurrent = 0.40;
     let moleDistributionModeCurrent = 'segment_35_30_20_5';
+    let segmentRatesCurrent = { r0_2: 1.0, r3_29: 0.28, r30_59: 0.20, r60_89: 0.12, r90p: 0.05 };
     let moleRewardRateCurrent = 0.10;
     let useExternalSeedApi = (location.protocol === 'http:' || location.protocol === 'https:');
     let goalReward = 1.0;
@@ -1654,6 +1808,8 @@
     let rewardPerMole = 0.1;
     let maxKillsCurrent = 15;
     let currentSeedMolePlan = { hasMole: [], posRoll: [] };
+    let injectedPieceBatch = null;
+    let pendingReviveContext = null;
     let currentMatchLog = null;
     let matchLogs = [];
     let comboToastTimer = null;
@@ -1874,6 +2030,27 @@
             if (seqIndexInSeed <= 89) return 0.20;
             return 0.05;
         }
+        if (moleDistributionModeCurrent === 'segment_25_20_15_5') {
+            if (seqIndexInSeed <= 2) return 1.0;
+            if (seqIndexInSeed <= 29) return 0.25;
+            if (seqIndexInSeed <= 59) return 0.20;
+            if (seqIndexInSeed <= 89) return 0.15;
+            return 0.05;
+        }
+        if (moleDistributionModeCurrent === 'segment_28_20_12_5') {
+            if (seqIndexInSeed <= 2) return 1.0;
+            if (seqIndexInSeed <= 29) return 0.28;
+            if (seqIndexInSeed <= 59) return 0.20;
+            if (seqIndexInSeed <= 89) return 0.12;
+            return 0.05;
+        }
+        if (moleDistributionModeCurrent === 'segment_custom') {
+            if (seqIndexInSeed <= 2) return segmentRatesCurrent.r0_2;
+            if (seqIndexInSeed <= 29) return segmentRatesCurrent.r3_29;
+            if (seqIndexInSeed <= 59) return segmentRatesCurrent.r30_59;
+            if (seqIndexInSeed <= 89) return segmentRatesCurrent.r60_89;
+            return segmentRatesCurrent.r90p;
+        }
         return getCurrentMoleSpawnRate();
     }
 
@@ -1888,18 +2065,36 @@
         return moleSpawnRateCurrent;
     }
 
+    function clamp01(v) {
+        return Math.min(1, Math.max(0, Number(v) || 0));
+    }
+
     function isGuardrailsMode() {
         return moleDistributionModeCurrent === 'guardrails';
     }
 
     function isSegmentMode(mode = moleDistributionModeCurrent) {
-        return mode === 'segment_35_30_20_5';
+        return mode === 'segment_35_30_20_5' || mode === 'segment_25_20_15_5' || mode === 'segment_28_20_12_5' || mode === 'segment_custom';
     }
 
     function updateMoleRateVisibility(mode = moleDistributionModeCurrent) {
         const item = document.getElementById('debug-mole-rate-item');
         if (!item) return;
-        item.style.display = isSegmentMode(mode) ? 'none' : '';
+        const isSeg = isSegmentMode(mode);
+        item.style.display = isSeg ? 'none' : '';
+        if (debugSegmentRatesItemEl) {
+            debugSegmentRatesItemEl.style.display = mode === 'segment_custom' ? '' : 'none';
+        }
+    }
+
+    function readSegmentRatesFromInputs() {
+        return {
+            r0_2: clamp01((Number(debugSeg02InputEl?.value || 100)) / 100),
+            r3_29: clamp01((Number(debugSeg329InputEl?.value || 28)) / 100),
+            r30_59: clamp01((Number(debugSeg3059InputEl?.value || 20)) / 100),
+            r60_89: clamp01((Number(debugSeg6089InputEl?.value || 12)) / 100),
+            r90p: clamp01((Number(debugSeg90pInputEl?.value || 5)) / 100),
+        };
     }
 
     function parseDifficultyFromSeedName(seedName) {
@@ -1982,13 +2177,25 @@
         const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
         const pieces = [];
-        for (let i = 0; i < 3; i++) {
-            const seqItem = nextSequenceShape();
-            pieces.push({
-                shapeObj: seqItem.shapeObj,
-                forceMole: false,
-                seqIndex: seqItem.seqIndex
+        if (Array.isArray(injectedPieceBatch) && injectedPieceBatch.length === 3) {
+            injectedPieceBatch.forEach((item, idx) => {
+                pieces.push({
+                    shapeObj: item.shapeObj,
+                    forceMole: false,
+                    seqIndex: item.seqIndex ?? (blockSequenceCursor + idx),
+                    injectedNoMole: true
+                });
             });
+            injectedPieceBatch = null;
+        } else {
+            for (let i = 0; i < 3; i++) {
+                const seqItem = nextSequenceShape();
+                pieces.push({
+                    shapeObj: seqItem.shapeObj,
+                    forceMole: false,
+                    seqIndex: seqItem.seqIndex
+                });
+            }
         }
 
         const guardrails = isGuardrailsMode();
@@ -2064,9 +2271,11 @@
             const seededAllowMole = !debugUnlimitedMode && (currentSeedMolePlan?.hasMole?.[seqMod] === true);
             const forcedAllowMole = pieces[i].forceMole === true
                 && (!guardrails || isMoleEligibleByList(shapeObj) || pieces[i].forceMoleOverrideList === true);
-            const allowMole = debugUnlimitedMode
+            const allowMole = pieces[i].injectedNoMole
+                ? false
+                : (debugUnlimitedMode
                 ? forcedAllowMole
-                : (guardrails ? forcedAllowMole : seededAllowMole);
+                : (guardrails ? forcedAllowMole : seededAllowMole));
             const posSalt = (getMolePatternSalt() >>> 6) + selectedStake * 17;
             const fixedIdx = validCells.length
                 ? (debugUnlimitedMode
@@ -2247,30 +2456,34 @@
         return true;
     }
 
-    function runHitStop(then) {
-        const app = document.querySelector('.app');
-        if (!app) {
-            then();
-            return;
-        }
-        app.classList.add('hit-stop');
+    function runHitStop(placedCells, then) {
+        const targets = Array.isArray(placedCells)
+            ? placedCells
+                .map(({ r, c }) => document.getElementById(`grid-${r}-${c}`))
+                .filter(Boolean)
+            : [];
+        targets.forEach((el) => {
+            el.classList.remove('hit-stop-local');
+            void el.offsetWidth;
+            el.classList.add('hit-stop-local');
+        });
         setTimeout(() => {
-            app.classList.remove('hit-stop');
+            targets.forEach((el) => el.classList.remove('hit-stop-local'));
             then();
         }, HIT_STOP_MS);
     }
 
     function commitPlacement(data, r, c, sourceEl) {
-        placeBlock(data.shape, r, c, data.molePos, data.moleType);
+        const placedCells = placeBlock(data.shape, r, c, data.molePos, data.moleType);
         if (sourceEl && sourceEl.parentElement) {
             sourceEl.parentElement.innerHTML = '';
         }
         if (isAllSlotsEmpty()) generatePieces();
-        runHitStop(() => {
+        runHitStop(placedCells, () => {
             checkClearance();
             setTimeout(moveMoles, 360);
             setTimeout(() => {
-                if (!hasAnyMoves()) endGame(false, '没有空格了');
+                if (!hasAnyMoves()) endGame(false, '没有空格了', { cause: 'no_space' });
             }, 520);
         });
     }
@@ -2279,6 +2492,7 @@
         const fixedMolePos = normalizeMolePos(shape, molePos);
         const hasMole = Boolean(fixedMolePos);
         const blockId = blockIdCounter++;
+        const placedCells = [];
         if (currentMatchLog) {
             currentMatchLog.blocksPlaced += 1;
             if (hasMole) {
@@ -2295,6 +2509,7 @@
             row.forEach((v, j) => {
                 if (v) {
                     grid[r + i][c + j] = 1;
+                    placedCells.push({ r: r + i, c: c + j });
                     if (hasMole) {
                         holes[r + i][c + j] = 1;
                         holeBlockId[r + i][c + j] = blockId;
@@ -2306,7 +2521,8 @@
                 }
             });
         });
-        updateGridView(true);
+        updateGridView(true, placedCells);
+        return placedCells;
     }
 
     function createMoleEntity(r, c, moleType, blockId) {
@@ -2682,12 +2898,44 @@
         return false;
     }
 
+    function canShapeFitAnywhere(shape) {
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                if (canPlace(shape, r, c)) return true;
+            }
+        }
+        return false;
+    }
+
+    function buildRevivePieceBatch() {
+        const placeable = SHAPES
+            .filter((s) => canShapeFitAnywhere(s.s))
+            .sort((a, b) => countActiveCells(b) - countActiveCells(a) || a.id.localeCompare(b.id));
+        if (placeable.length === 0) return null;
+        const chosen = [];
+        for (let i = 0; i < 3; i++) {
+            chosen.push(placeable[Math.min(i, placeable.length - 1)]);
+        }
+        return chosen.map((shapeObj, idx) => ({
+            shapeObj,
+            seqIndex: blockSequenceCursor + idx,
+        }));
+    }
+
     function screenShake() {
         const shell = document.querySelector('.device-shell');
         if (!shell) return;
         shell.classList.remove('screen-shake');
         shell.offsetWidth;
         shell.classList.add('screen-shake');
+    }
+
+    function screenShakeStrong() {
+        const shell = document.querySelector('.device-shell');
+        if (!shell) return;
+        shell.classList.remove('screen-shake-strong');
+        shell.offsetWidth;
+        shell.classList.add('screen-shake-strong');
     }
 
     function getSnapPlacement(shape, r, c, radius = DROP_SNAP_RADIUS) {
@@ -2752,6 +3000,7 @@
 
         setTimeout(() => {
             h.classList.add('smash');
+            screenShakeStrong();
         }, 300);
 
         setTimeout(() => {
@@ -2784,7 +3033,8 @@
         }, 780);
     }
 
-    function updateGridView(pulse = false) {
+    function updateGridView(pulse = false, pulseCells = []) {
+        const pulseSet = new Set((pulseCells || []).map((p) => `${p.r},${p.c}`));
         for (let r = 0; r < GRID_SIZE; r++) {
             for (let c = 0; c < GRID_SIZE; c++) {
                 const cell = document.getElementById(`grid-${r}-${c}`);
@@ -2796,7 +3046,7 @@
                     cell.style.removeProperty('--hole-img');
                 }
                 cell.className = classes;
-                if (pulse && grid[r][c]) {
+                if (pulse && pulseSet.has(`${r},${c}`)) {
                     cell.classList.add('pulse');
                     setTimeout(() => cell.classList.remove('pulse'), 420);
                 }
@@ -3271,12 +3521,20 @@
         gateGoalMolesEl.innerText = `${goalTargetCurrent}`;
         gateMaxEl.innerText = Number.isFinite(maxReward) ? `$${maxReward.toFixed(2)}` : '∞';
         playEntryBtn.innerText = `Play for $${entryFee}`;
-        debugHintEl.innerText = `倍率: ${activeReturnMultiplier}x (fixed) | Goal:${goalTargetCurrent} | Cap:${maxKillsCurrent} | 难度筛选: ${selectedDifficultyFilter} | 当前难度: ${currentDifficulty} | Seed: ${currentSeedName}`;
+        const segText = moleDistributionModeCurrent === 'segment_custom'
+            ? ` | Seg:${Math.round(segmentRatesCurrent.r0_2*100)}/${Math.round(segmentRatesCurrent.r3_29*100)}/${Math.round(segmentRatesCurrent.r30_59*100)}/${Math.round(segmentRatesCurrent.r60_89*100)}/${Math.round(segmentRatesCurrent.r90p*100)}`
+            : '';
+        debugHintEl.innerText = `倍率: ${activeReturnMultiplier}x (fixed) | Goal:${goalTargetCurrent} | Cap:${maxKillsCurrent} | 难度筛选: ${selectedDifficultyFilter} | 当前难度: ${currentDifficulty} | Seed: ${currentSeedName}${segText}`;
         if (debugGoalInputEl) debugGoalInputEl.value = String(goalTargetCurrent);
         if (debugDifficultySelectEl) debugDifficultySelectEl.value = selectedDifficultyFilter;
         if (debugMaxMolesInputEl) debugMaxMolesInputEl.value = String(maxKillsCurrent);
         if (debugMoleRateInputEl) debugMoleRateInputEl.value = String(Math.round(getCurrentMoleSpawnRate() * 100));
         if (debugMoleDistSelectEl) debugMoleDistSelectEl.value = moleDistributionModeCurrent;
+        if (debugSeg02InputEl) debugSeg02InputEl.value = String(Math.round(segmentRatesCurrent.r0_2 * 100));
+        if (debugSeg329InputEl) debugSeg329InputEl.value = String(Math.round(segmentRatesCurrent.r3_29 * 100));
+        if (debugSeg3059InputEl) debugSeg3059InputEl.value = String(Math.round(segmentRatesCurrent.r30_59 * 100));
+        if (debugSeg6089InputEl) debugSeg6089InputEl.value = String(Math.round(segmentRatesCurrent.r60_89 * 100));
+        if (debugSeg90pInputEl) debugSeg90pInputEl.value = String(Math.round(segmentRatesCurrent.r90p * 100));
         if (debugMoleRewardRateInputEl) debugMoleRewardRateInputEl.value = String(Number(moleRewardRateCurrent.toFixed(2)));
         updateMoleRateVisibility();
         debugMultiBtns.forEach((btn) => {
@@ -3303,7 +3561,7 @@
         const nextCap = Math.max(nextGoal, Number(debugMaxMolesInputEl?.value || maxMolesCapCurrent));
         const nextCoveragePct = Number(debugMoleRateInputEl?.value ?? (getCurrentMoleSpawnRate() * 100));
         const nextMoleDistModeRaw = String(debugMoleDistSelectEl?.value || moleDistributionModeCurrent);
-        const nextMoleDistMode = ['guardrails', 'flat', 'segment_35_30_20_5'].includes(nextMoleDistModeRaw)
+        const nextMoleDistMode = ['guardrails', 'flat', 'segment_35_30_20_5', 'segment_25_20_15_5', 'segment_28_20_12_5', 'segment_custom'].includes(nextMoleDistModeRaw)
             ? nextMoleDistModeRaw
             : 'flat';
         const rawRewardRate = String(debugMoleRewardRateInputEl?.value ?? '').trim();
@@ -3321,6 +3579,9 @@
         }
         maxMolesCapCurrent = Math.floor(nextCap);
         moleDistributionModeCurrent = nextMoleDistMode;
+        if (moleDistributionModeCurrent === 'segment_custom') {
+            segmentRatesCurrent = readSegmentRatesFromInputs();
+        }
         if (!isSegmentMode()) {
             moleSpawnRateCurrent = Math.min(1, Math.max(0, nextCoveragePct / 100));
         }
@@ -3346,6 +3607,9 @@
         passedGoal = false;
         blockIdCounter = 0;
         blockSequenceCursor = 0;
+        injectedPieceBatch = null;
+        pendingReviveContext = null;
+        closeReviveModal();
         timeLeft = 180;
         timerEl.innerText = debugUnlimitedMode ? '∞' : '03:00';
         piecesContainer.innerHTML = '';
@@ -3386,6 +3650,35 @@
         overlayBtnEl.innerText = buttonText;
         overlayBtnEl.onclick = onClick;
         document.getElementById('overlay').classList.remove('hidden');
+    }
+
+    function closeReviveModal() {
+        reviveModalEl.classList.add('hidden');
+    }
+
+    function openReviveModal(meta = {}) {
+        pendingReviveContext = { ...(meta || {}) };
+        const reviveCost = entryFee * 0.7;
+        const earnedNow = getEarnedAmount();
+        const causeText = meta?.cause === 'time' ? 'Time is up' : 'Out of moves';
+        reviveTitleEl.innerText = `Still close!`;
+        reviveSubtitleEl.innerText = `${causeText}. Revive to continue this run.`;
+        reviveLossEl.innerHTML = `If you end now, you will lose current collected cash: <b>$${earnedNow.toFixed(2)}</b>`;
+        reviveProgressEl.innerText = `Progress ${collectedCount}/${goalTargetCurrent} • Revive grants 3 playable blocks`;
+        revivePayBtn.innerText = `Revive $${reviveCost.toFixed(2)}`;
+        reviveModalEl.classList.remove('hidden');
+    }
+
+    async function finalizeFailSettlement(message) {
+        await showResultToast(message === '没有空格了' ? 'move' : 'time', 1300);
+        finalizeMatchLog('Fail');
+        openSettlement(
+            '未达成Goal',
+            '本局没有获得钱',
+            accountBalance <= 0 ? '去充值' : '返回关卡',
+            () => returnToLevelGate(false)
+        );
+        if (accountBalance <= 0) openRechargeModal();
     }
 
     async function startGameFromGate() {
@@ -3480,6 +3773,39 @@
             closeRechargeModal();
         });
     });
+    reviveEndBtn.addEventListener('click', async () => {
+        const ctx = pendingReviveContext || {};
+        closeReviveModal();
+        pendingReviveContext = null;
+        await finalizeFailSettlement(ctx.message || '没有空格了');
+    });
+    revivePayBtn.addEventListener('click', () => {
+        const reviveCost = entryFee * 0.7;
+        if (accountBalance < reviveCost) {
+            showToast('余额不足，无法复活', 1200, 'fail');
+            openRechargeModal();
+            return;
+        }
+        accountBalance -= reviveCost;
+        updateBalanceView();
+        closeReviveModal();
+        const ctx = pendingReviveContext || {};
+        pendingReviveContext = null;
+        const revivePack = buildRevivePieceBatch();
+        if (!revivePack) {
+            endGame(false, ctx.message || '没有空格了', { ...(ctx || {}), allowRevive: false });
+            return;
+        }
+        injectedPieceBatch = revivePack;
+        piecesContainer.innerHTML = '';
+        generatePieces();
+        if (!debugUnlimitedMode && timeLeft <= 0) {
+            timeLeft = 30;
+            timerEl.innerText = '00:30';
+        }
+        gameActive = true;
+        showToast('Revived!', 900, 'win');
+    });
     playEntryBtn.addEventListener('click', startGameFromGate);
 
     const timerInterval = setInterval(() => {
@@ -3492,7 +3818,7 @@
         const m = Math.floor(timeLeft/60).toString().padStart(2, '0');
         const s = (timeLeft%60).toString().padStart(2, '0');
         timerEl.innerText = `${m}:${s}`;
-        if (timeLeft <= 0) endGame(false, '时间到');
+        if (timeLeft <= 0) endGame(false, '时间到', { cause: 'time' });
     }, 1000);
 
     async function endGame(win, message, meta = {}) {
@@ -3516,15 +3842,12 @@
         }
 
         if (!reachedGoal) {
-            await showResultToast(message === '没有空格了' ? 'move' : 'time', 1300);
-            finalizeMatchLog('Fail');
-            openSettlement(
-                '未达成Goal',
-                '本局没有获得钱',
-                accountBalance <= 0 ? '去充值' : '返回关卡',
-                () => returnToLevelGate(false)
-            );
-            if (accountBalance <= 0) openRechargeModal();
+            const allowRevive = meta.allowRevive !== false;
+            if (allowRevive) {
+                openReviveModal({ ...meta, message });
+                return;
+            }
+            await finalizeFailSettlement(message);
             return;
         }
 
