@@ -4,9 +4,11 @@ import html
 import json
 import mimetypes
 import random
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from uuid import uuid4
 from urllib.parse import parse_qs, urlparse
 
 from simulator import (
@@ -19,6 +21,7 @@ from simulator import (
     MOLE_MODE_SEGMENT_V5,
     MOLE_MODE_SEGMENT_CUSTOM,
     MOLE_MODE_UNIFORM_SMOOTH,
+    MOLE_MODE_UNIFORM_BALANCED,
     MOLE_MODES,
     MOLE_REWARD_RATE,
     build_run_seed_list,
@@ -33,6 +36,8 @@ from simulator import (
 
 LAST_CSV = b""
 LAST_CSV_NAME = "sim_results.csv"
+RUN_JOBS = {}
+RUN_JOBS_LOCK = threading.Lock()
 
 
 def build_seed_file_index(seeds_dir: Path):
@@ -193,10 +198,38 @@ def build_csv(rows, concise_report: bool = False):
 
 def summarize(rows, duration_seconds: float = 0.0):
     if not rows:
-        return {"matches": 0, "win_rate": 0.0, "rtp": 0.0, "stake": 0.0, "earned": 0.0, "duration_seconds": duration_seconds}
+        return {
+            "matches": 0,
+            "win_rate": 0.0,
+            "rtp": 0.0,
+            "stake": 0.0,
+            "earned": 0.0,
+            "duration_seconds": duration_seconds,
+            "by_difficulty": [],
+        }
     stake = sum(r["stake"] for r in rows)
     earned = sum(r["earned"] for r in rows)
     win = sum(1 for r in rows if r["result"] != "Fail")
+    by_diff = {}
+    for row in rows:
+        diff = str(row.get("difficulty", "Unknown"))
+        by_diff.setdefault(diff, []).append(row)
+    by_difficulty = []
+    for diff in sorted(by_diff.keys()):
+        diff_rows = by_diff[diff]
+        diff_stake = sum(r["stake"] for r in diff_rows)
+        diff_earned = sum(r["earned"] for r in diff_rows)
+        diff_win = sum(1 for r in diff_rows if r["result"] != "Fail")
+        by_difficulty.append(
+            {
+                "difficulty": diff,
+                "matches": len(diff_rows),
+                "win_rate": (diff_win / len(diff_rows)) if diff_rows else 0.0,
+                "rtp": (diff_earned / diff_stake) if diff_stake > 0 else 0.0,
+                "stake": diff_stake,
+                "earned": diff_earned,
+            }
+        )
     return {
         "matches": len(rows),
         "win_rate": win / len(rows),
@@ -204,7 +237,114 @@ def summarize(rows, duration_seconds: float = 0.0):
         "stake": stake,
         "earned": earned,
         "duration_seconds": duration_seconds,
+        "by_difficulty": by_difficulty,
     }
+
+
+def render_progress_page(defaults, job_id: str):
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simulator Progress</title>
+  <style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #f5f6f8; color: #111; }}
+    .wrap {{ max-width: 760px; margin: 32px auto; padding: 0 16px 32px; }}
+    .card {{ background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 6px 24px rgba(0,0,0,.08); }}
+    .meta {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 14px; color: #445; }}
+    .bar {{ margin-top: 18px; height: 14px; border-radius: 999px; background: #e7ebf0; overflow: hidden; }}
+    .bar-fill {{ height: 100%; width: 0%; background: linear-gradient(90deg, #32b46c, #0d6efd); transition: width .18s ease; }}
+    .status {{ margin-top: 14px; font-size: 15px; font-weight: 600; color: #223; }}
+    .sub {{ margin-top: 8px; font-size: 13px; color: #667; }}
+    .timing {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; font-size: 13px; color: #556; }}
+    .error {{ margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: #ffe7e7; color: #b00020; display:none; }}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>模拟进行中</h2>
+      <div class="sub">任务 ID: {html.escape(job_id)}</div>
+      <div class="meta">
+        <div>难度: <b>{html.escape(str(defaults.get("difficulty", "D5")))}</b></div>
+        <div>模式: <b>{html.escape(str(defaults.get("mole_mode", DEFAULT_MOLE_MODE)))}</b></div>
+        <div>runs: <b>{html.escape(str(defaults.get("runs", 0)))}</b></div>
+        <div>策略: <b>{html.escape(str(defaults.get("policy", DEFAULT_POLICY)))}</b></div>
+      </div>
+      <div class="bar"><div id="bar-fill" class="bar-fill"></div></div>
+      <div id="status" class="status">准备中...</div>
+      <div id="sub" class="sub">0 / 0</div>
+      <div class="timing">
+        <div>已耗时: <b id="elapsed">00:00</b></div>
+        <div>预计结束: <b id="eta">计算中...</b></div>
+      </div>
+      <div id="error" class="error"></div>
+    </div>
+  </div>
+<script>
+(() => {{
+  const jobId = {json.dumps(job_id)};
+  const fillEl = document.getElementById('bar-fill');
+  const statusEl = document.getElementById('status');
+  const subEl = document.getElementById('sub');
+  const elapsedEl = document.getElementById('elapsed');
+  const etaEl = document.getElementById('eta');
+  const errEl = document.getElementById('error');
+
+  const fmtSeconds = (sec) => {{
+    const total = Math.max(0, Math.floor(Number(sec || 0)));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    if (h > 0) return `${{String(h).padStart(2, '0')}}:${{String(m).padStart(2, '0')}}:${{String(s).padStart(2, '0')}}`;
+    return `${{String(m).padStart(2, '0')}}:${{String(s).padStart(2, '0')}}`;
+  }};
+  const fmtClock = (epochSec) => {{
+    if (!epochSec) return '计算中...';
+    const d = new Date(Number(epochSec) * 1000);
+    return d.toLocaleTimeString([], {{ hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }});
+  }};
+
+  const tick = async () => {{
+    try {{
+      const resp = await fetch(`/api/run-status?id=${{encodeURIComponent(jobId)}}`, {{ cache: 'no-store' }});
+      if (!resp.ok) throw new Error(`HTTP ${{resp.status}}`);
+      const data = await resp.json();
+      const total = Math.max(0, Number(data.total || 0));
+      const current = Math.max(0, Number(data.current || 0));
+      const pct = total > 0 ? Math.max(0, Math.min(100, current / total * 100)) : 0;
+      fillEl.style.width = `${{pct}}%`;
+      statusEl.textContent = data.status_text || '运行中...';
+      subEl.textContent = `${{current}} / ${{total}}`;
+      elapsedEl.textContent = fmtSeconds(data.elapsed_seconds || 0);
+      etaEl.textContent = fmtClock(data.eta_epoch || 0);
+      if (data.state === 'done') {{
+        fillEl.style.width = '100%';
+        etaEl.textContent = '已完成';
+        window.location.href = `/result?id=${{encodeURIComponent(jobId)}}`;
+        return;
+      }}
+      if (data.state === 'error') {{
+        errEl.style.display = 'block';
+        errEl.textContent = data.error || '模拟失败';
+        statusEl.textContent = '运行失败';
+        etaEl.textContent = '--';
+        return;
+      }}
+      setTimeout(tick, 250);
+    }} catch (err) {{
+      errEl.style.display = 'block';
+      errEl.textContent = String(err);
+      statusEl.textContent = '状态查询失败';
+      etaEl.textContent = '--';
+    }}
+  }};
+  tick();
+}})();
+</script>
+</body>
+</html>"""
 
 
 def render_page(defaults, summary=None, rows=None, error=""):
@@ -246,6 +386,7 @@ def render_page(defaults, summary=None, rows=None, error=""):
         (MOLE_MODE_GUARDRAILS, "干预"),
         (MOLE_MODE_FLAT, "不干预"),
         (MOLE_MODE_UNIFORM_SMOOTH, "uniform_smooth (p30,w12,l2,u5)"),
+        (MOLE_MODE_UNIFORM_BALANCED, "uniform_balanced"),
         (MOLE_MODE_SEGMENT_V3, "segment_35_30_20_5"),
         (MOLE_MODE_SEGMENT_V4, "segment_25_20_15_5"),
         (MOLE_MODE_SEGMENT_V5, "segment_28_20_12_5"),
@@ -257,6 +398,41 @@ def render_page(defaults, summary=None, rows=None, error=""):
     )
     summary_html = ""
     if summary:
+        by_diff_rows = "".join(
+            (
+                "<tr>"
+                f"<td>{html.escape(str(item['difficulty']))}</td>"
+                f"<td>{item['matches']}</td>"
+                f"<td>{item['win_rate']:.2%}</td>"
+                f"<td>{item['rtp']:.3f}</td>"
+                f"<td>${item['stake']:.2f}</td>"
+                f"<td>${item['earned']:.2f}</td>"
+                "</tr>"
+            )
+            for item in summary.get("by_difficulty", [])
+        )
+        by_diff_html = ""
+        if by_diff_rows:
+            by_diff_html = f"""
+            <div style="margin-top:14px">
+              <h4 style="margin:0 0 8px">分难度返奖率</h4>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>difficulty</th>
+                      <th>对局数</th>
+                      <th>胜率</th>
+                      <th>RTP</th>
+                      <th>总下注</th>
+                      <th>总返奖</th>
+                    </tr>
+                  </thead>
+                  <tbody>{by_diff_rows}</tbody>
+                </table>
+              </div>
+            </div>
+            """
         summary_html = f"""
         <div class="card">
           <h3>结果总览</h3>
@@ -268,6 +444,7 @@ def render_page(defaults, summary=None, rows=None, error=""):
             <div>总返奖: <b>${summary['earned']:.2f}</b></div>
             <div>模拟耗时: <b>{summary.get('duration_seconds', 0.0):.3f}s</b></div>
           </div>
+          {by_diff_html}
           <a class="btn" href="/download">下载CSV</a>
         </div>
         """
@@ -399,6 +576,100 @@ def render_page(defaults, summary=None, rows=None, error=""):
 </html>"""
 
 
+def run_simulation_job(job_id: str, defaults: dict):
+    global LAST_CSV, LAST_CSV_NAME
+    try:
+        with RUN_JOBS_LOCK:
+            RUN_JOBS[job_id]["state"] = "running"
+            RUN_JOBS[job_id]["status_text"] = "读取种子..."
+            started_at = float(RUN_JOBS[job_id].get("started_at", time.time()))
+        t0 = time.perf_counter()
+        seed_cases = load_seed_cases(Path(defaults["seeds_dir"]), defaults["max_seeds"])
+        seed_cases = build_seed_pool(seed_cases, defaults["difficulty"], defaults["prefer_unique"])
+        if not seed_cases:
+            raise ValueError("没有可用seed（请检查目录/难度筛选）")
+
+        rng = random.Random(defaults["rng_seed"])
+        segment_rates = {
+            "r0_2": min(1.0, max(0.0, float(defaults.get("seg_rate_0_2", 1.0)))),
+            "r3_29": min(1.0, max(0.0, float(defaults.get("seg_rate_3_29", 0.28)))),
+            "r30_59": min(1.0, max(0.0, float(defaults.get("seg_rate_30_59", 0.20)))),
+            "r60_89": min(1.0, max(0.0, float(defaults.get("seg_rate_60_89", 0.12)))),
+            "r90p": min(1.0, max(0.0, float(defaults.get("seg_rate_90p", 0.05)))),
+        }
+        rows = []
+        runs = defaults["runs"]
+        if runs > 0:
+            balance_all = defaults["all_balanced"] and str(defaults["difficulty"]).strip().upper() == "ALL"
+            run_list = build_run_seed_list(seed_cases, runs, rng, balance_all)
+        else:
+            run_list = list(seed_cases)
+
+        total = len(run_list)
+        with RUN_JOBS_LOCK:
+            RUN_JOBS[job_id]["total"] = total
+            RUN_JOBS[job_id]["status_text"] = "开始模拟..."
+
+        for idx, sc in enumerate(run_list, start=1):
+            rows.append(
+                simulate(
+                    sc,
+                    rng,
+                    defaults["entry_fee"],
+                    defaults["action_seconds"],
+                    defaults["max_actions"],
+                    defaults["goal_target"],
+                    defaults["max_moles"],
+                    defaults["mole_rate"],
+                    defaults["policy"],
+                    False,
+                    defaults["mole_reward_rate"],
+                    defaults["mole_mode"],
+                    segment_rates,
+                )
+            )
+            if idx == 1 or idx == total or idx % 5 == 0:
+                with RUN_JOBS_LOCK:
+                    if job_id in RUN_JOBS:
+                        elapsed_now = max(0.0, time.time() - started_at)
+                        eta_epoch = 0.0
+                        if idx > 0 and total > 0:
+                            eta_epoch = time.time() + max(0.0, elapsed_now * (total - idx) / idx)
+                        RUN_JOBS[job_id]["current"] = idx
+                        RUN_JOBS[job_id]["status_text"] = f"模拟中... ({idx}/{total})"
+                        RUN_JOBS[job_id]["elapsed_seconds"] = elapsed_now
+                        RUN_JOBS[job_id]["eta_epoch"] = eta_epoch
+
+        elapsed = max(time.perf_counter() - t0, time.time() - started_at)
+        concise_report = bool(defaults.get("concise_report", False))
+        csv_bytes = build_csv(rows, concise_report)
+        csv_name = "sim_results_concise.csv" if concise_report else "sim_results.csv"
+        summary = summarize(rows, elapsed)
+
+        with RUN_JOBS_LOCK:
+            RUN_JOBS[job_id].update({
+                "state": "done",
+                "current": total,
+                "total": total,
+                "status_text": "模拟完成",
+                "elapsed_seconds": elapsed,
+                "eta_epoch": 0.0,
+                "rows": rows,
+                "summary": summary,
+                "csv_bytes": csv_bytes,
+                "csv_name": csv_name,
+            })
+        LAST_CSV = csv_bytes
+        LAST_CSV_NAME = csv_name
+    except Exception as e:
+        with RUN_JOBS_LOCK:
+            if job_id in RUN_JOBS:
+                RUN_JOBS[job_id]["state"] = "error"
+                RUN_JOBS[job_id]["error"] = str(e)
+                RUN_JOBS[job_id]["status_text"] = "模拟失败"
+                RUN_JOBS[job_id]["eta_epoch"] = 0.0
+
+
 class Handler(BaseHTTPRequestHandler):
     defaults = {}
     seed_index = None
@@ -436,6 +707,41 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
+        if path == "/api/run-status":
+            q = parse_qs(parsed.query or "")
+            job_id = (q.get("id", [""])[0] or "").strip()
+            with RUN_JOBS_LOCK:
+                job = RUN_JOBS.get(job_id)
+            if not job:
+                self.send_json({"error": "job not found"}, status=404)
+                return
+            self.send_json({
+                "id": job_id,
+                "state": job.get("state", "queued"),
+                "current": job.get("current", 0),
+                "total": job.get("total", 0),
+                "status_text": job.get("status_text", ""),
+                "elapsed_seconds": job.get("elapsed_seconds", max(0.0, time.time() - float(job.get("started_at", time.time())))),
+                "eta_epoch": job.get("eta_epoch", 0.0),
+                "error": job.get("error", ""),
+            })
+            return
+        if path == "/result":
+            q = parse_qs(parsed.query or "")
+            job_id = (q.get("id", [""])[0] or "").strip()
+            with RUN_JOBS_LOCK:
+                job = RUN_JOBS.get(job_id)
+            if not job:
+                self.send_html(render_page(self.defaults, error="任务不存在"), status=404)
+                return
+            if job.get("state") == "error":
+                self.send_html(render_page(job.get("defaults", self.defaults), error=job.get("error", "模拟失败")), status=400)
+                return
+            if job.get("state") != "done":
+                self.send_html(render_progress_page(job.get("defaults", self.defaults), job_id))
+                return
+            self.send_html(render_page(job.get("defaults", self.defaults), job.get("summary"), job.get("rows")))
+            return
         if path == "/download":
             if not LAST_CSV:
                 self.send_response(404)
@@ -544,68 +850,26 @@ class Handler(BaseHTTPRequestHandler):
         self.defaults = defaults
 
         try:
-            t0 = time.perf_counter()
-            seed_cases = load_seed_cases(Path(defaults["seeds_dir"]), defaults["max_seeds"])
-            seed_cases = build_seed_pool(seed_cases, defaults["difficulty"], defaults["prefer_unique"])
-            if not seed_cases:
-                raise ValueError("没有可用seed（请检查目录/难度筛选）")
-
-            rng = random.Random(defaults["rng_seed"])
-            segment_rates = {
-                "r0_2": min(1.0, max(0.0, float(defaults.get("seg_rate_0_2", 1.0)))),
-                "r3_29": min(1.0, max(0.0, float(defaults.get("seg_rate_3_29", 0.28)))),
-                "r30_59": min(1.0, max(0.0, float(defaults.get("seg_rate_30_59", 0.20)))),
-                "r60_89": min(1.0, max(0.0, float(defaults.get("seg_rate_60_89", 0.12)))),
-                "r90p": min(1.0, max(0.0, float(defaults.get("seg_rate_90p", 0.05)))),
-            }
-
-            rows = []
-            runs = defaults["runs"]
-            if runs > 0:
-                balance_all = defaults["all_balanced"] and str(defaults["difficulty"]).strip().upper() == "ALL"
-                for sc in build_run_seed_list(seed_cases, runs, rng, balance_all):
-                    rows.append(
-                        simulate(
-                            sc,
-                            rng,
-                            defaults["entry_fee"],
-                            defaults["action_seconds"],
-                            defaults["max_actions"],
-                            defaults["goal_target"],
-                            defaults["max_moles"],
-                            defaults["mole_rate"],
-                            defaults["policy"],
-                            False,
-                            defaults["mole_reward_rate"],
-                            defaults["mole_mode"],
-                            segment_rates,
-                        )
-                    )
-            else:
-                for sc in seed_cases:
-                    rows.append(
-                        simulate(
-                            sc,
-                            rng,
-                            defaults["entry_fee"],
-                            defaults["action_seconds"],
-                            defaults["max_actions"],
-                            defaults["goal_target"],
-                            defaults["max_moles"],
-                            defaults["mole_rate"],
-                            defaults["policy"],
-                            False,
-                            defaults["mole_reward_rate"],
-                            defaults["mole_mode"],
-                            segment_rates,
-                        )
-                    )
-
-            elapsed = time.perf_counter() - t0
-            concise_report = bool(defaults.get("concise_report", False))
-            LAST_CSV = build_csv(rows, concise_report)
-            LAST_CSV_NAME = "sim_results_concise.csv" if concise_report else "sim_results.csv"
-            self.send_html(render_page(defaults, summarize(rows, elapsed), rows))
+            job_id = uuid4().hex
+            with RUN_JOBS_LOCK:
+                RUN_JOBS[job_id] = {
+                    "state": "queued",
+                    "current": 0,
+                    "total": 0,
+                    "status_text": "排队中...",
+                    "started_at": time.time(),
+                    "elapsed_seconds": 0.0,
+                    "eta_epoch": 0.0,
+                    "error": "",
+                    "defaults": dict(defaults),
+                    "rows": [],
+                    "summary": None,
+                    "csv_bytes": b"",
+                    "csv_name": "sim_results.csv",
+                }
+            worker = threading.Thread(target=run_simulation_job, args=(job_id, dict(defaults)), daemon=True)
+            worker.start()
+            self.send_html(render_progress_page(defaults, job_id))
         except Exception as e:
             self.send_html(render_page(defaults, error=str(e)), status=400)
 

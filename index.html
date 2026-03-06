@@ -92,8 +92,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
-            padding: 4px 10px 10px;
+            gap: 5px;
+            padding: 3px 10px 10px;
             transition: transform 0.06s linear, filter 0.06s linear;
         }
 
@@ -107,60 +107,118 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 6px 8px;
+            gap: 10px;
+            min-height: 82px;
+            padding: 14px 12px 16px;
             box-sizing: border-box;
-            background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.28));
-            border: 1px solid rgba(255,255,255,0.45);
+            background: linear-gradient(180deg, rgba(255,255,255,0.58), rgba(255,255,255,0.22));
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 20px;
+            box-shadow: 0 10px 24px rgba(46, 31, 13, 0.16);
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            inset: 6px;
             border-radius: 16px;
-            box-shadow: 0 8px 20px rgba(46, 31, 13, 0.16);
+            background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+            border: 1px solid rgba(255,255,255,0.16);
+            pointer-events: none;
+        }
+
+        header::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0), rgba(255,255,255,0.08));
+            pointer-events: none;
         }
 
         .top-time {
-            font-size: 1.86rem;
+            font-size: 1.7rem;
             font-weight: 800;
             letter-spacing: 0.02em;
+            line-height: 1.2;
             color: #fff;
             text-shadow: -2px -2px 0 #0f6e2e, 2px -2px 0 #0f6e2e, -2px 2px 0 #0f6e2e, 2px 2px 0 #0f6e2e, 0 4px 10px rgba(0,0,0,0.35);
-            min-width: 108px;
+            min-width: 118px;
+            white-space: nowrap;
+            padding: 6px 0 10px;
         }
 
-        .top-settings {
-            font-size: 30px;
-            color: #17763a;
-            width: 48px;
-            height: 48px;
-            display: grid;
-            place-items: center;
-            border-radius: 50%;
-            background: linear-gradient(180deg, #fff, #eaf7ea);
-            border: 3px solid #17853c;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+        .top-time-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: relative;
+            z-index: 1;
+            flex: 1 1 auto;
+            min-width: 0;
+            padding: 3px 0 2px;
+        }
+
+        .top-balance-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px 5px 8px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(239,247,236,0.58));
+            border: 1px solid rgba(25, 107, 45, 0.14);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+            position: relative;
+            z-index: 1;
+            flex: 0 0 auto;
+        }
+
+        .hud-caption {
+            font-size: 0.62rem;
+            font-weight: 900;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(54, 42, 19, 0.72);
+            line-height: 1;
         }
 
         .goal-panel {
             width: 100%;
             background: transparent;
             border-radius: 10px;
-            padding: 4px 2px 6px;
-            margin-top: 2px;
+            padding: 7px 2px 0;
+            margin-top: 1px;
         }
 
         .goal-cards {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 11px;
             transition: all 0.2s ease;
         }
 
         .goal-card {
             background: center / 100% 100% no-repeat;
-            min-height: 76px;
+            min-height: 82px;
             border-radius: 12px;
-            padding: 8px 10px 6px;
+            padding: 9px 11px 9px;
             text-align: center;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            filter: drop-shadow(0 8px 12px rgba(70, 42, 12, 0.18));
+            position: relative;
+        }
+
+        .goal-card::after {
+            content: "";
+            position: absolute;
+            inset: 10px 14px 12px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
+            pointer-events: none;
         }
 
         .goal-card.goal {
@@ -193,34 +251,49 @@
 
         .goal-card-value {
             color: #fff;
-            font-size: 1.38rem;
+            font-size: 1.3rem;
             font-weight: 900;
-            line-height: 1;
+            line-height: 1.1;
             -webkit-text-stroke: 0;
             text-shadow:
                 0 2px 0 rgba(110, 58, 31, 0.9),
                 0 4px 8px rgba(0,0,0,0.24);
             width: 100%;
-            min-height: 30px;
+            min-height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 0.01em;
         }
 
         .goal-card.goal .goal-card-value {
-            padding-left: 5ch;
-            transform: translateX(-2px);
+            padding-left: 4.8ch;
+            padding-right: 0.4ch;
+            transform: translate(-1px, 1px);
         }
 
         .goal-card.earned .goal-card-value {
-            font-size: 1.34rem;
+            font-size: 1.2rem;
+            transform: translateY(2px);
         }
 
         .goal-card.earned .earned-current {
             color: #37d463;
             -webkit-text-stroke: 0;
             text-shadow: none;
+        }
+
+        .goal-card.earned.collect-pulse {
+            animation: earned-collect-pulse 0.28s ease;
+        }
+
+        @keyframes earned-collect-pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 8px 12px rgba(70, 42, 12, 0.18)); }
+            50% { transform: scale(1.04); filter: drop-shadow(0 12px 18px rgba(58, 138, 70, 0.28)); }
+            100% { transform: scale(1); filter: drop-shadow(0 8px 12px rgba(70, 42, 12, 0.18)); }
         }
 
         .goal-card.earned .earned-sep,
@@ -237,10 +310,38 @@
             max-width: 360px;
             aspect-ratio: 1;
             background: #5C3222;
-            padding: 5px;
-            border-radius: 18px;
-            box-shadow: var(--shadow);
-            border: 2px solid rgba(120, 80, 30, 0.28);
+            padding: 10px 8px 8px;
+            border-radius: 24px;
+            box-shadow:
+                0 20px 34px rgba(50, 32, 12, 0.2),
+                inset 0 2px 0 rgba(255,255,255,0.08),
+                inset 0 -10px 18px rgba(30, 18, 8, 0.22);
+            border: 2px solid rgba(120, 80, 30, 0.24);
+            margin-top: 9px;
+        }
+
+        #board-wrapper::before {
+            content: "";
+            position: absolute;
+            inset: 4px;
+            border-radius: 20px;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.06), transparent 18%),
+                linear-gradient(180deg, rgba(34, 21, 10, 0.08), transparent 28%);
+            pointer-events: none;
+        }
+
+        #board-wrapper::after {
+            content: "";
+            position: absolute;
+            left: 18px;
+            right: 18px;
+            bottom: -12px;
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(58, 35, 16, 0.24);
+            filter: blur(10px);
+            pointer-events: none;
         }
 
         #game-grid {
@@ -255,9 +356,9 @@
         /* 地鼠独立层 */
         #mole-layer {
             position: absolute;
-            top: 6px; left: 6px;
-            width: calc(100% - 12px);
-            height: calc(100% - 12px);
+            top: 11px; left: 9px;
+            width: calc(100% - 18px);
+            height: calc(100% - 18px);
             pointer-events: none;
         }
 
@@ -297,35 +398,78 @@
         }
 
         .cell.preview {
-            background: rgba(120, 200, 90, 0.35);
-            box-shadow: 0 0 0 2px rgba(255,255,255,0.45) inset;
+            background:
+                linear-gradient(180deg, rgba(153, 231, 118, 0.42), rgba(92, 175, 66, 0.36)),
+                #5C3222;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.5) inset, 0 0 16px rgba(125, 215, 97, 0.18);
+            transform: translateY(-2px);
+        }
+
+        .cell.preview::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 8px;
+            border: 2px solid rgba(226, 255, 212, 0.36);
+            z-index: 2;
+            pointer-events: none;
         }
 
         .cell.preview.invalid {
-            background: rgba(255, 90, 108, 0.28);
-            box-shadow: 0 0 0 2px rgba(255,90,108,0.45) inset;
+            background:
+                linear-gradient(180deg, rgba(255, 140, 140, 0.3), rgba(216, 66, 78, 0.28)),
+                #5C3222;
+            box-shadow: 0 0 0 2px rgba(255,90,108,0.52) inset, 0 0 16px rgba(255,90,108,0.16);
+        }
+
+        .cell.preview.invalid::after {
+            border-color: rgba(255, 176, 176, 0.48);
         }
 
         .cell.preview.hit {
             outline: 2px solid rgba(255, 214, 74, 0.85);
             outline-offset: -2px;
+            box-shadow:
+                0 0 0 2px rgba(255, 214, 74, 0.55) inset,
+                0 0 18px rgba(255, 214, 74, 0.28);
         }
 
         .cell.line-preview {
-            background: rgba(255, 214, 74, 0.25);
+            background:
+                linear-gradient(180deg, rgba(255, 235, 161, 0.35), rgba(255, 190, 82, 0.24)),
+                #5C3222;
         }
 
         .cell.line-preview::after {
             content: "";
             position: absolute;
             inset: 0;
-            background: rgba(255, 214, 74, 0.35);
+            background:
+                linear-gradient(90deg, rgba(255, 239, 183, 0.18), rgba(255, 214, 74, 0.42), rgba(255, 239, 183, 0.18));
             z-index: 3;
             pointer-events: none;
         }
 
         .cell.has-hole.line-preview::before {
             filter: saturate(1.2) brightness(1.12);
+        }
+
+        .cell.line-preview.hit {
+            outline-color: rgba(255, 233, 149, 0.95);
+        }
+
+        .mole-entity.preview-target .mole-sprite {
+            animation: mole-preview-pulse 0.55s ease-in-out infinite;
+            filter: drop-shadow(0 0 14px rgba(255, 220, 98, 0.9));
+        }
+
+        .mole-entity.preview-target .mole-emoji {
+            opacity: 1;
+        }
+
+        @keyframes mole-preview-pulse {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-3px) scale(1.08); }
         }
 
         .board-shake {
@@ -420,21 +564,36 @@
             width: 82px;
             height: 82px;
             z-index: 200;
-            background: url('pic/hammer.png?v=2') center / contain no-repeat;
+            background: url('pic/锤.png?v=1') center / contain no-repeat;
         }
 
         #pieces-container {
-            margin-top: 64px;
+            margin-top: 54px;
             display: flex;
             justify-content: space-between;
             width: 100%;
             gap: 10px;
             height: 110px;
-            padding: 9px 4px 8px;
-            border-radius: 14px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.1));
-            border: 1px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(1px);
+            padding: 14px 10px 10px;
+            border-radius: 20px;
+            background:
+                linear-gradient(180deg, rgba(94, 60, 26, 0.3), rgba(255,255,255,0.1));
+            border: 1px solid rgba(255,255,255,0.18);
+            backdrop-filter: blur(2px);
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.12),
+                inset 0 -8px 14px rgba(43, 26, 11, 0.14),
+                0 12px 26px rgba(73, 47, 18, 0.08);
+            position: relative;
+        }
+
+        #pieces-container::before {
+            content: "";
+            position: absolute;
+            inset: 6px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            pointer-events: none;
         }
 
         .piece-slot {
@@ -443,10 +602,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(180deg, rgba(246, 236, 201, 0.9), rgba(231, 213, 166, 0.88));
-            border: 1px solid rgba(120, 80, 30, 0.26);
-            border-radius: 14px;
-            box-shadow: 0 8px 18px rgba(120, 80, 30, 0.2), inset 0 2px 0 rgba(255,255,255,0.55);
+            background: linear-gradient(180deg, rgba(250, 244, 220, 0.9), rgba(224, 204, 156, 0.8));
+            border: 1px solid rgba(120, 80, 30, 0.18);
+            border-radius: 16px;
+            box-shadow:
+                0 8px 18px rgba(120, 80, 30, 0.1),
+                inset 0 2px 0 rgba(255,255,255,0.5),
+                inset 0 -6px 10px rgba(144, 109, 51, 0.08);
         }
 
         .piece {
@@ -454,7 +616,7 @@
             gap: 4px;
             cursor: grab;
             transition: transform 0.2s, filter 0.2s;
-            filter: drop-shadow(0 6px 8px rgba(120,70,20,0.25));
+            filter: drop-shadow(0 6px 8px rgba(120,70,20,0.16));
             touch-action: none;
             padding: 10px;
         }
@@ -520,7 +682,7 @@
             left: 50%;
             top: 4%;
             transform: translateX(-50%);
-            background: url('pic/mole.png?v=2') center / contain no-repeat;
+            background: url('pic/鼠.png?v=1') center / contain no-repeat;
         }
 
 
@@ -561,7 +723,7 @@
         }
 
         .hammer.ready {
-            animation: hammer-ready 0.22s ease-out forwards;
+            animation: hammer-ready 0.28s ease-out forwards;
         }
 
         .hammer.hit {
@@ -628,39 +790,18 @@
             100% { transform: scale(0.6); opacity: 0; }
         }
 
-        .reward-fly {
-            position: absolute;
-            font-size: 18px;
-            z-index: 220;
-            animation: reward-fly 0.7s ease-out forwards;
-        }
-
-        @keyframes reward-fly {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-28px) scale(1.1); opacity: 0; }
-        }
-
-        .reward-fly.to-top {
-            animation: reward-to-top 0.9s ease-out forwards;
-        }
-
-        @keyframes reward-to-top {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(-120px, -260px) scale(0.9); opacity: 0; }
-        }
-
         .money-flyer {
             position: fixed;
             z-index: 3000;
             pointer-events: none;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 900;
             color: #11853a;
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
             background: rgba(255, 255, 255, 0.92);
             border: 1px solid rgba(17, 133, 58, 0.4);
             border-radius: 999px;
-            padding: 4px 8px;
+            padding: 5px 10px;
             transform: translate(-50%, -50%) scale(1);
             opacity: 1;
             transition:
@@ -670,8 +811,8 @@
                 opacity 0.9s ease-out;
         }
         @keyframes hammer-ready {
-            0% { transform: translate(0, -60px) rotate(-35deg); opacity: 0; }
-            100% { transform: translate(0, -10px) rotate(-10deg); opacity: 1; }
+            0% { transform: scale(1.16) translate(0, -70px) rotate(-35deg); opacity: 0; }
+            100% { transform: scale(1) translate(0, -18px) rotate(-12deg); opacity: 1; }
         }
 
         @keyframes hammer-hit-strong {
@@ -858,8 +999,8 @@
             justify-content: center;
             background:
                 radial-gradient(120% 80% at 50% -10%, rgba(255,255,255,0.22), transparent 58%),
-                linear-gradient(180deg, rgba(8, 26, 12, 0.55), rgba(10, 28, 14, 0.68));
-            backdrop-filter: blur(3px);
+                linear-gradient(180deg, rgba(8, 26, 12, 0.44), rgba(10, 28, 14, 0.6));
+            backdrop-filter: blur(4px);
         }
 
         .gate-loading {
@@ -915,44 +1056,64 @@
         .level-card {
             width: min(92%, 360px);
             background:
-                linear-gradient(180deg, rgba(255, 247, 220, 0.98), rgba(246, 230, 189, 0.96));
-            border: 2px solid rgba(122, 82, 30, 0.42);
-            border-radius: 24px;
+                linear-gradient(180deg, rgba(255, 248, 226, 0.98), rgba(245, 226, 179, 0.96));
+            border: 2px solid rgba(122, 82, 30, 0.34);
+            border-radius: 28px;
             box-shadow:
-                0 22px 46px rgba(0, 0, 0, 0.35),
-                inset 0 2px 0 rgba(255,255,255,0.8);
-            padding: 14px 14px 14px;
+                0 24px 54px rgba(0, 0, 0, 0.32),
+                inset 0 2px 0 rgba(255,255,255,0.84),
+                inset 0 -14px 24px rgba(160, 122, 56, 0.08);
+            padding: 16px 16px 16px;
             color: #2e1c06;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .level-card::before {
+            content: "";
+            position: absolute;
+            inset: 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.22);
+            pointer-events: none;
         }
 
         .level-title {
             text-align: center;
-            font-size: 1.62rem;
+            font-size: 1.72rem;
             font-weight: 900;
             letter-spacing: 0.02em;
-            margin: 2px 0 8px;
+            margin: 2px 0 10px;
             color: #5b3516;
-            text-shadow: 0 2px 0 rgba(255,255,255,0.75);
+            text-shadow: 0 2px 0 rgba(255,255,255,0.75), 0 8px 16px rgba(129, 90, 34, 0.12);
+            position: relative;
+            z-index: 1;
         }
 
         .level-rules {
-            margin: 0 0 8px;
-            padding: 8px 10px;
-            border-radius: 12px;
+            margin: 0 0 10px;
+            padding: 10px 12px;
+            border-radius: 14px;
             border: 1px solid rgba(109, 74, 25, 0.28);
-            background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.45));
+            background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.5));
             font-size: 0.8rem;
-            line-height: 1.35;
+            line-height: 1.42;
             font-weight: 700;
             color: #5a3a17;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+            position: relative;
+            z-index: 1;
         }
 
         .level-info {
-            background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.5));
+            background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.56));
             border: 1px solid rgba(112, 78, 30, 0.22);
-            border-radius: 18px;
-            padding: 10px 10px 12px;
+            border-radius: 20px;
+            padding: 12px 12px 14px;
             text-align: center;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.62);
+            position: relative;
+            z-index: 1;
         }
 
         .level-info-row {
@@ -965,31 +1126,31 @@
         }
 
         .level-info-goal {
-            margin-top: 2px;
-            font-size: 1.24rem;
+            margin-top: 3px;
+            font-size: 1.28rem;
             font-weight: 900;
             letter-spacing: 0.01em;
         }
 
         .level-info-max {
-            margin-top: 2px;
-            font-size: 2rem;
+            margin-top: 4px;
+            font-size: 2.08rem;
             font-weight: 900;
             line-height: 1;
             color: #0c8e44;
         }
 
         .gate-atmosphere {
-            margin: 8px 0;
-            height: 96px;
-            border-radius: 16px;
+            margin: 10px 0 12px;
+            height: 104px;
+            border-radius: 18px;
             border: 1px solid rgba(98, 66, 23, 0.24);
             background:
                 radial-gradient(130px 80px at 70% 20%, rgba(181, 228, 132, 0.32), transparent 72%),
                 linear-gradient(180deg, rgba(118, 178, 78, 0.86), rgba(86, 137, 52, 0.82));
             position: relative;
             overflow: hidden;
-            box-shadow: inset 0 -10px 18px rgba(62, 93, 37, 0.25);
+            box-shadow: inset 0 -10px 18px rgba(62, 93, 37, 0.25), 0 10px 20px rgba(67, 94, 35, 0.14);
         }
 
         .gate-atmosphere::before {
@@ -998,11 +1159,11 @@
             inset: 0;
             background:
                 linear-gradient(180deg, rgba(255,255,255,0.12), transparent 48%),
-                url('pic/mole.png') 18% 70% / 56px 56px no-repeat,
-                url('pic/mole.png') 76% 58% / 52px 52px no-repeat,
+                url('pic/鼠.png?v=1') 18% 70% / 56px 56px no-repeat,
+                url('pic/鼠.png?v=1') 76% 58% / 52px 52px no-repeat,
                 url('pic/hole.png') 34% 78% / 34px 34px no-repeat,
                 url('pic/hole.png') 58% 72% / 32px 32px no-repeat,
-                url('pic/hammer.png') 90% 18% / 34px 34px no-repeat;
+                url('pic/锤.png?v=1') 90% 18% / 34px 34px no-repeat;
             opacity: 0.94;
         }
 
@@ -1017,7 +1178,7 @@
         }
 
         .stake-scroll {
-            margin-top: 12px;
+            margin-top: 14px;
             overflow-x: auto;
             scrollbar-width: none;
         }
@@ -1034,12 +1195,12 @@
         }
 
         .stake-btn {
-            min-width: 90px;
+            min-width: 96px;
             border: 1px solid rgba(102, 70, 22, 0.38);
             background: linear-gradient(180deg, #fff8df, #f2d99d);
             color: #5b3515;
-            border-radius: 14px;
-            height: 50px;
+            border-radius: 16px;
+            height: 54px;
             font-size: 1.02rem;
             font-weight: 900;
             padding: 0;
@@ -1206,11 +1367,11 @@
         }
 
         .play-entry-btn {
-            margin-top: 12px;
+            margin-top: 14px;
             width: 100%;
-            height: 56px;
-            border-radius: 28px;
-            font-size: 1.3rem;
+            height: 58px;
+            border-radius: 30px;
+            font-size: 1.26rem;
             font-weight: 900;
             letter-spacing: 0.01em;
             background: linear-gradient(180deg, #ffe89e, #ffcc64);
@@ -1218,7 +1379,7 @@
             border: 1px solid rgba(124, 79, 21, 0.55);
             box-shadow:
                 inset 0 2px 0 rgba(255, 255, 255, 0.85),
-                0 10px 18px rgba(108, 64, 17, 0.3);
+                0 12px 20px rgba(108, 64, 17, 0.26);
         }
 
         .play-entry-btn:disabled {
@@ -1253,31 +1414,27 @@
             border: 1px solid rgba(18, 103, 51, 0.25);
             border-radius: 999px;
             height: 28px;
-            min-width: 88px;
-            padding: 0 10px;
+            min-width: 82px;
+            padding: 0 9px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 900;
             color: #0e8b43;
-        }
-
-        .top-balance-wrap {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
+            white-space: nowrap;
         }
 
         .balance-plus-btn {
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             border: 1px solid rgba(18, 103, 51, 0.35);
             background: linear-gradient(180deg, #ffffff, #e4f4e7);
             color: #0f6f34;
             font-weight: 900;
-            font-size: 1.1rem;
+            font-size: 1rem;
             padding: 0;
             line-height: 1;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
@@ -1291,21 +1448,56 @@
 
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 231, 189, 0.95); display: flex; flex-direction: column;
+            background:
+                radial-gradient(circle at 50% 24%, rgba(255, 214, 126, 0.2), transparent 34%),
+                rgba(27, 16, 10, 0.76);
+            display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 1000;
             gap: 18px;
+            backdrop-filter: blur(5px);
+        }
+
+        #overlay::before {
+            content: "";
+            position: absolute;
+            width: min(88vw, 330px);
+            min-height: 228px;
+            border-radius: 26px;
+            background: linear-gradient(180deg, #5a3a24, #302017);
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: 0 24px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        #overlay::after {
+            content: "";
+            position: absolute;
+            width: min(calc(88vw - 20px), 310px);
+            min-height: 208px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            pointer-events: none;
         }
 
         #msg-title {
-            font-size: 2rem;
+            position: relative;
+            z-index: 1;
+            font-size: 1.92rem;
             letter-spacing: 0.04em;
+            color: #fff4dc;
+            text-shadow: 0 2px 0 rgba(77, 43, 16, 0.9), 0 8px 16px rgba(0,0,0,0.22);
+            margin: 0 0 2px;
         }
 
         #msg-subtitle {
-            font-size: 1.05rem;
+            position: relative;
+            z-index: 1;
+            font-size: 1rem;
             font-weight: 700;
-            color: #2a2a2a;
+            color: rgba(255, 243, 224, 0.96);
             margin: 0;
+            max-width: 250px;
+            text-align: center;
+            line-height: 1.45;
         }
 
         .recharge-modal {
@@ -1374,82 +1566,113 @@
             position: fixed;
             inset: 0;
             z-index: 1250;
-            background: rgba(0, 0, 0, 0.62);
+            background:
+                radial-gradient(circle at 50% 24%, rgba(255, 202, 110, 0.16), transparent 36%),
+                rgba(0, 0, 0, 0.62);
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(2px);
+            backdrop-filter: blur(4px);
         }
 
         .revive-card {
             width: min(88vw, 340px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.42);
-            background: linear-gradient(180deg, #3f4437, #2d3127);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(180deg, #5a3a24, #302017);
             color: #fff;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
-            padding: 14px 14px 12px;
+            box-shadow: 0 22px 44px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+            padding: 18px 16px 16px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .revive-card::before {
+            content: "";
+            position: absolute;
+            inset: 10px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+            pointer-events: none;
         }
 
         .revive-title {
-            font-size: 1.25rem;
+            font-size: 1.48rem;
             font-weight: 900;
             letter-spacing: 0.01em;
+            color: #fff2d8;
+            text-shadow: 0 2px 0 rgba(77, 43, 16, 0.9), 0 8px 16px rgba(0,0,0,0.22);
+            position: relative;
+            z-index: 1;
         }
 
         .revive-subtitle {
-            margin-top: 6px;
-            font-size: 0.88rem;
+            margin-top: 8px;
+            font-size: 0.92rem;
+            line-height: 1.42;
             opacity: 0.9;
+            color: rgba(255, 239, 214, 0.92);
+            position: relative;
+            z-index: 1;
         }
 
         .revive-loss {
-            margin-top: 10px;
-            border-radius: 12px;
-            background: rgba(255, 102, 102, 0.16);
-            border: 1px solid rgba(255, 132, 132, 0.45);
-            padding: 8px 10px;
+            margin-top: 14px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 112, 112, 0.18), rgba(128, 34, 44, 0.18));
+            border: 1px solid rgba(255, 152, 152, 0.34);
+            padding: 10px 12px;
             text-align: left;
-            font-size: 0.82rem;
-            line-height: 1.35;
+            font-size: 0.84rem;
+            line-height: 1.42;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+            position: relative;
+            z-index: 1;
         }
 
         .revive-loss b {
-            color: #ffd2d2;
-            font-size: 0.9rem;
+            color: #ffe7ba;
+            font-size: 0.98rem;
         }
 
         .revive-progress {
-            margin-top: 8px;
-            font-size: 0.8rem;
+            margin-top: 10px;
+            font-size: 0.82rem;
             opacity: 0.95;
+            color: rgba(255, 240, 218, 0.9);
+            position: relative;
+            z-index: 1;
         }
 
         .revive-actions {
-            margin-top: 12px;
+            margin-top: 16px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
+            position: relative;
+            z-index: 1;
         }
 
         .revive-btn {
-            height: 42px;
-            border-radius: 12px;
+            height: 46px;
+            border-radius: 14px;
             border: 1px solid rgba(255,255,255,0.28);
             font-weight: 900;
-            font-size: 0.95rem;
+            font-size: 0.96rem;
             padding: 0;
         }
 
         .revive-btn.end {
-            background: rgba(255,255,255,0.14);
-            color: #fff;
+            background: rgba(255,255,255,0.12);
+            color: #fff8e8;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
         }
 
         .revive-btn.pay {
             background: linear-gradient(180deg, #ffe494, #ffbf4d);
             color: #3a2500;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.36), 0 10px 18px rgba(255, 168, 63, 0.18);
         }
 
         @keyframes revive-pop {
@@ -1473,6 +1696,21 @@
             box-shadow: 0 10px 20px rgba(120, 80, 30, 0.3);
         }
 
+        #overlay-btn {
+            position: relative;
+            z-index: 1;
+            min-width: 190px;
+            height: 50px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #ffe89e, #ffcc64);
+            color: #4a2a06;
+            border: 1px solid rgba(124, 79, 21, 0.55);
+            box-shadow:
+                inset 0 2px 0 rgba(255, 255, 255, 0.85),
+                0 12px 20px rgba(108, 64, 17, 0.22);
+            padding: 0 24px;
+        }
+
         @media (max-width: 420px) {
             .device-shell { border-radius: 28px; }
             .hud-value { font-size: 1rem; }
@@ -1484,8 +1722,22 @@
                 gap: 4px;
                 padding-top: 2px;
             }
+            header {
+                min-height: 76px;
+                padding: 12px 8px 14px;
+            }
+            .goal-card {
+                min-height: 72px;
+            }
+            .top-time {
+                font-size: 1.5rem;
+                min-width: 108px;
+                line-height: 1.18;
+                padding: 5px 0 8px;
+            }
             #pieces-container {
-                margin-top: 42px;
+                margin-top: 36px;
+                padding: 12px 8px 9px;
             }
             .ingame-debug {
                 margin-top: 42px;
@@ -1495,7 +1747,7 @@
 </head>
 <body>
 <div class="device-shell">
-    <img class="preload" src="pic/hammer.png?v=2" alt="">
+    <img class="preload" src="pic/锤.png?v=1" alt="">
     <img class="preload" src="pic/goal.png" alt="">
     <img class="preload" src="pic/youearned.png" alt="">
     <img class="preload" src="pic/keep_earning.png" alt="">
@@ -1538,12 +1790,15 @@
         </div>
         <div id="toast" class="toast"></div>
         <header>
-            <div id="timer" class="top-time">03:00</div>
+            <div class="top-time-wrap">
+                <div class="hud-caption">Time</div>
+                <div id="timer" class="top-time">03:00</div>
+            </div>
             <div class="top-balance-wrap">
+                <div class="hud-caption">Balance</div>
                 <div id="balance" class="top-balance">$10.00</div>
                 <button id="balance-plus-btn" class="balance-plus-btn">+</button>
             </div>
-            <div class="top-settings">⚙</div>
         </header>
 
         <div class="goal-panel">
@@ -1624,6 +1879,7 @@
                     <option value="guardrails">干预</option>
                     <option value="flat">不干预</option>
                     <option value="uniform_smooth" selected>uniform_smooth (p30,w12,l2,u5)</option>
+                    <option value="uniform_balanced">uniform_balanced</option>
                     <option value="segment_35_30_20_5">segment_35_30_20_5</option>
                     <option value="segment_25_20_15_5">segment_25_20_15_5</option>
                     <option value="segment_28_20_12_5">segment_28_20_12_5</option>
@@ -1757,8 +2013,8 @@
         'pic/grassbackground.jpg',
         'pic/block.png',
         'pic/hole.png?v=2',
-        'pic/mole.png?v=2',
-        'pic/hammer.png?v=2',
+        'pic/鼠.png?v=1',
+        'pic/锤.png?v=1',
         'pic/goal.png',
         'pic/youearned.png',
         'pic/keep_earning.png',
@@ -1814,6 +2070,7 @@
     let currentMatchLog = null;
     let matchLogs = [];
     let comboToastTimer = null;
+    let previewTargetMoles = [];
     const SEED_CASES = [{"file":"B_088-V4_B_088_DE_015-export.jsonl","name":"B_088-V4_B_088_DE_015","initialGrid":[129,231,24,0,0,60,102,66],"blockIds":["1122003","1133007","1122003","1133007","1224015","1133007","1212003","1144015","1212003","1111001","1122003","1224015","1324029","1122003","1212003","1234060","1313007","1324029","1324046","1324045","1313007","1223013","1234023","1234051","1324023","1111001","1212003","1122003","1224015","1234057","1222009","1122003","1222006","1324046","1326063","1122003","1324029","1234058","1223014","1324029","1222009","1313007","1222009","1122003","1122003","1324046","1326063","1111001","1324029","1122003","1223014","1222006","1133007","1326063","1222009","1111001","1111001","1224015","1313007","1133007","1223014","1222006","1222006","1234023","1122003","1212003","1236063","1212003","1324046","1144015","1122003","1222006","1326063","1326063","1133007","1223007","1223007","1223013","1313007","1324046","1111001","1222006","1223011","1223013","1223013","1133007","1212003","1122003","1122003","1122003","1212003","1324029","1223011","1324046","1212003","1223013","1236063","1222009","1223014","1324046","1236063","1234058","1223013","1223014","1223013","1324029","1122003","1414015","1313007","1223013","1122003","1313007","1222009","1223011","1212003","1212003","1223011","1223007","1313007","1324046"]},{"file":"B_122-V4_B_122_DE_010-export.jsonl","name":"B_122-V4_B_122_DE_010","initialGrid":[2,5,66,160,64,4,10,4],"blockIds":["1111001","1111001","1111001","1223011","1223011","1223007","1223013","1223013","1212003","1313007","1133007","1224015","1324053","1324029","1223011","1111001","1234023","1223007","1223013","1234058","1133007","1234039","1223013","1111001","1324030","1224015","1324046","1234023","1133007","1122003","1324029","1324046","1324046","1223014","1223013","1223014","1326063","1122003","1223014","1133007","1223011","1212003","1234023","1234058","1223013","1234058","1222006","1223007","1222006","1313007","1111001","1234058","1223011","1133007","1223007","1133007","1324029","1223007","1111001","1223014","1234023","1223007","1313007","1212003","1223007","1223013","1111001","1324029","1224015","1313007","1223013","1133007","1122003","1222006","1222009","1236063","1324046","1133007","1223007","1223007","1223014","1326063","1313007","1236063","1223007","1223014","1223014","1234023","1234058","1212003","1224015","1313007","1324029","1223011","1222006","1223007","1326063","1111001","1133007","1324046","1313007","1335457","1223013","1223007","1133007","1222009","1222006","1224015","1122003","1234058","1326063","1111001","1122003","1111001","1223011","1133007","1223014","1111001","1122003","1222006"]},{"file":"B_139-V4_B_139_DE_011-export.jsonl","name":"B_139-V4_B_139_DE_011","initialGrid":[0,0,102,219,231,36,0,0],"blockIds":["1234060","1122003","1234057","1122003","1224015","1122003","1111001","1326063","1111001","1144015","1234039","1234030","1224015","1324045","1326063","1223014","1212003","1324046","1223007","1111001","1234058","1313007","1326063","1313007","1234030","1223007","1236063","1111001","1133007","1223011","1223011","1236063","1223014","1122003","1223013","1313007","1223013","1224015","1234023","1212003","1313007","1313007","1223007","1122003","1223011","1234023","1223013","1326063","1223007","1223013","1223007","1324029","1234058","1234058","1223014","1223007","1223007","1223013","1313007","1234023","1222009","1212003","1223011","1313007","1324029","1236063","1223013","1234023","1133007","1222006","1223011","1222006","1324029","1111001","1313007","1234058","1224015","1223011","1111001","1234058","1326063","1111001","1122003","1335079","1133007","1234023","1222009","1224015","1223007","1222009","1234023","1335295","1111001","1223014","1223007","1234023","1223014","1234058","1224015","1223011","1122003","1223011","1122003","1212003","1326063","1122003","1222009","1111001","1236063","1234023","1313007","1223014","1224015","1223007","1236063","1111001","1313007","1234023","1133007","1224015"]},{"file":"B_020-V4_B_020_DE_014-export.jsonl","name":"B_020-V4_B_020_DE_014","initialGrid":[0,36,66,0,66,36,0,231],"blockIds":["1223007","1223013","1223014","1223011","1224015","1122003","1212003","1122003","1212003","1224015","1111001","1133007","1236063","1324023","1212003","1324043","1223007","1223014","1234060","1414015","1324046","1324045","1111001","1223011","1224015","1313007","1122003","1326063","1223011","1234023","1236063","1222009","1324046","1223007","1324046","1133007","1223011","1212003","1223014","1234058","1324046","1223013","1223007","1222006","1223011","1122003","1236063","1324046","1212003","1122003","1122003","1223013","1335079","1212003","1224015","1122003","1111001","1324046","1223013","1223011","1234058","1324029","1236063","1324046","1223013","1224015","1222009","1234058","1234058","1111001","1223014","1223014","1111001","1212003","1236063","1234058","1122003","1223014","1223014","1223013","1122003","1133007","1111001","1133007","1236063","1326063","1111001","1223011","1212003","1324046","1324046","1223013","1222009","1234023","1313007","1222009","1223007","1222006","1212003","1223014","1234023","1223011","1223013","1122003","1222009","1335295","1223013","1223011","1324029","1212003","1234058","1223014","1122003","1313007","1223014","1222009","1234058","1111001","1223007","1133007"]},{"file":"B_016-V4_B_016_DE_017-export.jsonl","name":"B_016-V4_B_016_DE_017","initialGrid":[129,66,36,0,36,66,129,0],"blockIds":["1223007","1223007","1223011","1223011","1223013","1223013","1223014","1223014","1224015","1212003","1212003","1122003","1133007","1111001","1326063","1324029","1324046","1133007","1234058","1122003","1111001","1234058","1313007","1224015","1212003","1324046","1236063","1324023","1324043","1223013","1222006","1133007","1223011","1324029","1222009","1212003","1234058","1313007","1224015","1224015","1223011","1234023","1222006","1223013","1234058","1313007","1224015","1222009","1313007","1236063","1122003","1234058","1212003","1324046","1234058","1111001","1313007","1313007","1324029","1222006","1324046","1324029","1224015","1224015","1313007","1223007","1234023","1144015","1236063","1324029","1223013","1223007","1111001","1236063","1324046","1122003","1122003","1122003","1222006","1313007","1223013","1223014","1133007","1324029","1313007","1223014","1122003","1224015","1234058","1326063","1234023","1223013","1223013","1122003","1324029","1324046","1111001","1223007","1222009","1111001","1223007","1313007","1326063","1324046","1223013","1133007","1133007","1324046","1222006","1111001","1122003","1324029","1144015","1223011","1313007","1223013","1223013","1122003","1234058","1324046"]},{"file":"B_092-V4_B_092_DE_013-export.jsonl","name":"B_092-V4_B_092_DE_013","initialGrid":[127,63,38,34,0,34,62,127],"blockIds":["1236063","1324058","1223013","1212003","1223007","1224015","1122003","1212003","1111001","1223011","1234060","1223007","1324029","1324043","1223011","1122003","1234015","1326063","1111001","1133007","1234051","1223013","1234030","1223014","1234023","1133007","1324046","1111001","1224015","1324023","1222009","1122003","1234023","1223013","1313007","1313007","1234023","1234023","1111001","1222006","1222009","1324046","1324029","1223014","1224015","1324029","1133007","1111001","1324029","1313007","1313007","1224015","1234023","1222006","1223007","1223014","1223014","1324046","1111001","1234023","1222009","1212003","1236063","1324029","1223011","1313007","1133007","1326063","1326063","1234058","1224015","1223013","1122003","1234023","1313007","1222009","1133007","1313007","1223014","1223007","1222006","1324046","1212003","1122003","1236063","1313007","1111001","1122003","1222006","1224015","1324029","1234023","1223013","1222006","1111001","1223011","1324029","1324029","1324046","1223007","1223013","1223013","1222006","1133007","1234058","1222006","1224015","1224015","1234023","1324029","1133007","1223011","1223014","1223013","1324029","1212003","1324029","1111001","1234023","1223013"]},{"file":"B_079-V4_B_079_DE_013-export.jsonl","name":"B_079-V4_B_079_DE_013","initialGrid":[0,24,60,126,60,24,0,0],"blockIds":["1223011","1223007","1223014","1223013","1313007","1313007","1224015","1133007","1224015","1212003","1236063","1212003","1234060","1324045","1324023","1223011","1122003","1223013","1324046","1111001","1133007","1326063","1234058","1122003","1313007","1223011","1212003","1224015","1122003","1223007","1212003","1335079","1236063","1324046","1326063","1313007","1223007","1223011","1223013","1236063","1122003","1212003","1324029","1223013","1324046","1324046","1234023","1223013","1224015","1223011","1223013","1111001","1122003","1324046","1326063","1222006","1222006","1324029","1324046","1414015","1236063","1326063","1223011","1223014","1223007","1223007","1122003","1122003","1133007","1222006","1223013","1223007","1234023","1133007","1324046","1223011","1223007","1223013","1222006","1212003","1324029","1223014","1222009","1222009","1324029","1313007","1122003","1133007","1234058","1223011","1223014","1224015","1223014","1122003","1133007","1223007","1212003","1133007","1212003","1313007","1324029","1324046","1223011","1223011","1223014","1234023","1122003","1313007","1223007","1324029","1224015","1222006","1222006","1111001","1324029","1313007","1223011","1212003","1324029","1212003"]},{"file":"B_107-V4_B_107_D0_001-export.jsonl","name":"B_107-V4_B_107_D0_001","initialGrid":[231,102,66,126,24,0,0,0],"blockIds":["1122003","1234023","1223013","1324046","1212003","1111001","1335079","1234058","1313007","1133007","1223014","1224015","1324046","1111001","1234058","1324029","1236063","1414015","1335295","1236063","1324029","1236063","1324046","1234023","1223014","1223011","1223007","1324029","1111001","1335295","1212003","1335079","1414015","1224015","1223013","1335457","1313007","1133007","1133007","1224015","1236063","1333084","1234023","1133007","1324046","1234023","1133007","1223011","1326063","1111001","1335457","1236063","1223013","1122003","1223011","1223014","1133007","1234058","1223013","1212003","1335457","1234058","1224015","1324029","1234023","1133007","1223013","1324046","1313007","1222006","1313007","1111001","1144015","1223013","1212003","1111001","1111001","1234058","1234058","1324029","1111001","1414015","1222009","1223011","1223011","1414015","1326063","1333273","1333273","1326063","1313007","1313007","1335457","1236063","1223007","1414015","1414015","1313007","1223007","1224015","1222009","1414015","1234023","1324029","1133007","1144015","1234023","1223014","1223013","1212003","1223007","1155031","1223014","1223013","1234058","1122003","1324046","1313007","1335457","1223011"]},{"file":"B_029-V4_B_029_D0_019-export.jsonl","name":"B_029-V4_B_029_D0_019","initialGrid":[0,0,24,16,124,56,16,0],"blockIds":["1326063","1234023","1324046","1223014","1223014","1133007","1222009","1224015","1324029","1313007","1222006","1223014","1111001","1234058","1324029","1335484","1234058","1224015","1223011","1224015","1223007","1223007","1234058","1324046","1111001","1212003","1122003","1236063","1335484","1212003","1223013","1223007","1234058","1234058","1324046","1224015","1313007","1223014","1223013","1144015","1222009","1324046","1111001","1133007","1335295","1335079","1133007","1324029","1234058","1324029","1133007","1234058","1222006","1212003","1324046","1223011","1222006","1335457","1111001","1222009","1324046","1223007","1223014","1324046","1414015","1234058","1324046","1324046","1222009","1133007","1335457","1414015","1111001","1111001","1223007","1212003","1234058","1313007","1313007","1222009","1144015","1212003","1133007","1224015","1223007","1222006","1236063","1144015","1414015","1133007","1335295","1133007","1223007","1223013","1223007","1326063","1515031","1111001","1222009","1234023","1236063","1224015","1324046","1324029","1133007","1236063","1234058","1324029","1212003","1234058","1223007","1155031","1234023","1223011","1223011","1222009","1326063","1234023","1144015","1324046"]},{"file":"B_081-V4_B_081_D0_011-export.jsonl","name":"B_081-V4_B_081_D0_011","initialGrid":[0,102,36,102,0,0,66,195],"blockIds":["1222009","1223014","1234058","1234058","1222009","1223013","1111001","1234058","1212003","1111001","1326063","1111001","1212003","1324046","1224015","1324046","1324029","1326063","1234023","1144015","1223013","1313007","1133007","1313007","1313007","1122003","1122003","1111001","1223013","1324046","1111001","1223011","1324029","1212003","1234058","1222006","1144015","1324029","1222009","1111001","1223013","1223014","1236063","1326063","1234023","1223013","1324029","1324046","1234023","1324029","1111001","1326063","1326063","1111001","1234058","1335484","1212003","1122003","1234023","1223007","1212003","1234058","1144015","1222006","1324029","1223013","1324029","1223011","1223014","1234058","1133007","1222006","1223011","1324046","1223013","1133007","1313007","1222006","1222009","1324046","1223007","1223014","1324029","1234058","1326063","1335457","1313007","1133007","1133007","1335295","1335295","1335457","1414015","1324029","1234058","1223011","1236063","1236063","1313007","1313007","1212003","1335295","1335457","1234023","1333273","1234023","1333273","1324046","1234023","1133007","1224015","1335079","1212003","1234023","1234023","1122003","1122003","1223013","1324046","1223014"]},{"file":"B_042-V4_B_042_D0_036-export.jsonl","name":"B_042-V4_B_042_D0_036","initialGrid":[0,0,60,126,60,0,0,0],"blockIds":["1326063","1236063","1326063","1324029","1223007","1324029","1224015","1324046","1234023","1223007","1223013","1223011","1111001","1223011","1324046","1335457","1324029","1324029","1223007","1223011","1223013","1326063","1212003","1324029","1223014","1234023","1223011","1223011","1212003","1313007","1122003","1234023","1335484","1111001","1122003","1111001","1223007","1133007","1223013","1222009","1234023","1222006","1335295","1324029","1236063","1133007","1335484","1234058","1111001","1111001","1133007","1212003","1122003","1333273","1313007","1236063","1313007","1335484","1212003","1223007","1414015","1224015","1144015","1223013","1234023","1144015","1111001","1133007","1234023","1111001","1335295","1335457","1111001","1122003","1324046","1133007","1515031","1133007","1224015","1212003","1224015","1335484","1335484","1324046","1335484","1414015","1234023","1133007","1335484","1223007","1223011","1333084","1222006","1133007","1236063","1326063","1333084","1224015","1133007","1414015","1122003","1155031","1212003","1223007","1111001","1326063","1223014","1333084","1326063","1414015","1144015","1313007","1133007","1122003","1236063","1122003","1333273","1155031","1335079","1333084"]},{"file":"B_198-V4_B_198_D0_035-export.jsonl","name":"B_198-V4_B_198_D0_035","initialGrid":[24,24,0,66,231,66,24,24],"blockIds":["1234058","1234023","1122003","1324029","1133007","1326063","1223007","1223013","1223013","1236063","1111001","1313007","1234023","1223014","1133007","1222006","1222006","1223014","1212003","1335295","1234058","1212003","1324046","1111001","1324029","1326063","1223013","1313007","1133007","1313007","1144015","1234023","1223011","1224015","1223011","1223014","1222009","1222006","1234058","1223011","1335079","1414015","1144015","1133007","1313007","1133007","1223014","1339511","1144015","1324046","1324029","1133007","1324029","1234023","1223011","1133007","1236063","1333084","1223011","1223014","1335295","1324046","1324046","1234058","1144015","1326063","1133007","1133007","1326063","1326063","1122003","1224015","1224015","1335457","1223013","1212003","1234023","1313007","1326063","1335484","1212003","1236063","1313007","1335457","1223014","1122003","1333084","1335079","1333084","1335484","1133007","1133007","1222006","1324029","1335457","1111001","1223014","1222006","1326063","1324046","1144015","1133007","1324046","1324029","1223013","1144015","1333273","1122003","1224015","1212003","1144015","1212003","1515031","1223007","1333273","1333273","1234058","1222009","1122003","1111001"]},{"file":"B_164-V4_B_164_D0_038-export.jsonl","name":"B_164-V4_B_164_D0_038","initialGrid":[142,196,128,0,0,1,35,113],"blockIds":["1335079","1122003","1223014","1234023","1335079","1224015","1223007","1133007","1335457","1222006","1111001","1223011","1222006","1223013","1223007","1133007","1335079","1326063","1414015","1326063","1144015","1223011","1236063","1313007","1222006","1223011","1212003","1223007","1122003","1236063","1224015","1111001","1224015","1223007","1234058","1222009","1223007","1212003","1234058","1111001","1111001","1324029","1236063","1111001","1224015","1234023","1324046","1111001","1333084","1234058","1111001","1324046","1223014","1234023","1335484","1122003","1133007","1313007","1155031","1223013","1236063","1223007","1326063","1335079","1234058","1212003","1133007","1223011","1234023","1324029","1111001","1324046","1324029","1144015","1223007","1324046","1222006","1224015","1324029","1111001","1333273","1339511","1236063","1324029","1234058","1234058","1222006","1234058","1223014","1333084","1333273","1324029","1313007","1313007","1234023","1133007","1212003","1335457","1133007","1234023","1223014","1224015","1324046","1133007","1313007","1111001","1234023","1335484","1515031","1223007","1234023","1313007","1324029","1224015","1223011","1223014","1223013","1335079","1414015","1222006"]},{"file":"B_003-V4_B_003_D1_027-export.jsonl","name":"B_003-V4_B_003_D1_027","initialGrid":[126,60,24,0,32,112,32,0],"blockIds":["1222009","1222009","1414015","1414015","1313007","1223013","1122003","1122003","1133007","1223007","1324023","1223013","1234015","1223011","1122003","1234051","1222006","1234060","1133007","1234039","1313007","1122003","1222009","1223014","1133007","1144015","1223014","1234039","1223007","1223007","1324053","1224015","1223013","1324029","1234060","1224015","1313007","1133007","1224015","1313007","1223007","1144015","1212003","1111001","1223013","1234023","1222006","1313007","1234051","1324046","1223014","1324046","1313007","1224015","1133007","1222006","1324023","1324030","1324058","1223014","1133007","1223011","1234023","1222009","1133007","1223013","1223014","1234060","1223007","1111001","1222006","1223007","1223007","1222006","1313007","1144015","1313007","1313007","1223007","1223011","1326063","1324053","1324023","1223011","1234023","1223007","1324029","1223011","1324046","1212003","1122003","1234030","1223007","1122003","1324043","1324023","1234058","1333273","1234023","1313007","1212003","1212003","1122003","1234058","1133007","1223013","1414015","1324053","1122003","1234039","1223011","1144015","1122003","1222006","1324058","1222006","1313007","1212003","1414015","1326063"]},{"file":"B_075-V4_B_075_D1_027-export.jsonl","name":"B_075-V4_B_075_D1_027","initialGrid":[126,60,24,24,0,0,0,0],"blockIds":["1313007","1324043","1222006","1234057","1313007","1222009","1122003","1212003","1133007","1223007","1223014","1313007","1222006","1144015","1234058","1234051","1234051","1223011","1223013","1111001","1223011","1414015","1223014","1324023","1223011","1313007","1234058","1133007","1212003","1223011","1223014","1324058","1414015","1324030","1223014","1122003","1324030","1414015","1234051","1324030","1234058","1236063","1324030","1223011","1224015","1223014","1234051","1313007","1133007","1223011","1234023","1234039","1234060","1224015","1223014","1223007","1234058","1234060","1324043","1223013","1223011","1223014","1324053","1223013","1234039","1224015","1212003","1223013","1234051","1324023","1223011","1122003","1212003","1234060","1324045","1234058","1223007","1133007","1313007","1234057","1223007","1313007","1222009","1111001","1223011","1223011","1234057","1223014","1324043","1234058","1324030","1223014","1324053","1223014","1234051","1234057","1223007","1223014","1224015","1122003","1324053","1223013","1122003","1224015","1144015","1313007","1222006","1133007","1224015","1324043","1223013","1223011","1324045","1234030","1234023","1222006","1222009","1133007","1122003","1212003"]},{"file":"B_006-V4_B_006_D1_004-export.jsonl","name":"B_006-V4_B_006_D1_004","initialGrid":[0,6,6,24,24,96,96,0],"blockIds":["1313007","1224015","1324045","1234058","1223007","1133007","1212003","1122003","1222006","1234039","1324045","1223014","1222006","1223007","1234030","1133007","1224015","1223014","1144015","1234015","1234051","1223013","1223007","1223011","1234058","1144015","1133007","1324043","1313007","1313007","1224015","1133007","1212003","1324029","1223011","1224015","1324045","1414015","1414015","1223013","1224015","1234023","1223011","1133007","1223014","1324029","1234030","1223014","1324058","1324030","1223011","1324043","1212003","1223007","1223013","1234023","1224015","1223014","1223007","1324043","1234058","1234023","1234057","1234023","1234051","1223013","1223007","1223011","1144015","1414015","1234051","1224015","1324043","1144015","1333273","1234023","1234030","1313007","1223013","1223014","1324043","1133007","1414015","1224015","1223014","1223007","1234023","1324045","1236063","1333273","1326063","1234015","1234030","1333273","1324029","1324023","1234058","1223007","1515031","1324043","1324058","1234039","1223011","1234051","1324046","1234039","1133007","1234060","1223011","1224015","1223013","1212003","1212003","1313007","1222006","1144015","1122003","1222006","1414015","1335079"]},{"file":"B_067-V4_B_067_D1_019-export.jsonl","name":"B_067-V4_B_067_D1_019","initialGrid":[0,0,0,231,165,231,0,0],"blockIds":["1111001","1222006","1324043","1111001","1111001","1111001","1212003","1222009","1313007","1223007","1324043","1324023","1223011","1122003","1324058","1234030","1223014","1234051","1234030","1313007","1324053","1223011","1223011","1224015","1144015","1223007","1224015","1224015","1133007","1414015","1111001","1223014","1111001","1223007","1324045","1212003","1144015","1324053","1111001","1223011","1324053","1324045","1223013","1223013","1122003","1324030","1324046","1324023","1223007","1223011","1234060","1324023","1234051","1223007","1223011","1234023","1234015","1224015","1223007","1212003","1313007","1313007","1234051","1223014","1324045","1223011","1212003","1223007","1313007","1212003","1234051","1324043","1222006","1324053","1111001","1234015","1223014","1324029","1324045","1133007","1223007","1133007","1223011","1212003","1222009","1223014","1234030","1212003","1144015","1222006","1234039","1234057","1324030","1222006","1133007","1234023","1324053","1324029","1326063","1222009","1133007","1313007","1144015","1324023","1234051","1223007","1224015","1324045","1223013","1324043","1324058","1234015","1223014","1234058","1234030","1324045","1234015","1234051","1133007","1222006"]},{"file":"B_103-V4_B_103_D1_024-export.jsonl","name":"B_103-V4_B_103_D1_024","initialGrid":[60,60,0,0,0,0,195,231],"blockIds":["1313007","1222009","1122003","1222006","1111001","1222009","1223013","1414015","1234051","1223011","1212003","1133007","1234060","1222009","1414015","1324045","1324045","1324058","1223011","1223014","1224015","1324029","1234030","1414015","1324030","1133007","1333084","1324046","1324046","1223013","1133007","1111001","1133007","1223007","1234051","1313007","1223007","1223013","1223013","1234058","1224015","1222009","1324045","1234039","1223007","1324023","1234039","1223011","1313007","1223014","1234015","1223011","1324030","1223011","1313007","1234057","1222009","1223013","1224015","1111001","1414015","1234039","1212003","1324045","1313007","1222006","1224015","1224015","1324045","1313007","1234039","1223011","1223014","1313007","1324046","1324043","1234015","1223011","1223013","1223014","1313007","1324023","1324053","1223013","1223013","1223011","1144015","1234015","1234039","1223007","1313007","1234023","1133007","1223011","1222006","1223013","1144015","1234030","1324046","1224015","1144015","1222006","1324053","1212003","1234057","1144015","1223011","1234051","1212003","1234015","1222009","1324043","1223007","1122003","1333084","1144015","1313007","1324023","1223014","1333273"]},{"file":"B_052-V4_B_052_D1_007-export.jsonl","name":"B_052-V4_B_052_D1_007","initialGrid":[252,248,240,224,192,128,0,0],"blockIds":["1313007","1222006","1222006","1223014","1222009","1122003","1222006","1133007","1223007","1223013","1212003","1222009","1324045","1414015","1222009","1122003","1234058","1111001","1144015","1224015","1111001","1222009","1111001","1234057","1133007","1222006","1212003","1222009","1234039","1133007","1223007","1144015","1234057","1234023","1223007","1223014","1133007","1144015","1144015","1234058","1324045","1324045","1223013","1223013","1223011","1324045","1133007","1324029","1224015","1223011","1111001","1324058","1234039","1122003","1223013","1223007","1324023","1234057","1324053","1223011","1223011","1223014","1324029","1222006","1234060","1144015","1324046","1324046","1223013","1414015","1223014","1223011","1122003","1111001","1313007","1223013","1324046","1224015","1122003","1234051","1223011","1324046","1324045","1223014","1223007","1111001","1111001","1234023","1333084","1222009","1223007","1324053","1224015","1324053","1223013","1236063","1324045","1223014","1324053","1324030","1212003","1234051","1324043","1234030","1234058","1324046","1144015","1223011","1133007","1223014","1223011","1122003","1234057","1122003","1333273","1324058","1224015","1236063","1133007","1333273"]},{"file":"B_047-V4_B_047_D1_018-export.jsonl","name":"B_047-V4_B_047_D1_018","initialGrid":[143,136,128,192,3,1,17,241],"blockIds":["1234023","1234058","1223013","1223007","1122003","1133007","1222006","1111001","1224015","1144015","1234051","1133007","1313007","1223011","1223011","1313007","1324046","1324046","1223007","1324045","1223014","1324030","1234030","1223007","1223007","1223013","1324058","1234023","1223013","1111001","1223014","1234030","1313007","1313007","1234039","1223007","1234015","1324045","1234060","1223014","1324023","1223011","1324046","1122003","1212003","1223013","1234058","1333273","1234030","1133007","1223013","1234051","1111001","1133007","1234015","1234023","1223013","1223007","1223014","1234039","1234060","1234039","1224015","1122003","1222006","1133007","1222009","1324030","1234057","1313007","1414015","1223013","1313007","1224015","1224015","1122003","1234030","1414015","1224015","1313007","1223007","1234058","1224015","1212003","1223011","1133007","1234051","1414015","1223014","1223014","1333084","1324045","1111001","1324030","1111001","1326063","1324058","1236063","1333084","1222006","1222006","1234057","1133007","1222009","1234030","1223011","1223013","1234023","1234058","1222009","1222006","1234015","1212003","1133007","1333273","1324053","1222006","1324043","1223013","1223011"]},{"file":"B_012-V4_B_012_D2_032-export.jsonl","name":"B_012-V4_B_012_D2_032","initialGrid":[189,60,24,24,0,195,0,0],"blockIds":["1324053","1313007","1122003","1223014","1223013","1223014","1212003","1313007","1313007","1222006","1324030","1212003","1223011","1222006","1234015","1324043","1414015","1313007","1223011","1223011","1223011","1324045","1324030","1324043","1223013","1324023","1223011","1224015","1324053","1144015","1414015","1326063","1234057","1324023","1222006","1326063","1324030","1324053","1234030","1133007","1313007","1133007","1234023","1144015","1234039","1224015","1324043","1223007","1223014","1324045","1111001","1223011","1234060","1324046","1234051","1222009","1324029","1414015","1234030","1133007","1223013","1324030","1313007","1122003","1234060","1223011","1414015","1324030","1223014","1223011","1122003","1313007","1122003","1222006","1212003","1414015","1133007","1133007","1223014","1223011","1324029","1234051","1234057","1224015","1223013","1324058","1234023","1234058","1223007","1223014","1333084","1234030","1234039","1223007","1414015","1144015","1324043","1324030","1414015","1223007","1223011","1223014","1223007","1122003","1414015","1414015","1313007","1324023","1333084","1222009","1222006","1234051","1234015","1212003","1223014","1224015","1223014","1122003","1234051","1212003"]},{"file":"B_178-V4_B_178_D2_025-export.jsonl","name":"B_178-V4_B_178_D2_025","initialGrid":[0,0,129,195,195,129,24,24],"blockIds":["1223007","1313007","1122003","1122003","1223011","1223011","1212003","1122003","1234051","1224015","1313007","1223014","1222006","1133007","1234030","1324043","1234057","1133007","1224015","1224015","1224015","1234057","1414015","1324023","1324030","1313007","1324030","1144015","1133007","1324053","1234060","1223011","1223014","1223011","1222006","1236063","1313007","1234039","1234060","1223011","1222006","1223007","1414015","1234058","1313007","1234058","1234058","1224015","1133007","1223011","1212003","1234023","1224015","1223013","1224015","1222006","1324030","1326063","1223014","1313007","1133007","1223013","1222009","1234060","1324030","1224015","1223011","1222006","1144015","1234015","1324046","1223007","1223013","1223013","1234051","1313007","1111001","1333273","1224015","1324053","1223011","1224015","1324023","1222006","1234030","1223014","1224015","1234058","1222009","1223013","1324029","1236063","1313007","1234030","1414015","1324046","1223013","1223013","1414015","1224015","1133007","1324030","1223014","1223014","1324043","1144015","1234058","1234030","1326063","1324029","1414015","1212003","1133007","1313007","1144015","1414015","1144015","1324043","1335457","1224015"]},{"file":"B_055-V4_B_055_D2_017-export.jsonl","name":"B_055-V4_B_055_D2_017","initialGrid":[3,99,48,0,12,8,8,0],"blockIds":["1313007","1234023","1223014","1313007","1234015","1122003","1212003","1212003","1111001","1324053","1222009","1223007","1234051","1414015","1234030","1224015","1223007","1223007","1111001","1313007","1414015","1223013","1223007","1133007","1223007","1223011","1414015","1234030","1234058","1133007","1133007","1414015","1324030","1236063","1222006","1234023","1324046","1333084","1324030","1223011","1223011","1223011","1324058","1111001","1234058","1234060","1223007","1324045","1111001","1111001","1234051","1144015","1324030","1144015","1324058","1414015","1144015","1133007","1234039","1313007","1224015","1313007","1234015","1234051","1234060","1223011","1313007","1224015","1223011","1234023","1234015","1313007","1222009","1222006","1144015","1234058","1414015","1223011","1223014","1223013","1414015","1234030","1313007","1223007","1234051","1324030","1223007","1223013","1212003","1236063","1144015","1234051","1122003","1224015","1223014","1234058","1222006","1224015","1324046","1333084","1212003","1414015","1236063","1222006","1223014","1324023","1234051","1234039","1313007","1224015","1212003","1324023","1223013","1133007","1223011","1223013","1333084","1414015","1234023","1133007"]},{"file":"B_168-V4_B_168_D2_034-export.jsonl","name":"B_168-V4_B_168_D2_034","initialGrid":[0,0,24,60,24,102,0,0],"blockIds":["1324043","1133007","1234039","1222009","1324030","1324043","1133007","1223014","1324053","1133007","1324045","1224015","1223007","1223011","1212003","1223014","1133007","1224015","1212003","1223013","1324053","1224015","1234030","1224015","1133007","1324053","1223007","1223013","1324029","1234058","1324053","1223011","1223013","1224015","1234051","1212003","1324043","1223007","1414015","1324030","1234058","1313007","1234051","1234058","1223013","1313007","1324023","1234015","1122003","1313007","1414015","1324029","1144015","1324030","1324030","1326063","1234015","1223013","1223013","1324043","1133007","1122003","1324030","1212003","1212003","1224015","1144015","1234039","1223014","1223013","1313007","1223007","1324053","1223011","1212003","1234030","1223013","1234051","1223011","1234057","1234030","1324045","1212003","1234015","1234057","1234030","1324058","1223013","1223007","1133007","1313007","1224015","1212003","1133007","1324043","1223013","1133007","1324030","1122003","1222009","1122003","1223007","1234015","1324053","1324030","1234039","1414015","1222009","1133007","1324043","1234051","1324030","1234030","1333273","1333084","1222006","1224015","1324046","1414015","1222006"]},{"file":"B_098-V4_B_098_D2_016-export.jsonl","name":"B_098-V4_B_098_D2_016","initialGrid":[0,0,0,231,126,60,24,0],"blockIds":["1324023","1111001","1223011","1234015","1234039","1234039","1223007","1212003","1144015","1144015","1234030","1223014","1223013","1324030","1324058","1111001","1234051","1326063","1212003","1223013","1122003","1234015","1234060","1414015","1234058","1111001","1324030","1223014","1223007","1223013","1324046","1111001","1223014","1224015","1224015","1324029","1223014","1324053","1324045","1223007","1111001","1133007","1234057","1212003","1223007","1324029","1234051","1223007","1223013","1111001","1324045","1324058","1222006","1324045","1223011","1324029","1212003","1313007","1222006","1223011","1223013","1324053","1224015","1144015","1333273","1324029","1234030","1324053","1224015","1223013","1313007","1234030","1313007","1324030","1133007","1133007","1234030","1324023","1212003","1212003","1122003","1223011","1144015","1223007","1324043","1234058","1223014","1223013","1133007","1223007","1313007","1222006","1324029","1144015","1144015","1133007","1212003","1223007","1223014","1222006","1234030","1222009","1335484","1324029","1324053","1155031","1223007","1333084","1324045","1122003","1324030","1222009","1324030","1223011","1222009","1324023","1223011","1223013","1223014","1324029"]},{"file":"B_167-V4_B_167_D2_035-export.jsonl","name":"B_167-V4_B_167_D2_035","initialGrid":[0,60,60,126,60,24,0,0],"blockIds":["1414015","1133007","1234023","1313007","1144015","1223011","1122003","1133007","1324029","1313007","1133007","1234058","1223014","1223013","1313007","1414015","1122003","1234060","1333084","1313007","1111001","1313007","1111001","1414015","1414015","1223013","1223007","1324045","1122003","1313007","1234023","1313007","1222009","1133007","1234030","1234060","1122003","1223013","1313007","1224015","1234051","1144015","1324029","1223011","1223011","1414015","1234051","1414015","1223011","1223011","1234058","1313007","1223011","1234058","1223011","1223011","1313007","1414015","1324045","1144015","1324053","1223007","1234039","1324046","1234023","1223011","1223013","1313007","1234015","1234039","1223014","1324045","1414015","1122003","1324043","1223007","1212003","1234058","1335484","1326063","1223014","1324043","1324030","1223011","1222009","1223013","1313007","1234058","1234051","1222009","1122003","1313007","1224015","1133007","1144015","1144015","1313007","1223014","1212003","1223014","1212003","1333273","1223013","1324029","1111001","1236063","1234015","1223013","1212003","1223011","1324053","1234051","1223011","1122003","1223014","1144015","1234015","1324045","1222006","1313007"]},{"file":"B_166-V4_B_166_D3_024-export.jsonl","name":"B_166-V4_B_166_D3_024","initialGrid":[195,129,0,96,6,0,129,195],"blockIds":["1144015","1133007","1133007","1222006","1212003","1414015","1324053","1223014","1122003","1223014","1111001","1223014","1324029","1222006","1133007","1133007","1223013","1324030","1223007","1133007","1222006","1414015","1324046","1324030","1223013","1223013","1224015","1234023","1133007","1212003","1223011","1223014","1133007","1234058","1234057","1223007","1234039","1324023","1326063","1223007","1133007","1234060","1133007","1224015","1326063","1234051","1222006","1333273","1234057","1212003","1236063","1234023","1222009","1224015","1324023","1234030","1234051","1234030","1326063","1234060","1122003","1222006","1212003","1223013","1414015","1313007","1222006","1324023","1324053","1234015","1324058","1414015","1223014","1234039","1234060","1324029","1333084","1234023","1324046","1324043","1234058","1234058","1234030","1223011","1111001","1212003","1223014","1223007","1222009","1414015","1133007","1122003","1324045","1335079","1324058","1324023","1223007","1223014","1224015","1122003","1333084","1324030","1222009","1234030","1223014","1414015","1222009","1144015","1313007","1223011","1155031","1222009","1234039","1222006","1234030","1133007","1133007","1324043","1324053","1324043"]},{"file":"B_159-V4_B_159_D3_040-export.jsonl","name":"B_159-V4_B_159_D3_040","initialGrid":[0,24,0,195,195,0,24,0],"blockIds":["1212003","1223011","1223007","1122003","1223014","1324045","1324030","1234039","1222009","1111001","1223007","1414015","1234060","1144015","1223011","1234057","1234051","1324030","1234030","1234023","1234051","1223007","1223007","1223007","1133007","1223007","1333084","1133007","1111001","1133007","1223007","1111001","1223014","1324045","1234015","1324023","1313007","1223014","1234039","1133007","1234015","1222009","1212003","1324023","1223011","1212003","1333084","1324058","1223013","1234030","1144015","1223011","1234023","1111001","1333273","1324043","1234015","1234030","1224015","1326063","1234030","1234058","1414015","1324045","1234058","1414015","1212003","1122003","1223014","1234051","1234057","1223014","1324029","1324046","1234030","1111001","1224015","1122003","1122003","1324046","1234051","1224015","1222006","1133007","1111001","1212003","1222006","1223007","1324043","1333084","1122003","1236063","1212003","1324058","1333084","1234015","1324046","1236063","1133007","1223013","1223013","1313007","1324045","1333084","1133007","1324058","1236063","1234051","1333273","1324046","1333273","1333084","1234057","1234060","1326063","1133007","1324043","1313007","1133007","1324043"]},{"file":"B_094-V4_B_094_D3_035-export.jsonl","name":"B_094-V4_B_094_D3_035","initialGrid":[31,15,12,12,8,24,24,0],"blockIds":["1133007","1414015","1324045","1223013","1133007","1313007","1222006","1223014","1414015","1313007","1223013","1222009","1234051","1223011","1111001","1324046","1333273","1222006","1324043","1234039","1234051","1324045","1324046","1223011","1222006","1144015","1222009","1234051","1212003","1212003","1223014","1324053","1324058","1313007","1223013","1414015","1223007","1122003","1133007","1333084","1222009","1414015","1324030","1313007","1223014","1324058","1223014","1111001","1144015","1212003","1133007","1234030","1414015","1212003","1223013","1222006","1324029","1324045","1324045","1122003","1234023","1144015","1324058","1122003","1333084","1414015","1236063","1224015","1324023","1234030","1223007","1111001","1414015","1234058","1324023","1223013","1324023","1333273","1224015","1234023","1326063","1223014","1222006","1122003","1133007","1234058","1223007","1324058","1224015","1111001","1324053","1223014","1234060","1234058","1223014","1333273","1133007","1515031","1223014","1324046","1335457","1234039","1333273","1222006","1234058","1333084","1335457","1133007","1223007","1111001","1313007","1234060","1223007","1222009","1234039","1324058","1122003","1236063","1234015","1414015"]},{"file":"B_152-V4_B_152_D3_039-export.jsonl","name":"B_152-V4_B_152_D3_039","initialGrid":[224,13,69,97,32,14,14,0],"blockIds":["1133007","1223014","1122003","1223011","1111001","1133007","1313007","1234051","1324045","1133007","1223011","1223013","1144015","1122003","1223011","1144015","1324023","1224015","1224015","1223013","1223011","1133007","1324030","1414015","1223007","1414015","1122003","1223013","1313007","1223011","1111001","1223007","1234030","1234058","1234051","1324045","1414015","1224015","1122003","1234030","1222006","1223007","1234030","1212003","1414015","1234039","1234051","1234030","1223014","1324043","1111001","1333084","1133007","1111001","1414015","1326063","1111001","1223011","1224015","1144015","1324030","1122003","1133007","1324058","1326063","1234023","1234015","1223013","1324030","1324043","1122003","1122003","1326063","1223007","1324030","1324046","1324023","1223011","1133007","1223014","1111001","1223007","1324046","1111001","1324046","1234015","1223007","1234051","1111001","1223011","1326063","1324030","1144015","1234030","1122003","1324053","1324045","1324046","1324053","1234051","1223014","1133007","1234060","1324023","1234039","1122003","1335457","1313007","1223013","1324023","1234058","1223013","1144015","1324030","1224015","1324023","1133007","1313007","1324053","1133007"]},{"file":"B_023-V4_B_023_D3_010-export.jsonl","name":"B_023-V4_B_023_D3_010","initialGrid":[24,60,126,0,0,24,24,0],"blockIds":["1414015","1122003","1144015","1324046","1222006","1144015","1223014","1234030","1234015","1111001","1223011","1224015","1234015","1313007","1313007","1414015","1224015","1144015","1313007","1223007","1133007","1144015","1144015","1414015","1223013","1144015","1222009","1223011","1324045","1324043","1111001","1414015","1234039","1324058","1313007","1223007","1313007","1223011","1313007","1414015","1122003","1222009","1224015","1133007","1122003","1324053","1133007","1111001","1223007","1224015","1223007","1236063","1222006","1326063","1223011","1144015","1324029","1144015","1313007","1122003","1224015","1222006","1234030","1326063","1133007","1414015","1333273","1234057","1234023","1234051","1324029","1313007","1324053","1223013","1224015","1133007","1122003","1222009","1324029","1223014","1234015","1333273","1223014","1236063","1324030","1111001","1234058","1223014","1234015","1234051","1324023","1324058","1234051","1223013","1234058","1324023","1133007","1324023","1223007","1313007","1144015","1313007","1234051","1144015","1324029","1414015","1324058","1324053","1223011","1234058","1234039","1515031","1324030","1144015","1324030","1133007","1222006","1223014","1333084","1324030"]},{"file":"B_013-V4_B_013_D3_017-export.jsonl","name":"B_013-V4_B_013_D3_017","initialGrid":[0,24,24,102,102,24,24,0],"blockIds":["1224015","1414015","1223007","1133007","1313007","1324045","1223011","1234058","1144015","1122003","1223007","1234051","1222009","1223011","1223007","1324030","1223014","1414015","1224015","1224015","1133007","1324045","1223013","1111001","1324053","1324045","1234039","1234058","1224015","1223013","1223011","1324029","1313007","1324058","1144015","1222009","1223011","1133007","1324029","1234060","1212003","1223013","1122003","1234030","1223014","1144015","1224015","1324045","1324045","1324058","1324045","1224015","1224015","1324043","1414015","1324045","1234039","1223011","1222009","1324053","1223007","1324030","1222006","1234039","1234057","1234051","1222006","1222006","1324023","1313007","1144015","1224015","1224015","1111001","1212003","1234015","1222009","1234051","1144015","1224015","1234051","1324043","1234039","1414015","1223014","1324030","1234057","1333273","1324046","1234057","1223007","1324043","1313007","1133007","1234015","1133007","1333273","1222006","1335484","1335457","1234060","1133007","1222009","1313007","1223007","1122003","1234039","1133007","1223014","1223007","1313007","1324058","1234058","1122003","1324029","1324058","1333084","1222006","1339511","1324029"]},{"file":"B_102-V4_B_102_D4_008-export.jsonl","name":"B_102-V4_B_102_D4_008","initialGrid":[24,60,0,0,126,60,24,0],"blockIds":["1223014","1133007","1133007","1324023","1222009","1223011","1324045","1234023","1212003","1414015","1324043","1223013","1222006","1222009","1133007","1222006","1223014","1324043","1324023","1324029","1313007","1223011","1133007","1414015","1133007","1234039","1122003","1122003","1222009","1324043","1234030","1223013","1212003","1234051","1234023","1155031","1313007","1414015","1324058","1234051","1223011","1223011","1324023","1144015","1234030","1122003","1223007","1223014","1144015","1335457","1333084","1223013","1333084","1234058","1212003","1326063","1223007","1335484","1224015","1234030","1234023","1324030","1144015","1234030","1234051","1324043","1223014","1333084","1324029","1234058","1223007","1234058","1224015","1333084","1234039","1324053","1144015","1234039","1212003","1234057","1212003","1333273","1234058","1223011","1234023","1223014","1234015","1212003","1324058","1333273","1236063","1234015","1234060","1133007","1234058","1324046","1234060","1324030","1313007","1144015","1223011","1222009","1324053","1234051","1234057","1223013","1324058","1333273","1335079","1122003","1223014","1234051","1324023","1222006","1122003","1122003","1234039","1333084","1222006","1222009"]},{"file":"B_174-V4_B_174_D4_006-export.jsonl","name":"B_174-V4_B_174_D4_006","initialGrid":[102,0,0,129,129,0,0,102],"blockIds":["1223007","1223007","1222006","1212003","1222009","1212003","1223007","1223007","1223011","1324030","1222009","1111001","1324058","1122003","1222009","1111001","1234060","1234060","1223013","1111001","1223013","1223011","1223013","1324029","1133007","1212003","1326063","1324046","1234015","1111001","1234023","1324023","1223014","1324023","1234030","1326063","1234051","1223011","1234060","1234051","1313007","1144015","1326063","1234051","1224015","1223014","1313007","1326063","1236063","1223007","1324045","1324053","1333273","1234030","1234051","1324045","1224015","1234060","1234051","1144015","1236063","1223007","1324045","1414015","1234030","1324043","1111001","1324029","1111001","1223007","1324045","1223011","1223007","1222006","1313007","1223011","1324030","1324043","1234058","1111001","1224015","1222009","1212003","1234057","1122003","1324045","1223013","1333084","1212003","1234057","1414015","1222009","1224015","1324030","1414015","1313007","1234023","1223013","1234015","1234015","1223013","1324046","1234057","1324045","1223007","1234060","1234058","1223011","1324053","1414015","1324058","1144015","1234051","1122003","1222006","1234060","1223014","1234023","1223013","1414015"]},{"file":"B_104-V4_B_104_D4_021-export.jsonl","name":"B_104-V4_B_104_D4_021","initialGrid":[227,227,3,0,0,192,199,199],"blockIds":["1223007","1223014","1234015","1234030","1234051","1223007","1222006","1224015","1326063","1313007","1222006","1223011","1212003","1222006","1144015","1111001","1234057","1222009","1224015","1223014","1324023","1223013","1212003","1234030","1224015","1324053","1223011","1234015","1324030","1324046","1223011","1234058","1223014","1234057","1324030","1234023","1324030","1234051","1144015","1224015","1313007","1324023","1223014","1111001","1122003","1223011","1234051","1234060","1324030","1223011","1333084","1234058","1212003","1234058","1324045","1333273","1234039","1223014","1222009","1234030","1212003","1234015","1224015","1234015","1234023","1324045","1212003","1326063","1234030","1333273","1222009","1324046","1133007","1234058","1324023","1234030","1324030","1234030","1234060","1212003","1234058","1333084","1234015","1222006","1224015","1234060","1234058","1333273","1223007","1324029","1234015","1223014","1223013","1324043","1324023","1236063","1234051","1324045","1223011","1122003","1223013","1515031","1223014","1224015","1223011","1313007","1324058","1324023","1234060","1234030","1234058","1324043","1222006","1324045","1414015","1234060","1324053","1324058","1234060","1324023"]},{"file":"B_145-V4_B_145_D4_012-export.jsonl","name":"B_145-V4_B_145_D4_012","initialGrid":[7,14,28,0,0,224,192,128],"blockIds":["1122003","1223013","1222009","1144015","1222006","1122003","1222006","1133007","1212003","1144015","1122003","1223014","1324045","1313007","1223011","1222006","1223014","1414015","1223011","1222009","1223013","1234039","1212003","1234060","1122003","1324023","1111001","1224015","1324045","1313007","1234023","1223007","1223014","1234051","1324046","1223014","1324045","1234015","1515031","1234015","1333084","1313007","1414015","1326063","1324046","1234060","1234030","1234030","1324045","1324058","1223014","1324043","1234051","1222009","1414015","1223007","1111001","1324045","1333084","1324046","1234058","1234060","1144015","1324058","1111001","1234023","1223013","1324046","1212003","1333273","1212003","1144015","1234051","1234060","1414015","1223011","1223014","1313007","1133007","1324045","1234058","1333273","1324046","1212003","1222006","1234058","1234057","1222006","1133007","1313007","1234060","1324043","1223007","1324023","1222009","1324023","1122003","1324058","1324045","1223014","1223011","1222009","1212003","1313007","1234060","1222009","1111001","1111001","1326063","1212003","1133007","1223014","1212003","1324029","1222009","1224015","1333084","1324046","1234023","1324029"]},{"file":"B_148-V4_B_148_D4_010-export.jsonl","name":"B_148-V4_B_148_D4_010","initialGrid":[36,66,129,0,0,129,66,36],"blockIds":["1133007","1111001","1133007","1234060","1324046","1234060","1313007","1313007","1234030","1234039","1324023","1223011","1234039","1223007","1224015","1324030","1222006","1324023","1223014","1414015","1212003","1324029","1223007","1144015","1224015","1223011","1324045","1222009","1234051","1212003","1324045","1234057","1224015","1324046","1223007","1111001","1234030","1223011","1223014","1234039","1414015","1324046","1223014","1223013","1223007","1234060","1324023","1313007","1223007","1111001","1122003","1324030","1223014","1236063","1236063","1335484","1133007","1324046","1324030","1111001","1222009","1333273","1212003","1222006","1313007","1333084","1223007","1234015","1324046","1234060","1222006","1223014","1144015","1333084","1133007","1212003","1223014","1324058","1122003","1335484","1133007","1324030","1234015","1111001","1414015","1324029","1224015","1223007","1234057","1223013","1234051","1324058","1324029","1333084","1133007","1144015","1324043","1223011","1223007","1234039","1122003","1324030","1234023","1313007","1234060","1324053","1212003","1224015","1324046","1333273","1234051","1234058","1339511","1223011","1234039","1324043","1122003","1122003","1111001","1234015"]},{"file":"B_163-V4_B_163_D4_014-export.jsonl","name":"B_163-V4_B_163_D4_014","initialGrid":[230,164,6,0,96,32,101,7],"blockIds":["1223013","1414015","1313007","1324045","1122003","1234039","1212003","1212003","1111001","1324053","1234051","1222009","1222009","1223007","1313007","1234015","1223011","1223007","1111001","1234051","1111001","1324023","1324030","1234051","1223014","1234060","1234051","1133007","1223011","1223014","1223013","1212003","1324023","1324058","1313007","1222009","1333084","1223013","1335457","1234060","1414015","1313007","1223007","1144015","1223011","1144015","1324046","1324030","1333084","1223007","1333084","1234058","1333084","1324023","1234060","1324023","1223014","1222009","1234015","1324058","1335079","1144015","1224015","1324053","1133007","1414015","1234058","1324058","1324029","1222006","1224015","1122003","1324030","1212003","1234051","1324045","1234058","1324058","1223013","1414015","1234051","1223011","1223014","1236063","1234039","1133007","1313007","1224015","1223007","1223013","1324030","1212003","1223014","1223014","1234057","1324045","1223014","1122003","1223014","1222009","1234060","1313007","1324043","1313007","1324045","1122003","1223007","1133007","1234015","1335484","1333273","1234051","1144015","1324023","1222006","1324030","1234051","1324023","1122003","1324045"]},{"file":"B_074-V4_B_074_D5_022-export.jsonl","name":"B_074-V4_B_074_D5_022","initialGrid":[0,0,66,126,60,36,0,0],"blockIds":["1234030","1133007","1222009","1212003","1212003","1122003","1313007","1222006","1223013","1414015","1234015","1234058","1223011","1324029","1122003","1234023","1224015","1234060","1414015","1224015","1234058","1222006","1234057","1144015","1133007","1324046","1324058","1224015","1234030","1324053","1324045","1234023","1212003","1339511","1324053","1155031","1234051","1324030","1335457","1324058","1324046","1133007","1111001","1324053","1234015","1212003","1234058","1133007","1223007","1222006","1222009","1223013","1234057","1111001","1313007","1324053","1236063","1234060","1224015","1224015","1111001","1313007","1133007","1324030","1234051","1234060","1223011","1223014","1324030","1133007","1333273","1324045","1122003","1212003","1234030","1234057","1122003","1333084","1515031","1223011","1234060","1133007","1234015","1222006","1222006","1224015","1224015","1234051","1212003","1155031","1223013","1236063","1223011","1324045","1313007","1234015","1324053","1133007","1313007","1234030","1324029","1324046","1122003","1133007","1122003","1222006","1324030","1212003","1222006","1222006","1333273","1234030","1234030","1222009","1224015","1236063","1223011","1414015","1144015","1313007"]},{"file":"B_010-V4_B_010_D5_029-export.jsonl","name":"B_010-V4_B_010_D5_029","initialGrid":[0,0,24,60,36,36,60,0],"blockIds":["1324058","1223011","1122003","1222006","1313007","1313007","1222009","1223013","1414015","1324023","1234057","1223011","1223013","1223007","1324030","1234015","1324029","1223013","1333084","1122003","1324029","1324045","1414015","1223011","1333273","1324029","1324030","1133007","1234057","1223014","1414015","1222006","1223013","1234057","1223014","1122003","1234030","1234039","1324029","1324043","1324045","1224015","1122003","1122003","1144015","1515031","1111001","1313007","1324023","1234039","1133007","1224015","1324046","1234060","1324045","1223013","1111001","1234015","1234060","1324043","1324045","1324046","1313007","1144015","1223011","1236063","1133007","1222009","1212003","1414015","1515031","1222006","1222006","1144015","1324058","1313007","1324053","1122003","1234023","1333273","1212003","1111001","1234057","1335484","1234051","1212003","1335484","1324053","1144015","1234060","1224015","1335484","1111001","1234030","1515031","1324023","1234023","1223007","1234030","1335484","1144015","1313007","1324029","1223014","1324043","1324046","1313007","1324045","1339511","1133007","1222006","1144015","1234057","1313007","1515031","1335295","1414015","1234030","1234058","1313007"]},{"file":"B_197-V4_B_197_D5_038-export.jsonl","name":"B_197-V4_B_197_D5_038","initialGrid":[195,195,0,0,0,102,231,195],"blockIds":["1133007","1324029","1222009","1313007","1212003","1222006","1222006","1223011","1223013","1212003","1212003","1144015","1122003","1111001","1414015","1144015","1324030","1324053","1223007","1234060","1234030","1324058","1324023","1223007","1313007","1144015","1313007","1224015","1223014","1234058","1111001","1212003","1212003","1234015","1236063","1236063","1234039","1313007","1313007","1234057","1234057","1133007","1224015","1224015","1324058","1222006","1234030","1223007","1222006","1313007","1339511","1335295","1223007","1313007","1234030","1144015","1313007","1111001","1111001","1234057","1234030","1414015","1234030","1222009","1234051","1234015","1223011","1313007","1515031","1339511","1313007","1313007","1324023","1313007","1234039","1122003","1222006","1122003","1326063","1234057","1222006","1324043","1223011","1222006","1335457","1111001","1333273","1223014","1222006","1324043","1313007","1234030","1236063","1333273","1335457","1224015","1324043","1234039","1234051","1324058","1333084","1223007","1133007","1122003","1122003","1222006","1212003","1324053","1222006","1335457","1234039","1313007","1335295","1335457","1133007","1324043","1324058","1234015","1133007","1414015"]},{"file":"B_101-V4_B_101_D5_016-export.jsonl","name":"B_101-V4_B_101_D5_016","initialGrid":[56,32,3,129,129,192,4,28],"blockIds":["1324029","1222009","1223007","1122003","1222009","1212003","1222009","1223013","1234039","1324046","1223007","1313007","1223007","1324045","1324029","1223013","1223013","1324045","1234030","1234023","1324023","1223014","1414015","1313007","1224015","1223014","1324043","1324043","1234039","1222009","1223014","1111001","1234057","1234058","1122003","1324023","1234060","1335079","1324023","1133007","1133007","1324058","1212003","1122003","1224015","1234051","1234058","1335484","1133007","1234030","1414015","1133007","1326063","1333273","1223014","1324045","1222009","1324030","1222006","1144015","1223013","1324045","1324043","1223007","1223014","1133007","1339511","1224015","1313007","1133007","1133007","1333084","1324023","1223013","1313007","1223014","1333084","1144015","1324045","1133007","1144015","1324030","1133007","1324045","1223013","1234058","1234015","1313007","1324045","1234060","1324045","1324053","1339511","1236063","1324029","1324029","1234057","1133007","1324045","1224015","1335484","1234023","1212003","1234060","1223013","1144015","1326063","1133007","1333273","1222006","1212003","1122003","1324045","1324058","1333273","1155031","1222006","1324058","1223011","1333273"]},{"file":"B_005-V4_B_005_D5_005-export.jsonl","name":"B_005-V4_B_005_D5_005","initialGrid":[224,192,128,0,0,1,3,7],"blockIds":["1133007","1212003","1313007","1122003","1212003","1223014","1122003","1111001","1234015","1223007","1234058","1222006","1234039","1212003","1223007","1414015","1324058","1515031","1234030","1234023","1234051","1111001","1324029","1324045","1333084","1339511","1234015","1133007","1324058","1324053","1324023","1223011","1224015","1234060","1335457","1212003","1234060","1224015","1122003","1223014","1324030","1223011","1144015","1324053","1212003","1234057","1234058","1234051","1133007","1324045","1324045","1324046","1144015","1133007","1234039","1324030","1223011","1313007","1222009","1144015","1223011","1223013","1333273","1223014","1324058","1414015","1333084","1224015","1133007","1324045","1324030","1122003","1223013","1234051","1234058","1133007","1222009","1223011","1236063","1222006","1224015","1224015","1223013","1234030","1234023","1133007","1333273","1223014","1324043","1326063","1324045","1324030","1234057","1324045","1335457","1223011","1155031","1324023","1326063","1224015","1223014","1133007","1155031","1234060","1324046","1223007","1333273","1122003","1324045","1335079","1155031","1234057","1133007","1324046","1414015","1222009","1324030","1133007","1333273","1111001"]},{"file":"B_195-V4_B_195_D5_010-export.jsonl","name":"B_195-V4_B_195_D5_010","initialGrid":[231,195,129,0,0,24,60,126],"blockIds":["1122003","1313007","1133007","1223007","1234030","1212003","1223014","1212003","1222009","1234039","1133007","1224015","1223007","1222009","1223011","1234057","1234023","1234057","1223013","1324023","1324046","1223013","1234023","1234051","1224015","1234039","1324045","1234015","1222006","1324030","1222006","1223011","1223007","1223013","1234039","1111001","1234057","1339511","1236063","1234015","1234030","1335079","1313007","1313007","1324023","1144015","1335079","1313007","1234051","1212003","1324045","1234039","1234058","1326063","1222009","1324046","1324043","1223011","1223011","1223007","1324058","1324046","1326063","1111001","1223014","1326063","1234051","1324058","1234039","1234015","1223013","1234015","1223011","1335484","1212003","1111001","1324023","1335295","1234015","1234030","1333273","1324023","1324029","1234023","1236063","1234039","1111001","1222006","1223007","1515031","1324053","1234057","1324058","1212003","1223007","1223007","1234058","1414015","1223013","1515031","1234023","1212003","1133007","1111001","1313007","1223013","1234015","1133007","1222006","1324045","1335457","1234039","1324023","1324030","1122003","1324030","1234030","1133007","1212003","1133007"]},{"file":"B_091-V4_B_091_D5_026-export.jsonl","name":"B_091-V4_B_091_D5_026","initialGrid":[0,0,24,36,66,36,24,0],"blockIds":["1234058","1222009","1324029","1222009","1313007","1324046","1144015","1133007","1222009","1234051","1222009","1223014","1223007","1122003","1144015","1223007","1223013","1122003","1223011","1324043","1324053","1223011","1234039","1223011","1223013","1223007","1324043","1414015","1223007","1234051","1234039","1223013","1222006","1333084","1324046","1324029","1234051","1234060","1333084","1234051","1223011","1234039","1223014","1414015","1224015","1122003","1324043","1414015","1223013","1111001","1324030","1234030","1223011","1234060","1313007","1313007","1234051","1222006","1234023","1324058","1326063","1234039","1234058","1236063","1324030","1324045","1223011","1122003","1339511","1236063","1324058","1324023","1313007","1133007","1133007","1212003","1223007","1155031","1414015","1234058","1324029","1324053","1324029","1333273","1222009","1223007","1324029","1234030","1324043","1223013","1324023","1122003","1234058","1223011","1335484","1324029","1212003","1234030","1223014","1313007","1223014","1212003","1223014","1333084","1324058","1234023","1234030","1335457","1324045","1212003","1414015","1313007","1224015","1223011","1234058","1234030","1414015","1223011","1326063","1234015"]},{"file":"B_181-V4_B_181_D6_008-export.jsonl","name":"B_181-V4_B_181_D6_008","initialGrid":[0,0,0,126,90,126,0,0],"blockIds":["1122003","1222009","1222006","1324046","1212003","1223011","1223014","1222009","1324046","1324030","1324053","1224015","1223013","1223007","1324043","1212003","1324043","1222009","1234060","1324023","1222009","1224015","1111001","1222006","1324023","1222006","1236063","1335295","1224015","1224015","1223013","1234057","1324058","1324030","1333273","1324058","1234058","1234015","1222006","1234060","1144015","1122003","1222006","1333084","1234057","1324029","1324058","1324029","1234051","1333084","1223007","1414015","1326063","1223007","1223013","1223011","1335457","1324058","1335295","1234058","1313007","1313007","1326063","1515031","1313007","1234058","1234058","1236063","1234030","1324058","1212003","1333084","1223013","1122003","1324045","1324030","1155031","1234015","1335484","1324030","1133007","1313007","1414015","1223013","1144015","1133007","1324045","1324029","1324058","1222009","1324043","1324053","1234039","1155031","1234015","1234039","1234051","1111001","1234051","1324043","1223014","1222009","1234060","1222009","1111001","1222009","1324023","1234051","1234051","1326063","1236063","1324058","1236063","1224015","1234058","1223013","1324029","1335079","1222006","1223011"]},{"file":"B_188-V4_B_188_D6_005-export.jsonl","name":"B_188-V4_B_188_D6_005","initialGrid":[64,64,96,240,240,240,96,0],"blockIds":["1133007","1223014","1222006","1222006","1222009","1122003","1122003","1122003","1324058","1133007","1324053","1223011","1223007","1324046","1223014","1234058","1326063","1222009","1326063","1234015","1223011","1222009","1234039","1313007","1324046","1223011","1223013","1339511","1111001","1222006","1313007","1223013","1223007","1335079","1335295","1324058","1324045","1133007","1234030","1222009","1324046","1324053","1324046","1222009","1234015","1324046","1133007","1234051","1111001","1324045","1324043","1222009","1326063","1234051","1313007","1333084","1223013","1326063","1333084","1122003","1313007","1212003","1234039","1324043","1333273","1324043","1234060","1313007","1324023","1414015","1212003","1335484","1122003","1223011","1324053","1234057","1335295","1313007","1234039","1324030","1234051","1222006","1324058","1122003","1212003","1324023","1234030","1234023","1222006","1324053","1333273","1224015","1234051","1223011","1335295","1133007","1234015","1339511","1223013","1324023","1234023","1212003","1133007","1313007","1133007","1324043","1223007","1155031","1222006","1515031","1335079","1333084","1234030","1223007","1234015","1122003","1222006","1122003","1234057","1133007"]},{"file":"B_034-V4_B_034_D6_006-export.jsonl","name":"B_034-V4_B_034_D6_006","initialGrid":[60,24,24,0,0,24,24,60],"blockIds":["1234039","1223007","1111001","1222009","1223011","1234051","1122003","1222009","1234030","1234057","1144015","1223013","1222009","1313007","1324053","1144015","1313007","1333273","1335457","1111001","1144015","1234015","1324023","1324053","1234060","1234058","1223013","1313007","1223014","1223011","1122003","1234015","1324058","1234030","1333273","1212003","1223007","1324030","1234051","1222006","1324045","1333273","1224015","1324045","1324045","1111001","1222009","1223011","1324045","1234030","1324045","1236063","1326063","1133007","1133007","1313007","1236063","1222006","1414015","1414015","1234030","1223013","1313007","1335484","1133007","1222009","1324053","1324029","1234039","1224015","1222009","1212003","1234023","1313007","1223014","1324053","1222006","1324053","1133007","1234051","1223014","1223011","1122003","1223014","1111001","1234057","1234051","1223007","1324053","1335457","1324043","1335295","1144015","1326063","1339511","1324045","1234039","1234051","1335079","1339511","1234030","1313007","1133007","1234051","1324030","1324030","1326063","1313007","1144015","1223011","1222006","1333273","1236063","1234039","1324043","1222009","1333273","1326063","1335457","1234015"]},{"file":"B_018-V4_B_018_D6_003-export.jsonl","name":"B_018-V4_B_018_D6_003","initialGrid":[126,60,24,16,16,24,0,0],"blockIds":["1234023","1234015","1122003","1212003","1223013","1212003","1222009","1222006","1133007","1234057","1223014","1324058","1234015","1223013","1324043","1324058","1234015","1414015","1223014","1234051","1222009","1234023","1224015","1234030","1234057","1223013","1324053","1223007","1324053","1222006","1223014","1234058","1223011","1234058","1335295","1222006","1234030","1324053","1236063","1234057","1212003","1111001","1324045","1223007","1335484","1122003","1234057","1324030","1234058","1234051","1234015","1414015","1335457","1333273","1133007","1313007","1122003","1222006","1236063","1212003","1222006","1333084","1324043","1234057","1333084","1212003","1234023","1324030","1324046","1324029","1223013","1111001","1144015","1234023","1222009","1224015","1324058","1223007","1324058","1223013","1313007","1234060","1222006","1234023","1335079","1222006","1234039","1234057","1234023","1133007","1414015","1313007","1234015","1144015","1234015","1333273","1515031","1339511","1324030","1333084","1234051","1324043","1313007","1313007","1234023","1515031","1234051","1324046","1326063","1223007","1324046","1335457","1212003","1236063","1335295","1155031","1324046","1234030","1313007","1335457"]},{"file":"B_147-V4_B_147_D6_033-export.jsonl","name":"B_147-V4_B_147_D6_033","initialGrid":[14,6,2,0,0,64,96,112],"blockIds":["1222009","1111001","1212003","1324029","1234057","1223014","1222009","1223013","1313007","1223014","1111001","1234058","1212003","1144015","1144015","1234030","1222006","1324053","1335295","1223007","1234057","1324030","1234023","1335484","1335295","1223013","1234051","1414015","1234058","1223014","1223011","1324029","1324045","1234058","1223013","1515031","1234023","1324045","1234015","1324043","1236063","1111001","1144015","1324030","1234030","1223011","1222006","1111001","1234051","1223014","1324046","1324045","1144015","1223013","1234058","1122003","1326063","1223007","1335457","1212003","1326063","1236063","1234015","1111001","1234051","1133007","1212003","1236063","1234015","1223007","1212003","1339511","1324046","1313007","1234030","1133007","1234051","1222006","1335079","1324029","1313007","1122003","1313007","1414015","1223011","1212003","1234023","1333273","1133007","1234030","1111001","1234051","1335484","1324053","1414015","1234030","1222009","1324043","1333273","1223013","1335079","1333084","1335457","1414015","1324043","1133007","1335079","1223014","1212003","1155031","1223013","1222009","1223014","1234057","1122003","1333273","1212003","1212003","1234057","1324046"]},{"file":"B_031-V4_B_031_D6_004-export.jsonl","name":"B_031-V4_B_031_D6_004","initialGrid":[24,24,126,60,24,0,0,0],"blockIds":["1414015","1324053","1324043","1144015","1122003","1122003","1223007","1212003","1122003","1212003","1234060","1224015","1223014","1234051","1212003","1212003","1324053","1324043","1234023","1234058","1234015","1234039","1111001","1133007","1324023","1234039","1324053","1144015","1324058","1111001","1324029","1324029","1324043","1333084","1335295","1515031","1333084","1515031","1324045","1234060","1155031","1234060","1335079","1324058","1333084","1234015","1324053","1133007","1234060","1335295","1223014","1222009","1313007","1335295","1324030","1223007","1335484","1133007","1335295","1324045","1333084","1133007","1335079","1324058","1324053","1234015","1324023","1333084","1224015","1324053","1324030","1333273","1333273","1234030","1234015","1324023","1324045","1333084","1333084","1223013","1144015","1144015","1133007","1212003","1222009","1335457","1234051","1324030","1313007","1223011","1324045","1324058","1333273","1234015","1222006","1212003","1223013","1324045","1111001","1515031","1223014","1212003","1222006","1326063","1144015","1234058","1234039","1236063","1324029","1324046","1326063","1313007","1234057","1212003","1234023","1333084","1236063","1234015","1236063","1234060"]},{"file":"B_109-V4_B_109_D7_030-export.jsonl","name":"B_109-V4_B_109_D7_030","initialGrid":[0,0,102,36,231,231,36,0],"blockIds":["1144015","1223011","1222006","1212003","1324029","1234057","1122003","1223007","1414015","1324030","1222009","1223014","1223013","1222009","1324030","1324053","1234039","1324043","1144015","1324053","1333084","1324058","1234057","1324030","1133007","1111001","1223014","1111001","1223014","1324053","1324053","1223014","1223011","1212003","1333084","1335457","1212003","1111001","1133007","1324030","1324023","1333084","1234060","1234060","1324030","1324046","1234030","1212003","1223014","1155031","1333273","1155031","1224015","1313007","1313007","1155031","1224015","1223011","1111001","1335457","1133007","1515031","1414015","1223013","1223007","1324043","1234039","1155031","1515031","1515031","1326063","1234023","1155031","1324046","1313007","1234015","1313007","1223013","1234051","1414015","1223013","1234051","1234057","1324043","1324043","1222006","1324053","1414015","1212003","1222006","1234023","1222006","1234023","1333273","1324029","1335484","1335484","1234060","1223011","1333084","1212003","1333273","1335079","1224015","1223011","1333273","1234015","1324029","1324053","1335079","1324045","1333084","1223007","1335457","1234058","1326063","1324045","1223007","1122003","1335295"]},{"file":"B_111-V4_B_111_D7_037-export.jsonl","name":"B_111-V4_B_111_D7_037","initialGrid":[0,189,153,24,0,0,102,66],"blockIds":["1234015","1324045","1223013","1324029","1324030","1122003","1313007","1234015","1133007","1324029","1324030","1212003","1234015","1324030","1223013","1324058","1224015","1234058","1324043","1313007","1234060","1234057","1212003","1335457","1234030","1234030","1234057","1223013","1234058","1234058","1335484","1133007","1313007","1155031","1222009","1133007","1234023","1333273","1324023","1234060","1324030","1212003","1223011","1223014","1155031","1234015","1223011","1133007","1223007","1313007","1234015","1223007","1324058","1144015","1122003","1333084","1313007","1333084","1333084","1212003","1313007","1223013","1335484","1335484","1335295","1234057","1313007","1234051","1324046","1326063","1236063","1313007","1234030","1313007","1335079","1234060","1236063","1324046","1313007","1324058","1223007","1223014","1223011","1335295","1122003","1324043","1234023","1515031","1122003","1324023","1324045","1155031","1222006","1224015","1122003","1324030","1324046","1222009","1335079","1234057","1133007","1335295","1234015","1333084","1515031","1326063","1236063","1333084","1324029","1335079","1155031","1324029","1313007","1234060","1133007","1223011","1223014","1236063","1223011","1234051"]},{"file":"B_095-V4_B_095_D7_032-export.jsonl","name":"B_095-V4_B_095_D7_032","initialGrid":[0,165,90,60,60,24,0,0],"blockIds":["1122003","1234060","1234058","1222009","1111001","1223011","1222009","1324030","1222009","1222009","1224015","1324023","1414015","1324030","1212003","1313007","1234060","1234023","1223007","1234015","1324030","1122003","1313007","1324030","1333084","1324058","1324043","1234030","1414015","1234060","1234060","1324029","1324023","1236063","1111001","1324030","1515031","1515031","1212003","1335457","1335079","1234051","1133007","1335484","1144015","1223011","1111001","1212003","1234057","1333273","1335079","1155031","1324023","1324030","1414015","1333084","1313007","1234051","1313007","1223014","1222006","1222009","1234060","1335484","1515031","1234039","1234015","1326063","1122003","1324045","1324030","1223007","1224015","1122003","1324053","1222009","1335079","1324043","1234057","1324029","1324058","1224015","1133007","1234023","1223014","1335295","1234030","1313007","1234015","1223013","1333273","1234057","1234060","1333273","1326063","1223013","1222009","1234057","1155031","1324053","1313007","1223014","1234039","1133007","1326063","1223013","1326063","1222006","1223011","1313007","1335484","1212003","1223013","1515031","1144015","1234060","1234023","1335484","1212003","1335457"]},{"file":"B_086-V4_B_086_D7_003-export.jsonl","name":"B_086-V4_B_086_D7_003","initialGrid":[60,126,60,24,0,0,0,0],"blockIds":["1234060","1234057","1222006","1324029","1324045","1222006","1313007","1222006","1234030","1234015","1122003","1223011","1223014","1222009","1122003","1155031","1324045","1234030","1324046","1324046","1234057","1223007","1223013","1324029","1324058","1222006","1224015","1223011","1324058","1324046","1234057","1324045","1234030","1236063","1224015","1234030","1326063","1324045","1324058","1144015","1144015","1333084","1155031","1133007","1144015","1324053","1313007","1324058","1224015","1234060","1234057","1324030","1324030","1224015","1222006","1222009","1234039","1234030","1234057","1324045","1144015","1324029","1333084","1313007","1223007","1234039","1222009","1133007","1223007","1333273","1335457","1313007","1313007","1212003","1155031","1234039","1324029","1324046","1324043","1234057","1414015","1223007","1224015","1414015","1155031","1133007","1326063","1236063","1313007","1222009","1212003","1236063","1234023","1324046","1324053","1324030","1223014","1144015","1234023","1324030","1234051","1223007","1324046","1324053","1335295","1335079","1333273","1122003","1324058","1222006","1234015","1333084","1223007","1155031","1155031","1324046","1324023","1234058","1234060","1234023"]},{"file":"B_183-V4_B_183_D7_008-export.jsonl","name":"B_183-V4_B_183_D7_008","initialGrid":[60,0,24,231,36,231,0,0],"blockIds":["1222009","1223013","1223007","1234058","1333273","1111001","1313007","1111001","1324043","1212003","1234051","1122003","1234023","1234060","1122003","1223007","1324045","1223011","1324053","1324058","1234023","1222009","1212003","1333084","1335484","1223013","1313007","1313007","1223011","1222006","1313007","1324029","1223011","1326063","1335079","1324030","1313007","1155031","1234060","1335295","1335079","1335079","1324030","1155031","1414015","1515031","1313007","1234057","1324053","1234057","1335079","1144015","1234039","1324043","1324045","1324046","1324029","1223013","1333084","1335079","1236063","1212003","1335484","1222009","1234023","1234057","1515031","1122003","1335295","1212003","1234023","1223013","1234015","1515031","1222006","1222009","1223013","1155031","1144015","1324029","1324046","1234039","1324053","1234060","1234023","1223014","1223011","1222006","1234023","1212003","1122003","1224015","1212003","1223013","1234051","1234039","1222009","1223011","1335457","1133007","1324030","1144015","1144015","1133007","1333084","1223007","1234060","1324053","1324045","1223011","1324023","1236063","1313007","1234039","1223014","1335457","1223014","1313007","1234039","1324046"]},{"file":"B_071-V4_B_071_D7_019-export.jsonl","name":"B_071-V4_B_071_D7_019","initialGrid":[231,195,129,0,0,129,195,231],"blockIds":["1223013","1212003","1223007","1234015","1234015","1133007","1133007","1313007","1223014","1234058","1313007","1234023","1333084","1324023","1223014","1335079","1223013","1324058","1111001","1122003","1234015","1222009","1324029","1326063","1234060","1324029","1223014","1212003","1223011","1234058","1324023","1133007","1324029","1222009","1234060","1234060","1326063","1223007","1324046","1333273","1324030","1326063","1234057","1234015","1133007","1223014","1335079","1313007","1234030","1324043","1333084","1234030","1236063","1313007","1324029","1313007","1223014","1234057","1234060","1324043","1234015","1324043","1223014","1333273","1133007","1324053","1234057","1234058","1222009","1333084","1333273","1133007","1223007","1324053","1335079","1133007","1324029","1414015","1223007","1335457","1324023","1313007","1234057","1122003","1234058","1234060","1223007","1223007","1222006","1222009","1335457","1324058","1234058","1234051","1324053","1234039","1313007","1326063","1155031","1324043","1212003","1414015","1111001","1234030","1222006","1324053","1324030","1339511","1133007","1224015","1222006","1515031","1144015","1155031","1223013","1223011","1223007","1234030","1326063","1234023"]},{"file":"B_200-V4_B_200_D8_012-export.jsonl","name":"B_200-V4_B_200_D8_012","initialGrid":[48,48,3,3,192,192,12,12],"blockIds":["1234039","1212003","1222006","1223013","1222006","1224015","1212003","1212003","1144015","1234023","1222009","1324043","1234039","1223007","1133007","1234023","1223007","1234060","1122003","1324045","1335457","1111001","1223013","1212003","1234057","1324046","1324043","1234023","1326063","1111001","1234023","1324043","1144015","1324023","1339511","1234023","1335295","1326063","1324043","1234051","1234051","1234051","1324045","1223013","1324046","1223013","1222009","1155031","1222006","1111001","1122003","1222009","1414015","1223007","1333084","1222006","1335484","1234051","1324023","1133007","1234058","1234015","1222009","1324043","1234051","1222009","1234039","1223014","1234060","1212003","1155031","1223011","1324023","1324030","1223014","1236063","1222006","1326063","1223014","1224015","1324046","1212003","1335295","1234058","1234051","1335457","1313007","1133007","1133007","1324053","1223007","1224015","1324053","1335457","1234015","1324058","1223014","1223013","1333273","1324029","1313007","1234060","1234060","1234058","1234030","1223014","1324058","1324043","1223011","1223014","1133007","1234060","1234015","1313007","1335457","1234057","1335295","1324045","1324023","1333084"]},{"file":"B_171-V4_B_171_D8_025-export.jsonl","name":"B_171-V4_B_171_D8_025","initialGrid":[3,1,0,0,15,207,6,0],"blockIds":["1223007","1234060","1234057","1223014","1324029","1223011","1223013","1234039","1144015","1324046","1223014","1234058","1224015","1223011","1111001","1515031","1414015","1223007","1324053","1234051","1144015","1111001","1324045","1223013","1324045","1234023","1234060","1324023","1234051","1324045","1324053","1222009","1133007","1335295","1223011","1222009","1335484","1155031","1324045","1335295","1234051","1324046","1133007","1234060","1234039","1324023","1324045","1324023","1234051","1234039","1324058","1324029","1234039","1324030","1224015","1324023","1324046","1324043","1223011","1234030","1324043","1234057","1313007","1335079","1414015","1223007","1223011","1223013","1212003","1234030","1324058","1223011","1122003","1324046","1335079","1324030","1335457","1324053","1313007","1313007","1222009","1111001","1234023","1111001","1222006","1333273","1234030","1234060","1234057","1333084","1335484","1324058","1144015","1236063","1224015","1224015","1313007","1324029","1144015","1324043","1333084","1324046","1212003","1234030","1335484","1234060","1335295","1324058","1222006","1212003","1234058","1414015","1335457","1155031","1111001","1133007","1335457","1324043","1335484","1223014"]},{"file":"B_062-V4_B_062_D8_027-export.jsonl","name":"B_062-V4_B_062_D8_027","initialGrid":[0,36,102,0,0,102,36,0],"blockIds":["1313007","1144015","1234060","1223013","1223011","1222009","1324023","1223011","1223011","1223011","1324023","1324045","1222006","1234030","1144015","1234023","1234030","1324043","1324058","1324046","1223007","1223014","1335457","1234015","1122003","1324046","1133007","1324029","1324043","1324043","1234057","1234039","1224015","1234051","1324046","1313007","1223011","1234023","1222009","1236063","1234051","1515031","1324030","1335079","1234030","1333084","1324030","1313007","1133007","1234030","1414015","1324058","1335457","1236063","1133007","1133007","1335457","1324029","1324046","1333273","1144015","1333084","1335079","1414015","1234030","1324029","1313007","1234060","1234015","1222006","1313007","1223014","1234060","1144015","1223007","1223007","1234051","1414015","1335079","1324058","1324053","1335484","1333084","1313007","1326063","1155031","1234030","1324043","1339511","1333084","1223014","1234058","1326063","1326063","1212003","1223013","1324029","1234030","1324053","1324058","1339511","1324043","1212003","1313007","1324046","1111001","1223011","1224015","1515031","1339511","1234051","1144015","1333084","1414015","1313007","1335295","1335295","1324023","1133007","1234039"]},{"file":"B_050-V4_B_050_D8_036-export.jsonl","name":"B_050-V4_B_050_D8_036","initialGrid":[16,16,16,124,124,0,0,0],"blockIds":["1222009","1223013","1234057","1222006","1223014","1223013","1122003","1122003","1223007","1324030","1234051","1234057","1234060","1122003","1313007","1234030","1234060","1223007","1133007","1324058","1324045","1324046","1234023","1234015","1222006","1234051","1414015","1222009","1122003","1326063","1223014","1223013","1324030","1224015","1324030","1234051","1234057","1212003","1324043","1222006","1335484","1335079","1335457","1222009","1122003","1223011","1111001","1224015","1324023","1335484","1335079","1326063","1335484","1313007","1335295","1155031","1234060","1333273","1133007","1223007","1111001","1335457","1335295","1234039","1414015","1313007","1234051","1324058","1324058","1122003","1223011","1335079","1212003","1333273","1223013","1324043","1339511","1324045","1234057","1234039","1111001","1111001","1324046","1324046","1223013","1234023","1223011","1335484","1313007","1234051","1234030","1339511","1339511","1234030","1335079","1324029","1333084","1414015","1234060","1324053","1133007","1223007","1222006","1234058","1234039","1515031","1414015","1324046","1234058","1111001","1234023","1313007","1335457","1223013","1111001","1324046","1234030","1133007","1234030","1234030"]},{"file":"B_028-V4_B_028_D8_015-export.jsonl","name":"B_028-V4_B_028_D8_015","initialGrid":[124,88,188,60,60,36,0,0],"blockIds":["1223014","1223007","1222009","1122003","1212003","1212003","1223011","1222006","1234015","1234051","1122003","1324029","1222009","1324058","1122003","1234039","1133007","1335457","1324029","1324046","1223007","1515031","1234015","1234051","1234058","1234039","1324053","1333084","1223011","1324043","1324023","1223011","1333273","1414015","1335295","1155031","1333273","1236063","1234058","1313007","1324058","1324045","1326063","1333273","1222009","1234015","1133007","1212003","1111001","1234023","1223014","1122003","1222006","1234051","1223013","1234023","1144015","1223013","1223007","1155031","1324053","1111001","1335484","1335295","1224015","1313007","1324045","1324030","1223014","1133007","1223007","1223013","1222006","1333273","1133007","1234058","1133007","1335484","1223011","1335295","1324030","1326063","1234039","1122003","1234015","1222006","1324058","1414015","1234015","1324046","1414015","1122003","1313007","1234057","1144015","1222009","1324023","1234023","1222006","1234015","1324046","1234057","1324023","1155031","1234023","1224015","1223014","1324030","1234015","1234030","1122003","1234023","1324023","1335484","1333273","1224015","1324046","1223013","1324058","1234015"]},{"file":"B_093-V4_B_093_D8_031-export.jsonl","name":"B_093-V4_B_093_D8_031","initialGrid":[231,102,60,60,24,0,0,0],"blockIds":["1222009","1222009","1223011","1111001","1212003","1222006","1222006","1223011","1223007","1324053","1324046","1222009","1122003","1236063","1324030","1324058","1223011","1155031","1324023","1223013","1324045","1223011","1234051","1212003","1155031","1234030","1324023","1324030","1324053","1234030","1234015","1224015","1133007","1515031","1122003","1236063","1234060","1224015","1324030","1223007","1313007","1313007","1234030","1324023","1133007","1212003","1324058","1414015","1223014","1224015","1335457","1335079","1324058","1313007","1236063","1515031","1234015","1313007","1324029","1234039","1223013","1122003","1324043","1335295","1335457","1515031","1234015","1515031","1234057","1324023","1335295","1133007","1133007","1324043","1111001","1335295","1223011","1324058","1234051","1324045","1212003","1122003","1212003","1234057","1333273","1313007","1223013","1212003","1234023","1224015","1222009","1324043","1313007","1515031","1335484","1333084","1212003","1324023","1313007","1234015","1324043","1234060","1234023","1324045","1223011","1515031","1155031","1133007","1414015","1333084","1326063","1234057","1324023","1234058","1234051","1212003","1313007","1324029","1223011","1324023"]},{"file":"B_161-V4_B_161_D9_022-export.jsonl","name":"B_161-V4_B_161_D9_022","initialGrid":[102,0,0,195,195,0,0,102],"blockIds":["1234039","1313007","1324023","1223014","1222006","1223007","1234039","1234023","1223013","1155031","1223007","1324030","1223014","1122003","1222009","1144015","1234057","1324058","1223011","1324029","1144015","1324029","1223014","1324023","1224015","1326063","1122003","1234057","1313007","1223011","1212003","1234051","1324023","1324029","1155031","1122003","1333273","1234057","1335079","1155031","1339511","1234030","1335457","1324058","1335484","1133007","1234058","1133007","1111001","1324046","1111001","1333084","1223013","1324053","1212003","1324046","1333084","1122003","1212003","1324053","1144015","1133007","1222006","1324053","1111001","1234030","1133007","1222006","1324029","1335295","1133007","1324029","1133007","1223013","1324053","1324043","1324046","1234030","1222009","1234023","1223013","1335457","1223011","1333084","1133007","1234039","1212003","1313007","1326063","1111001","1339511","1224015","1414015","1313007","1223014","1333084","1324043","1234015","1335457","1234058","1222006","1333084","1313007","1122003","1133007","1222009","1326063","1122003","1212003","1339511","1324043","1133007","1223013","1335457","1335457","1133007","1313007","1335457","1333084","1313007"]},{"file":"B_072-V4_B_072_D9_010-export.jsonl","name":"B_072-V4_B_072_D9_010","initialGrid":[60,60,0,129,129,0,60,60],"blockIds":["1122003","1133007","1234023","1324023","1223007","1324029","1234030","1111001","1222009","1324043","1234023","1234057","1234015","1212003","1223007","1324023","1234058","1335079","1234058","1313007","1313007","1111001","1223014","1223013","1122003","1313007","1234015","1223011","1234060","1122003","1111001","1335295","1234058","1326063","1222006","1236063","1335484","1313007","1234039","1222006","1234060","1324029","1234039","1234030","1224015","1324023","1324046","1234030","1222006","1324046","1223011","1223013","1222009","1324058","1155031","1111001","1414015","1324043","1335079","1313007","1313007","1313007","1335079","1224015","1234060","1223013","1236063","1324053","1133007","1324045","1234030","1236063","1224015","1144015","1234030","1324023","1223014","1515031","1313007","1144015","1326063","1234039","1333084","1324058","1324045","1324043","1133007","1122003","1133007","1324043","1339511","1234057","1133007","1224015","1324043","1414015","1234051","1155031","1222009","1324029","1324046","1335295","1234030","1324046","1223011","1339511","1144015","1224015","1234015","1335484","1122003","1335295","1324053","1133007","1234039","1234060","1339511","1324030","1234039","1324043"]},{"file":"B_009-V4_B_009_D9_010-export.jsonl","name":"B_009-V4_B_009_D9_010","initialGrid":[0,0,60,126,60,24,0,0],"blockIds":["1234060","1212003","1133007","1515031","1234039","1224015","1224015","1324043","1223013","1234060","1234023","1223007","1223011","1234051","1234051","1335457","1324053","1234057","1324043","1234015","1234060","1223014","1324023","1122003","1234023","1324053","1223007","1222009","1414015","1234023","1212003","1223011","1222009","1234030","1324045","1339511","1133007","1234051","1133007","1313007","1223011","1212003","1234030","1324058","1333273","1234051","1222006","1223014","1324046","1515031","1333273","1234015","1515031","1333084","1335484","1515031","1324023","1333273","1155031","1335295","1335295","1324058","1414015","1313007","1333273","1223011","1333273","1324053","1133007","1222006","1324029","1324058","1333084","1223013","1324023","1324029","1234023","1223011","1223013","1234023","1234015","1222009","1335295","1313007","1234039","1313007","1324023","1324046","1223007","1111001","1224015","1414015","1335457","1234030","1223013","1133007","1122003","1313007","1234060","1222009","1122003","1313007","1224015","1324045","1133007","1222006","1122003","1234058","1223013","1313007","1212003","1222009","1234030","1155031","1335457","1155031","1324053","1335079","1333273","1313007"]},{"file":"B_185-V4_B_185_D9_010-export.jsonl","name":"B_185-V4_B_185_D9_010","initialGrid":[165,165,231,0,0,231,36,231],"blockIds":["1324029","1222006","1324029","1223014","1324030","1222009","1324058","1324023","1234039","1234060","1324029","1223014","1133007","1234060","1313007","1313007","1224015","1335457","1223011","1234057","1234023","1324029","1111001","1223007","1335079","1223007","1234051","1236063","1324043","1324045","1324058","1234039","1236063","1223014","1212003","1155031","1234051","1224015","1222009","1111001","1155031","1133007","1222006","1224015","1223013","1133007","1223013","1144015","1133007","1236063","1234023","1335457","1234051","1234057","1324045","1133007","1212003","1335457","1335484","1234060","1111001","1122003","1414015","1333084","1324053","1324030","1324053","1324053","1122003","1223007","1122003","1234023","1234051","1335457","1313007","1335079","1234039","1111001","1223013","1223011","1133007","1155031","1324023","1324023","1234060","1335295","1313007","1155031","1313007","1223014","1324058","1234039","1313007","1335295","1223014","1133007","1326063","1234058","1222009","1326063","1326063","1222009","1335295","1234023","1224015","1223013","1223007","1335295","1234039","1333273","1335079","1234058","1324023","1111001","1224015","1223014","1234039","1212003","1414015","1122003"]},{"file":"B_144-V4_B_144_D9_040-export.jsonl","name":"B_144-V4_B_144_D9_040","initialGrid":[231,195,153,60,102,0,0,0],"blockIds":["1324058","1324046","1234039","1223013","1223014","1224015","1212003","1234023","1223011","1223007","1313007","1324043","1234060","1324023","1324046","1236063","1335457","1324058","1313007","1324023","1133007","1324058","1324046","1133007","1222006","1324029","1234030","1222006","1324043","1326063","1313007","1111001","1222009","1111001","1133007","1234015","1335484","1324030","1335079","1155031","1133007","1335484","1324029","1234057","1234057","1333084","1414015","1333084","1313007","1313007","1333084","1333084","1333084","1313007","1234023","1313007","1335457","1122003","1236063","1223011","1324053","1212003","1326063","1324053","1324053","1223007","1223011","1234060","1155031","1335079","1324046","1414015","1313007","1133007","1224015","1212003","1234023","1222006","1515031","1212003","1234030","1234015","1335484","1313007","1133007","1133007","1333273","1223013","1335484","1234057","1335295","1324053","1339511","1223011","1335079","1234057","1234015","1324043","1234030","1212003","1324045","1335484","1236063","1144015","1324046","1324043","1222006","1324045","1155031","1234023","1133007","1324046","1324029","1313007","1223011","1234030","1515031","1234015","1414015","1223007"]},{"file":"B_149-V4_B_149_D9_008-export.jsonl","name":"B_149-V4_B_149_D9_008","initialGrid":[24,0,0,0,231,102,36,0],"blockIds":["1234060","1234030","1234023","1223014","1224015","1223013","1234057","1324023","1223007","1324053","1122003","1324023","1324046","1324053","1222006","1333273","1223011","1324053","1133007","1234039","1224015","1144015","1223007","1122003","1326063","1144015","1234051","1234023","1111001","1414015","1333084","1313007","1222006","1324046","1324029","1335079","1515031","1133007","1133007","1223011","1313007","1234058","1313007","1335457","1335457","1313007","1234030","1234030","1111001","1324058","1324043","1234030","1234030","1313007","1326063","1324023","1223007","1222009","1122003","1111001","1234057","1223013","1122003","1144015","1335484","1212003","1133007","1212003","1324045","1222009","1313007","1223013","1133007","1324053","1133007","1234039","1324045","1223011","1222009","1222009","1212003","1333273","1414015","1122003","1133007","1212003","1414015","1223011","1234023","1335295","1133007","1324043","1326063","1224015","1234051","1222009","1224015","1155031","1335079","1223014","1144015","1326063","1133007","1133007","1222009","1234030","1234039","1333084","1515031","1223011","1155031","1133007","1133007","1324046","1222009","1234051","1335484","1324030","1324046","1222009"]},{"file":"B_056-V4_B_056_D10_040-export.jsonl","name":"B_056-V4_B_056_D10_040","initialGrid":[0,102,36,0,66,195,0,0],"blockIds":["1335295","1122003","1324023","1234058","1324030","1212003","1223011","1234060","1111001","1324053","1234057","1234058","1122003","1324023","1324045","1324023","1133007","1122003","1313007","1333084","1335079","1324045","1133007","1122003","1335295","1222006","1223013","1324046","1222006","1234060","1324053","1234015","1333084","1144015","1335295","1335079","1326063","1333273","1234023","1234060","1313007","1234060","1222009","1133007","1324058","1222009","1234058","1222006","1335484","1324029","1223013","1122003","1223013","1335295","1122003","1234039","1223014","1333084","1335079","1223013","1133007","1223014","1335079","1313007","1333273","1224015","1324023","1236063","1324046","1222006","1324043","1414015","1324053","1335295","1133007","1234023","1133007","1324029","1335295","1223011","1324029","1326063","1333084","1133007","1313007","1133007","1324045","1122003","1234057","1223007","1212003","1324045","1339511","1326063","1335484","1234051","1111001","1122003","1222009","1339511","1324053","1515031","1234039","1155031","1212003","1414015","1324058","1335079","1222006","1236063","1223014","1222006","1222006","1223011","1234030","1111001","1335484","1223014","1324045","1335457"]},{"file":"B_123-V4_B_123_D10_036-export.jsonl","name":"B_123-V4_B_123_D10_036","initialGrid":[192,192,16,48,12,8,3,3],"blockIds":["1223011","1234057","1234015","1324058","1313007","1324046","1333273","1324053","1326063","1324029","1339511","1324045","1313007","1234023","1222006","1335457","1155031","1335457","1335079","1515031","1234051","1234058","1155031","1234060","1234058","1335457","1223007","1324030","1335484","1144015","1133007","1223013","1234030","1234057","1335457","1223014","1234060","1223011","1236063","1324023","1223014","1223011","1133007","1212003","1155031","1335484","1324029","1333273","1324030","1133007","1324030","1326063","1212003","1223013","1234039","1335079","1223013","1223011","1223007","1324029","1313007","1333273","1133007","1335079","1234057","1224015","1122003","1222006","1333084","1333084","1223011","1133007","1324029","1144015","1223007","1324053","1222009","1155031","1222009","1223007","1335457","1414015","1122003","1335457","1222009","1223007","1234030","1122003","1144015","1222006","1335079","1236063","1333273","1155031","1155031","1223013","1335079","1335484","1333084","1515031","1335079","1133007","1335295","1144015","1144015","1324029","1324046","1324030","1234030","1223011","1222006","1111001","1234057","1324046","1223011","1223007","1339511","1155031","1324029","1324053"]},{"file":"B_114-V4_B_114_D10_031-export.jsonl","name":"B_114-V4_B_114_D10_031","initialGrid":[0,252,4,247,16,31,0,0],"blockIds":["1324029","1223014","1212003","1223013","1324043","1324023","1234015","1223007","1122003","1111001","1234039","1324045","1324045","1324029","1223013","1222009","1234015","1324053","1234051","1234058","1333273","1212003","1324023","1234060","1234051","1222006","1324030","1224015","1234060","1223013","1224015","1324045","1324046","1414015","1324058","1515031","1335295","1234023","1335484","1313007","1234039","1313007","1324023","1223013","1335484","1313007","1212003","1144015","1324030","1111001","1223013","1333273","1313007","1324046","1313007","1335457","1212003","1236063","1223011","1414015","1324046","1236063","1224015","1339511","1212003","1223014","1333273","1212003","1223007","1324045","1414015","1224015","1223013","1223014","1326063","1234023","1133007","1324043","1224015","1335079","1144015","1133007","1223011","1234039","1234030","1133007","1324053","1223007","1333273","1212003","1234015","1335079","1335484","1111001","1234057","1155031","1335484","1212003","1236063","1234058","1234030","1324023","1155031","1335484","1223013","1111001","1234023","1324045","1324053","1234015","1335457","1223007","1324029","1234060","1414015","1122003","1222009","1335484","1144015","1144015"]},{"file":"B_131-V4_B_131_D10_031-export.jsonl","name":"B_131-V4_B_131_D10_031","initialGrid":[240,112,48,16,8,12,14,15],"blockIds":["1234057","1222009","1335079","1234058","1324058","1324029","1234039","1324029","1324030","1234039","1414015","1133007","1234051","1223013","1324058","1223011","1223014","1234058","1324058","1155031","1335484","1234058","1234023","1339511","1335079","1223011","1234057","1223007","1234015","1122003","1234023","1111001","1223011","1324029","1111001","1222006","1234015","1234058","1335457","1234060","1133007","1234039","1313007","1333273","1324023","1223014","1324023","1224015","1335457","1333084","1335295","1133007","1324023","1414015","1335079","1313007","1223013","1223014","1223011","1324058","1324053","1335457","1339511","1324030","1324043","1236063","1234030","1333084","1234057","1234023","1324045","1324045","1234015","1222006","1212003","1324043","1335484","1223014","1122003","1313007","1324029","1212003","1223011","1223013","1324045","1234030","1324045","1111001","1223013","1222009","1313007","1133007","1339511","1223013","1335295","1234057","1111001","1234051","1144015","1324030","1222006","1224015","1234058","1324058","1234030","1212003","1234039","1324043","1223013","1324023","1223014","1223013","1155031","1224015","1234060","1222006","1133007","1222006","1212003","1122003"]},{"file":"B_162-V4_B_162_D10_013-export.jsonl","name":"B_162-V4_B_162_D10_013","initialGrid":[0,36,60,124,76,14,12,0],"blockIds":["1234058","1223013","1155031","1324043","1223011","1223013","1222009","1234051","1234060","1234051","1414015","1324043","1324058","1223013","1324046","1111001","1234015","1224015","1335295","1144015","1234039","1324058","1324043","1234060","1313007","1122003","1324030","1223007","1414015","1122003","1324043","1234058","1414015","1333273","1324058","1144015","1234057","1234023","1324058","1234039","1223007","1333273","1333084","1324030","1234015","1133007","1324029","1222009","1222009","1515031","1133007","1333273","1339511","1313007","1234023","1144015","1313007","1324046","1324046","1234039","1122003","1234023","1223014","1234039","1335079","1222009","1222009","1223013","1155031","1515031","1111001","1339511","1223011","1222006","1222006","1324029","1324053","1234039","1222006","1234023","1335295","1224015","1223013","1234060","1234023","1144015","1324030","1212003","1234023","1222009","1335457","1335484","1212003","1155031","1144015","1333273","1324030","1133007","1324023","1515031","1515031","1222009","1324045","1234015","1324023","1234060","1155031","1234030","1333273","1222006","1222006","1223013","1155031","1212003","1234058","1111001","1335457","1133007","1333273","1234058"]},{"file":"B_045-V4_B_045_D10_036-export.jsonl","name":"B_045-V4_B_045_D10_036","initialGrid":[66,102,36,0,36,102,66,0],"blockIds":["1234023","1333273","1333084","1133007","1133007","1133007","1222006","1222009","1222009","1224015","1222009","1155031","1111001","1324045","1414015","1223007","1222009","1335457","1324030","1234039","1324045","1324043","1222006","1224015","1324058","1234058","1234030","1324053","1223014","1234060","1324043","1222009","1223011","1144015","1212003","1335484","1414015","1212003","1333273","1223014","1122003","1335484","1335079","1234058","1324053","1324045","1324023","1333273","1133007","1222009","1223013","1313007","1224015","1111001","1234015","1333273","1324053","1223014","1324023","1335079","1144015","1222006","1335079","1224015","1326063","1324053","1234058","1223011","1324023","1133007","1234030","1133007","1224015","1223011","1324029","1324030","1234060","1111001","1122003","1324053","1515031","1133007","1234015","1324046","1313007","1414015","1223011","1223013","1223011","1122003","1234060","1515031","1335484","1335295","1234039","1223011","1313007","1313007","1133007","1234057","1222006","1515031","1335079","1324045","1223013","1223014","1234030","1324046","1234051","1122003","1335079","1324058","1324045","1223011","1223011","1324058","1324045","1133007","1222006","1234030"]},{"file":"B_150-V4_B_150_D11_037-export.jsonl","name":"B_150-V4_B_150_D11_037","initialGrid":[191,150,132,144,16,90,90,223],"blockIds":["1234023","1155031","1144015","1234023","1324029","1224015","1234039","1223014","1234051","1111001","1223007","1324045","1324023","1324023","1223007","1324043","1333084","1324045","1324046","1223013","1234039","1313007","1122003","1335295","1223014","1212003","1335079","1324053","1133007","1155031","1335079","1333084","1335484","1324046","1133007","1313007","1224015","1234051","1111001","1324058","1333273","1234030","1324023","1223014","1324029","1333273","1223007","1212003","1234058","1324023","1234023","1333084","1324053","1122003","1324058","1324046","1236063","1324045","1313007","1234015","1324046","1133007","1223007","1223014","1155031","1236063","1122003","1212003","1515031","1335484","1155031","1155031","1313007","1234057","1339511","1223011","1133007","1324023","1414015","1222006","1234060","1234060","1222009","1324045","1324030","1234051","1234015","1222009","1335079","1324053","1222006","1234015","1111001","1224015","1335079","1234023","1155031","1333273","1223014","1324045","1122003","1335079","1333084","1133007","1223014","1515031","1335295","1324043","1223007","1324058","1212003","1335484","1133007","1234030","1324023","1234039","1155031","1122003","1223014","1324030"]},{"file":"B_186-V4_B_186_D11_027-export.jsonl","name":"B_186-V4_B_186_D11_027","initialGrid":[24,60,60,60,60,24,0,0],"blockIds":["1236063","1133007","1144015","1313007","1223011","1313007","1111001","1224015","1335457","1111001","1234057","1111001","1324058","1234039","1324030","1234060","1223014","1313007","1234015","1324023","1234030","1324043","1313007","1122003","1324046","1144015","1234057","1223014","1133007","1111001","1223011","1222009","1515031","1144015","1223007","1234057","1122003","1122003","1224015","1335295","1212003","1155031","1234039","1223013","1223013","1223014","1515031","1324023","1333084","1313007","1324046","1133007","1324045","1234039","1335484","1313007","1133007","1324023","1222009","1222006","1234015","1223011","1223007","1324046","1324043","1324045","1335079","1335484","1335079","1326063","1223013","1335295","1313007","1212003","1335457","1236063","1414015","1223013","1234060","1335457","1324030","1234057","1133007","1223013","1234015","1133007","1335079","1234015","1335457","1222006","1222009","1515031","1326063","1122003","1335079","1234015","1234039","1333273","1335457","1324030","1414015","1324058","1144015","1234057","1133007","1234058","1515031","1111001","1222009","1212003","1333084","1223014","1224015","1313007","1324046","1222009","1335484","1335079","1234051","1133007"]},{"file":"B_019-V4_B_019_D11_032-export.jsonl","name":"B_019-V4_B_019_D11_032","initialGrid":[0,0,36,24,24,36,0,0],"blockIds":["1234039","1223011","1234051","1324029","1324058","1324023","1335079","1223013","1133007","1234023","1212003","1414015","1224015","1234023","1234030","1324045","1212003","1324043","1223007","1222006","1234039","1234039","1133007","1222009","1333273","1234030","1414015","1324043","1324029","1133007","1111001","1333084","1234039","1222009","1234039","1224015","1234058","1324030","1333084","1223013","1223011","1333273","1236063","1313007","1223007","1223013","1133007","1324045","1223007","1324029","1223011","1155031","1324030","1133007","1122003","1234039","1324046","1335079","1133007","1133007","1326063","1414015","1223013","1212003","1212003","1223013","1234039","1111001","1234060","1234060","1234060","1515031","1234039","1133007","1324058","1144015","1222009","1335457","1234058","1212003","1335079","1324053","1224015","1234060","1335457","1335457","1222006","1324046","1333273","1326063","1212003","1335457","1155031","1234060","1324058","1234051","1324030","1324053","1133007","1333084","1414015","1122003","1324053","1324029","1224015","1234058","1223013","1236063","1234060","1335484","1326063","1313007","1234060","1133007","1236063","1223013","1222009","1122003","1324053","1111001"]},{"file":"B_146-V4_B_146_D11_008-export.jsonl","name":"B_146-V4_B_146_D11_008","initialGrid":[60,126,126,0,0,0,0,0],"blockIds":["1414015","1335295","1224015","1234057","1234023","1144015","1223013","1223011","1234039","1333273","1111001","1234058","1326063","1324029","1234058","1335484","1236063","1222006","1222006","1335457","1335079","1111001","1111001","1234060","1324053","1234060","1324029","1234023","1224015","1133007","1155031","1223014","1324058","1324030","1234015","1324058","1133007","1234060","1133007","1222006","1324045","1224015","1234015","1324029","1234030","1324045","1326063","1414015","1326063","1313007","1133007","1133007","1324053","1326063","1324023","1324030","1223013","1234058","1234051","1324023","1335295","1133007","1313007","1144015","1223014","1111001","1234023","1313007","1222006","1223011","1223013","1223007","1324045","1324058","1324053","1155031","1234030","1324030","1144015","1234023","1223014","1324030","1234060","1223013","1224015","1324023","1324046","1313007","1144015","1335484","1324029","1335457","1234058","1223014","1313007","1223013","1313007","1234060","1111001","1324053","1335295","1223014","1155031","1324043","1234058","1234060","1324023","1324023","1335079","1234023","1324045","1122003","1324053","1155031","1122003","1335457","1324053","1335295","1222009","1223011"]},{"file":"B_126-V4_B_126_D11_029-export.jsonl","name":"B_126-V4_B_126_D11_029","initialGrid":[254,94,84,16,0,0,0,0],"blockIds":["1224015","1111001","1324029","1234015","1324058","1222009","1234015","1324030","1212003","1222009","1324053","1222009","1234051","1222009","1324046","1324029","1515031","1223013","1223014","1222006","1122003","1223007","1234057","1326063","1111001","1324058","1122003","1222009","1234039","1222009","1324045","1313007","1324030","1335457","1223013","1111001","1335484","1324053","1414015","1234060","1234051","1122003","1335484","1335484","1335079","1234057","1313007","1234057","1234060","1234051","1324046","1234060","1324043","1223014","1324030","1324029","1212003","1324023","1234051","1122003","1155031","1414015","1222009","1223011","1414015","1234015","1111001","1234060","1234023","1111001","1223007","1335295","1222009","1212003","1155031","1144015","1133007","1313007","1313007","1333273","1234015","1335484","1333273","1234051","1335079","1313007","1133007","1133007","1222009","1335295","1122003","1324043","1339511","1324029","1222009","1324023","1133007","1236063","1324043","1133007","1222006","1223007","1222006","1234051","1515031","1234030","1335079","1326063","1324030","1234023","1335295","1335484","1234051","1313007","1133007","1223014","1335079","1414015","1324023","1324053"]},{"file":"B_138-V4_B_138_D11_020-export.jsonl","name":"B_138-V4_B_138_D11_020","initialGrid":[0,0,231,189,231,0,0,0],"blockIds":["1324046","1324029","1324045","1144015","1133007","1223007","1324023","1222006","1234023","1223011","1224015","1414015","1222009","1111001","1133007","1234060","1223007","1324023","1234039","1335079","1335079","1324029","1155031","1234060","1324023","1234015","1324046","1144015","1324043","1324045","1222006","1223007","1324046","1234060","1222009","1234030","1122003","1223007","1324058","1236063","1324045","1339511","1234023","1234060","1234015","1236063","1223007","1234060","1324030","1324030","1122003","1223014","1222009","1335295","1324053","1222009","1212003","1223011","1324058","1222006","1133007","1111001","1223014","1313007","1212003","1111001","1326063","1335457","1324053","1223007","1223011","1234058","1234060","1234023","1333273","1324058","1324029","1234023","1333084","1313007","1223014","1236063","1155031","1222009","1324043","1234030","1223014","1234058","1234023","1212003","1335079","1324053","1324030","1223013","1236063","1223011","1324029","1122003","1515031","1335457","1333084","1313007","1324030","1111001","1223014","1223011","1223011","1212003","1212003","1155031","1335295","1335484","1133007","1324058","1111001","1155031","1222009","1335457","1133007","1111001"]},{"file":"B_156-V4_B_156_D12_039-export.jsonl","name":"B_156-V4_B_156_D12_039","initialGrid":[7,1,49,48,12,140,128,224],"blockIds":["1234057","1414015","1234051","1223014","1223014","1223011","1234060","1234030","1234039","1223013","1224015","1223014","1324053","1324045","1313007","1133007","1335295","1122003","1335079","1324045","1324043","1234051","1236063","1234057","1324058","1223011","1324045","1222009","1234023","1313007","1234039","1324045","1324046","1144015","1234039","1234015","1324045","1223013","1324043","1133007","1223011","1515031","1335457","1414015","1515031","1335484","1326063","1234060","1324058","1324058","1222006","1326063","1324043","1223007","1326063","1212003","1236063","1333084","1223014","1212003","1223014","1414015","1335484","1333273","1234058","1326063","1236063","1335079","1335484","1324058","1335484","1236063","1339511","1335079","1111001","1333084","1222009","1324029","1324043","1155031","1133007","1223011","1335079","1222006","1326063","1335484","1326063","1111001","1324030","1333084","1223007","1324045","1234039","1515031","1326063","1224015","1133007","1212003","1335457","1111001","1155031","1515031","1155031","1111001","1122003","1223011","1223011","1335484","1234057","1335295","1333084","1155031","1155031","1339511","1313007","1234030","1335295","1326063","1313007","1133007"]},{"file":"B_057-V4_B_057_D12_033-export.jsonl","name":"B_057-V4_B_057_D12_033","initialGrid":[24,36,0,0,229,2,0,0],"blockIds":["1222009","1324045","1234060","1111001","1223013","1212003","1324045","1223011","1324045","1224015","1324030","1324058","1122003","1223014","1234058","1324030","1155031","1515031","1333273","1335295","1333084","1133007","1133007","1313007","1111001","1339511","1122003","1223013","1324046","1133007","1234058","1324053","1122003","1234015","1324023","1223007","1234051","1333273","1324023","1222009","1234060","1133007","1335484","1234039","1236063","1122003","1324029","1223011","1324053","1333084","1223013","1133007","1111001","1122003","1333273","1111001","1335295","1223007","1234057","1313007","1324023","1222009","1133007","1335079","1234058","1133007","1414015","1324029","1335484","1335484","1333273","1155031","1324030","1339511","1155031","1313007","1335484","1335079","1155031","1333273","1335295","1324046","1333084","1324053","1333084","1234051","1234023","1234030","1326063","1335457","1335295","1313007","1324045","1313007","1324046","1234060","1234057","1212003","1333084","1122003","1335484","1223013","1333273","1324046","1234015","1236063","1223011","1335079","1324046","1335457","1234060","1234015","1223007","1324043","1324058","1333273","1234030","1222009","1333273","1133007"]},{"file":"B_116-V4_B_116_D12_037-export.jsonl","name":"B_116-V4_B_116_D12_037","initialGrid":[24,60,66,195,195,66,60,24],"blockIds":["1223007","1324023","1222009","1223011","1324043","1234030","1223014","1223011","1222009","1234015","1324045","1324045","1223007","1223013","1223011","1326063","1324045","1234060","1234051","1414015","1333084","1324029","1324046","1133007","1313007","1223011","1144015","1234060","1111001","1335079","1234023","1324045","1324053","1234060","1234058","1324043","1326063","1324023","1111001","1339511","1324043","1223007","1155031","1324030","1223007","1223011","1335457","1333084","1326063","1133007","1335457","1133007","1234030","1223013","1223007","1234051","1324053","1335295","1335484","1333084","1133007","1122003","1335457","1324046","1222006","1222006","1313007","1212003","1224015","1326063","1212003","1212003","1335484","1155031","1234057","1122003","1222006","1335484","1333084","1133007","1335295","1335079","1122003","1122003","1222006","1324043","1335484","1515031","1212003","1324058","1335457","1222006","1234058","1313007","1335484","1133007","1324045","1155031","1144015","1515031","1335295","1326063","1335484","1333084","1515031","1234051","1155031","1335457","1515031","1234030","1333273","1234051","1324043","1333084","1133007","1324045","1234051","1335295","1324045","1335457"]},{"file":"B_142-V4_B_142_D12_010-export.jsonl","name":"B_142-V4_B_142_D12_010","initialGrid":[28,62,62,28,8,48,48,0],"blockIds":["1414015","1335295","1335079","1324053","1234039","1324023","1223013","1223013","1313007","1333084","1234015","1234039","1223007","1224015","1313007","1335484","1236063","1414015","1133007","1324058","1324053","1234023","1223013","1313007","1222009","1335295","1155031","1335295","1324045","1313007","1234030","1222006","1335484","1144015","1326063","1335484","1313007","1313007","1324045","1234058","1222006","1339511","1234030","1122003","1212003","1335457","1335295","1335079","1324053","1313007","1313007","1313007","1234023","1212003","1234023","1223013","1234057","1234060","1234039","1324023","1326063","1223013","1234060","1234058","1223011","1326063","1333273","1223011","1223014","1223013","1515031","1335484","1326063","1122003","1324030","1335079","1223007","1155031","1324053","1234015","1223011","1324045","1234057","1222006","1223013","1515031","1234051","1236063","1339511","1324023","1212003","1234057","1335484","1223014","1122003","1324030","1236063","1234057","1223007","1234060","1223007","1223013","1234023","1414015","1324030","1223013","1515031","1222006","1335457","1122003","1223014","1236063","1155031","1122003","1324030","1324043","1324058","1414015","1223014","1333273"]},{"file":"B_119-V4_B_119_D12_019-export.jsonl","name":"B_119-V4_B_119_D12_019","initialGrid":[224,160,224,0,0,7,5,7],"blockIds":["1333084","1223007","1111001","1144015","1234057","1324053","1223014","1313007","1324030","1234057","1133007","1223013","1224015","1222009","1234051","1324029","1234058","1234015","1313007","1324030","1212003","1335484","1133007","1223013","1324029","1324045","1212003","1224015","1234051","1335484","1222009","1223014","1223014","1155031","1234023","1234015","1313007","1313007","1324030","1234023","1324058","1222006","1223014","1234057","1326063","1515031","1335079","1335484","1155031","1335295","1339511","1515031","1144015","1324053","1515031","1335457","1234039","1333084","1234030","1324030","1324046","1234030","1234023","1133007","1212003","1313007","1223014","1223011","1223014","1155031","1223013","1324023","1324046","1212003","1333273","1339511","1122003","1111001","1515031","1335079","1223011","1515031","1335457","1223007","1223011","1324043","1324046","1234057","1324030","1234058","1335457","1335484","1335484","1324053","1313007","1133007","1234039","1212003","1324053","1223014","1333084","1234060","1223011","1222006","1335079","1222006","1324030","1324046","1414015","1234051","1223013","1333273","1324053","1122003","1234058","1313007","1222006","1236063","1133007","1324030"]},{"file":"B_177-V4_B_177_D12_034-export.jsonl","name":"B_177-V4_B_177_D12_034","initialGrid":[219,195,0,0,0,0,66,231],"blockIds":["1324053","1414015","1144015","1515031","1234051","1324023","1224015","1313007","1224015","1111001","1122003","1414015","1223011","1324045","1224015","1234057","1324045","1234051","1324029","1414015","1324045","1223014","1234058","1222009","1212003","1414015","1155031","1111001","1212003","1111001","1234058","1234051","1313007","1223014","1133007","1335484","1224015","1234051","1324053","1222009","1223013","1223007","1335484","1326063","1234060","1234015","1333273","1223014","1223014","1212003","1324043","1234058","1414015","1324030","1326063","1133007","1324023","1234023","1324030","1333084","1313007","1335484","1335079","1144015","1313007","1144015","1335457","1223013","1212003","1223011","1234015","1234060","1414015","1234015","1313007","1515031","1335079","1335295","1333273","1133007","1335295","1324043","1234051","1324045","1144015","1234030","1326063","1133007","1155031","1122003","1335484","1234057","1111001","1234057","1324030","1324058","1212003","1326063","1223007","1155031","1335295","1133007","1335457","1324023","1223013","1222006","1133007","1324045","1234051","1223011","1335484","1223013","1234051","1222006","1155031","1335079","1133007","1335079","1222006","1122003"]},{"file":"B_143-V4_B_143_R13_013-export.jsonl","name":"B_143-V4_B_143_R13_013","initialGrid":[28,62,62,28,28,8,16,0],"blockIds":["1324046","1234023","1324045","1234058","1234030","1133007","1111001","1212003","1324043","1223011","1335484","1324030","1335484","1234051","1326063","1324045","1236063","1324029","1234057","1223013","1335457","1144015","1335457","1333084","1335079","1414015","1144015","1335484","1333273","1333084","1339511","1324029","1515031","1333084","1335295","1133007","1133007","1326063","1333084","1133007","1335457","1333084","1326063","1234058","1234030","1324023","1222006","1324045","1234057","1223007","1234058","1335295","1324045","1333084","1515031","1234051","1333273","1339511","1333084","1339511","1155031","1155031","1324023","1333273","1335079","1234030","1236063","1133007","1234039","1335079","1324043","1335079","1234051","1234030","1313007","1333273","1223011","1324043","1155031","1515031","1223013","1335079","1223014","1324029","1324030","1324053","1155031","1333273","1335484","1324046","1515031","1234051","1313007","1335295","1133007","1234051","1234058","1414015","1155031","1223014","1326063","1234015","1133007","1326063","1335295","1234039","1236063","1324043","1324030","1144015","1234051","1234051","1335295","1236063","1236063","1144015","1313007","1326063","1333273","1333273"]},{"file":"B_044-V4_B_044_R13_018-export.jsonl","name":"B_044-V4_B_044_R13_018","initialGrid":[0,64,64,94,66,122,2,0],"blockIds":["1339511","1223013","1335484","1515031","1324046","1324053","1333084","1234023","1326063","1324058","1333084","1335484","1324045","1234023","1324030","1335079","1133007","1324023","1234060","1111001","1122003","1326063","1111001","1324045","1335484","1133007","1111001","1324046","1111001","1222006","1515031","1144015","1339511","1335457","1333273","1155031","1234030","1324045","1236063","1133007","1133007","1133007","1324045","1223007","1222006","1212003","1333084","1326063","1333273","1212003","1339511","1326063","1236063","1144015","1335295","1333084","1515031","1324046","1313007","1155031","1335295","1133007","1335457","1236063","1326063","1155031","1234039","1234015","1313007","1335079","1133007","1155031","1155031","1324053","1335484","1335484","1234058","1144015","1236063","1335457","1339511","1324058","1515031","1335484","1234060","1335457","1236063","1339511","1324058","1324053","1326063","1333084","1324023","1234058","1339511","1333084","1324053","1133007","1324045","1234058","1333273","1234058","1324058","1224015","1339511","1333084","1333273","1234015","1234023","1324023","1335457","1333084","1335457","1133007","1324046","1133007","1234023","1326063","1339511","1223007"]},{"file":"B_130-V4_B_130_R13_012-export.jsonl","name":"B_130-V4_B_130_R13_012","initialGrid":[0,128,192,231,3,1,0,0],"blockIds":["1335295","1324053","1234015","1234039","1324058","1515031","1234051","1324023","1333273","1234023","1333273","1122003","1335079","1335484","1326063","1333084","1222009","1326063","1222009","1155031","1223013","1144015","1335484","1324045","1324043","1234058","1333084","1335457","1133007","1324045","1236063","1335295","1236063","1155031","1133007","1333084","1324029","1324023","1324053","1335484","1155031","1234058","1234030","1133007","1324030","1234030","1234015","1335484","1515031","1335484","1335079","1335079","1333084","1414015","1155031","1155031","1333273","1339511","1313007","1333273","1234051","1339511","1313007","1333273","1335079","1324045","1133007","1324058","1236063","1223013","1234060","1313007","1313007","1155031","1234051","1339511","1155031","1515031","1155031","1133007","1324043","1335079","1335295","1324046","1236063","1133007","1223011","1324030","1324045","1335295","1333273","1133007","1234058","1324023","1335457","1414015","1335079","1335295","1155031","1515031","1515031","1333273","1333084","1335295","1324029","1326063","1414015","1335295","1133007","1333273","1333084","1234030","1333084","1335079","1324029","1155031","1339511","1324030","1324029","1335079"]},{"file":"B_077-V4_B_077_R13_002-export.jsonl","name":"B_077-V4_B_077_R13_002","initialGrid":[24,60,126,0,8,56,28,16],"blockIds":["1236063","1234030","1223007","1515031","1234030","1223013","1335457","1326063","1324045","1333273","1515031","1335484","1222006","1333084","1335484","1234060","1313007","1333084","1333084","1111001","1324043","1324030","1333273","1324045","1339511","1111001","1335295","1223013","1515031","1234039","1335484","1515031","1335295","1234057","1234051","1335295","1333084","1234030","1326063","1324053","1324043","1223007","1234039","1335295","1333273","1335484","1234015","1324030","1313007","1133007","1339511","1326063","1335457","1313007","1335295","1335295","1234057","1335295","1133007","1234039","1234015","1234015","1234058","1324043","1333084","1515031","1234030","1324053","1324058","1234030","1133007","1324029","1313007","1515031","1324045","1335295","1144015","1234039","1234039","1324029","1223011","1414015","1333273","1333273","1133007","1324043","1333273","1515031","1155031","1335295","1313007","1515031","1144015","1155031","1236063","1324045","1335295","1324023","1333273","1234051","1339511","1335295","1333084","1155031","1326063","1324030","1333084","1324058","1414015","1335484","1133007","1234015","1234015","1326063","1333084","1326063","1324046","1324030","1234030","1223011"]},{"file":"B_141-V4_B_141_R13_009-export.jsonl","name":"B_141-V4_B_141_R13_009","initialGrid":[0,0,248,248,56,32,0,0],"blockIds":["1339511","1133007","1133007","1223014","1333084","1324023","1335457","1335484","1212003","1234030","1326063","1234015","1333084","1326063","1339511","1236063","1339511","1324030","1155031","1333273","1335484","1324030","1234051","1324029","1333273","1234023","1414015","1333273","1324023","1234030","1515031","1339511","1234030","1333273","1333084","1236063","1333084","1324030","1313007","1324046","1326063","1333084","1335457","1515031","1234058","1333273","1339511","1515031","1133007","1324053","1335295","1324023","1339511","1324058","1236063","1155031","1333273","1326063","1313007","1144015","1234058","1333273","1333084","1333084","1324058","1324046","1324043","1234058","1324045","1335295","1223011","1333084","1324045","1234030","1333273","1326063","1223011","1155031","1133007","1335079","1234030","1333084","1335295","1234023","1324046","1324029","1333084","1333273","1333084","1234051","1324045","1234051","1234057","1313007","1335484","1333273","1324029","1155031","1234057","1133007","1133007","1333084","1339511","1324030","1223014","1333084","1335484","1339511","1234015","1313007","1223014","1339511","1313007","1335484","1324043","1335457","1414015","1223011","1324029","1234030"]},{"file":"B_165-V4_B_165_R13_018-export.jsonl","name":"B_165-V4_B_165_R13_018","initialGrid":[195,102,0,0,0,0,102,195],"blockIds":["1515031","1515031","1122003","1324030","1236063","1212003","1234015","1333084","1234039","1335295","1234030","1335484","1324030","1335484","1111001","1324023","1324030","1515031","1155031","1212003","1234030","1326063","1234051","1324023","1234051","1234023","1335295","1212003","1335484","1122003","1339511","1339511","1335457","1515031","1324046","1236063","1335079","1313007","1326063","1333084","1333273","1234030","1222009","1326063","1335484","1313007","1335079","1324045","1234057","1224015","1236063","1326063","1339511","1236063","1414015","1515031","1234023","1333273","1324043","1313007","1313007","1133007","1335457","1155031","1324043","1234023","1234060","1324045","1234015","1333084","1333084","1324030","1144015","1236063","1223013","1223014","1234058","1339511","1414015","1515031","1335484","1236063","1324045","1133007","1326063","1335079","1234057","1234060","1333084","1324046","1223007","1324045","1223014","1144015","1234015","1339511","1223013","1515031","1335079","1339511","1333084","1515031","1326063","1324053","1155031","1234023","1333273","1333273","1155031","1133007","1333084","1414015","1333273","1324053","1324029","1324053","1335484","1333273","1335457","1313007"]},{"file":"B_199-V4_B_199_R14_020-export.jsonl","name":"B_199-V4_B_199_R14_020","initialGrid":[0,4,14,4,32,112,32,0],"blockIds":["1333273","1333084","1236063","1234060","1335484","1333084","1324029","1234015","1324043","1324053","1155031","1339511","1236063","1234030","1234015","1111001","1223007","1333084","1335457","1223011","1236063","1333273","1333084","1324053","1324045","1333084","1212003","1236063","1234015","1324023","1335079","1335484","1333273","1133007","1515031","1339511","1324043","1326063","1155031","1234051","1234057","1335484","1234023","1155031","1335079","1333084","1236063","1515031","1324045","1515031","1333273","1324045","1515031","1324030","1339511","1234051","1335484","1335484","1333273","1326063","1324023","1324029","1133007","1234030","1335457","1333273","1155031","1515031","1335079","1326063","1324046","1335079","1335295","1236063","1324043","1515031","1339511","1236063","1335457","1414015","1324030","1333084","1326063","1515031","1313007","1234015","1324029","1234039","1234023","1234023","1335079","1155031","1313007","1333273","1335079","1324023","1324058","1234023","1333273","1144015","1324030","1335079","1326063","1133007","1324045","1333273","1144015","1335457","1333273","1155031","1234015","1515031","1335295","1236063","1515031","1333273","1339511","1326063","1236063","1324058"]},{"file":"B_106-V4_B_106_R14_010-export.jsonl","name":"B_106-V4_B_106_R14_010","initialGrid":[231,66,66,0,0,66,66,231],"blockIds":["1122003","1324045","1326063","1339511","1335484","1335295","1324029","1335295","1234023","1313007","1236063","1234057","1223014","1234030","1335079","1324045","1324029","1515031","1234023","1335295","1333273","1313007","1133007","1324053","1324045","1111001","1223007","1333084","1234030","1324046","1236063","1339511","1155031","1335295","1515031","1234015","1335484","1324046","1335457","1234057","1324045","1234058","1324058","1234023","1234015","1335484","1333273","1339511","1155031","1234051","1326063","1324053","1234060","1335484","1335484","1324029","1234057","1324045","1324053","1333084","1335079","1234023","1333084","1234039","1324043","1234023","1236063","1333084","1223011","1324030","1236063","1223011","1335484","1234060","1333084","1223013","1335295","1236063","1236063","1324030","1333084","1335079","1333084","1324030","1234023","1313007","1313007","1223014","1236063","1333273","1335295","1335484","1234039","1324058","1234058","1234051","1234030","1133007","1515031","1339511","1324045","1234039","1155031","1335484","1335295","1324023","1326063","1234060","1335295","1333084","1234060","1234015","1234051","1324043","1224015","1324030","1234057","1335457","1234023","1515031"]},{"file":"B_194-V4_B_194_R14_019-export.jsonl","name":"B_194-V4_B_194_R14_019","initialGrid":[0,129,195,129,0,0,0,231],"blockIds":["1335079","1335457","1234015","1339511","1335295","1223014","1313007","1144015","1313007","1222006","1335484","1234030","1234030","1335295","1324023","1515031","1133007","1234057","1333084","1326063","1234030","1333084","1234051","1333084","1333273","1212003","1234051","1133007","1111001","1515031","1326063","1335457","1326063","1234015","1335484","1333273","1515031","1324030","1335079","1324046","1324046","1324045","1324058","1335295","1234030","1326063","1324045","1335457","1155031","1133007","1155031","1236063","1333273","1339511","1333273","1333273","1234051","1236063","1155031","1515031","1339511","1333273","1234015","1333084","1234057","1236063","1155031","1133007","1324029","1234039","1223014","1339511","1333273","1236063","1133007","1234015","1324045","1333273","1236063","1326063","1234058","1223013","1234051","1234015","1324043","1133007","1234051","1326063","1335079","1333273","1335484","1223014","1223014","1234057","1234057","1335295","1324043","1339511","1515031","1223014","1223013","1234023","1234057","1234030","1224015","1335457","1335484","1335295","1335484","1236063","1155031","1339511","1335079","1155031","1234060","1333084","1324045","1333273","1414015","1326063"]},{"file":"B_027-V4_B_027_R14_020-export.jsonl","name":"B_027-V4_B_027_R14_020","initialGrid":[254,240,248,128,128,128,192,0],"blockIds":["1234057","1223011","1335079","1335484","1324058","1326063","1122003","1333273","1333084","1212003","1339511","1324045","1324029","1234051","1234051","1111001","1324058","1324045","1326063","1333273","1335457","1333084","1324045","1515031","1313007","1335457","1234030","1335295","1515031","1234057","1155031","1333084","1236063","1515031","1515031","1236063","1339511","1335079","1324029","1324046","1326063","1324045","1234057","1234015","1333084","1234030","1223011","1324030","1324058","1515031","1335457","1515031","1324058","1333084","1339511","1234051","1324023","1155031","1339511","1236063","1155031","1236063","1333084","1335457","1326063","1324053","1234030","1335295","1339511","1313007","1515031","1333084","1234039","1333273","1234057","1234058","1333084","1234039","1313007","1133007","1335295","1339511","1326063","1324053","1234030","1234030","1414015","1333084","1335295","1234039","1223013","1313007","1333273","1324023","1234060","1333084","1155031","1339511","1339511","1515031","1339511","1335079","1155031","1324030","1339511","1324045","1335079","1133007","1335484","1339511","1326063","1155031","1144015","1335295","1324045","1335484","1339511","1333273","1339511","1234051"]},{"file":"B_124-V4_B_124_R14_010-export.jsonl","name":"B_124-V4_B_124_R14_010","initialGrid":[224,65,3,49,48,2,2,0],"blockIds":["1339511","1222006","1234023","1335457","1324029","1333273","1324030","1335457","1324043","1313007","1222006","1326063","1324023","1335079","1236063","1339511","1515031","1326063","1234030","1234051","1335079","1339511","1515031","1324058","1236063","1515031","1324045","1333273","1339511","1335484","1335457","1333084","1333273","1144015","1234039","1223011","1335484","1313007","1333273","1155031","1234015","1339511","1335484","1335457","1324029","1234051","1335484","1236063","1313007","1234057","1339511","1333084","1339511","1335457","1313007","1414015","1155031","1144015","1335295","1313007","1234051","1133007","1339511","1335079","1333273","1313007","1133007","1326063","1324053","1324058","1335079","1236063","1236063","1234039","1335079","1324023","1324045","1234058","1333084","1223007","1234058","1333084","1324029","1324045","1339511","1339511","1155031","1335295","1133007","1324030","1236063","1339511","1234058","1335295","1133007","1234030","1313007","1339511","1236063","1324023","1333273","1339511","1324023","1339511","1333273","1515031","1339511","1326063","1335484","1313007","1339511","1339511","1324045","1333273","1339511","1339511","1155031","1155031","1515031","1324030"]},{"file":"B_038-V4_B_038_R14_003-export.jsonl","name":"B_038-V4_B_038_R14_003","initialGrid":[34,127,85,127,0,0,0,0],"blockIds":["1234060","1335457","1335079","1324058","1324045","1122003","1324045","1212003","1223014","1122003","1335484","1236063","1234051","1333273","1324030","1339511","1324053","1335295","1234060","1133007","1335295","1324030","1335457","1111001","1324030","1324058","1234051","1333084","1335484","1339511","1339511","1333273","1223011","1333273","1155031","1324023","1234060","1324045","1326063","1234051","1133007","1234051","1333273","1335457","1324053","1335079","1335457","1326063","1333084","1234039","1155031","1326063","1326063","1335457","1335484","1339511","1326063","1333084","1234051","1515031","1326063","1333273","1335484","1326063","1339511","1335295","1324029","1324030","1335457","1335295","1333084","1335079","1133007","1234051","1333273","1333084","1234023","1335079","1326063","1339511","1236063","1234060","1335079","1414015","1335295","1324046","1324030","1313007","1333084","1236063","1324043","1223013","1339511","1333273","1234058","1223014","1223014","1326063","1234015","1324046","1223014","1155031","1335295","1236063","1313007","1234030","1234057","1234030","1326063","1324058","1333273","1335457","1236063","1234058","1313007","1326063","1234030","1324029","1223014","1324045"]},{"file":"B_032-V4_B_032_R14_013-export.jsonl","name":"B_032-V4_B_032_R14_013","initialGrid":[24,24,0,0,102,36,36,0],"blockIds":["1414015","1414015","1335484","1222006","1144015","1234039","1324023","1335484","1212003","1234060","1515031","1339511","1335457","1324045","1324043","1335295","1333273","1335079","1234030","1234051","1324030","1313007","1335295","1155031","1133007","1335295","1335295","1234039","1133007","1515031","1335457","1335295","1515031","1335484","1333273","1335484","1234015","1515031","1326063","1335295","1234051","1335079","1234058","1335295","1324030","1234051","1234030","1324046","1335295","1223014","1333084","1333273","1339511","1339511","1155031","1326063","1144015","1236063","1339511","1335484","1324023","1324046","1335457","1335079","1335079","1324046","1234015","1515031","1326063","1236063","1339511","1335484","1339511","1324023","1333273","1333273","1515031","1234015","1339511","1324023","1333273","1515031","1333084","1339511","1333084","1335295","1313007","1515031","1324045","1234051","1335457","1133007","1324030","1324043","1313007","1236063","1155031","1335484","1324046","1326063","1133007","1236063","1133007","1313007","1234058","1515031","1224015","1414015","1335295","1223014","1324043","1324023","1234060","1339511","1236063","1326063","1234039","1335484","1324053","1313007"]}];
     let currentSeedCase = null;
 
@@ -1883,6 +2140,17 @@
     const FORCE_ONE_MOLE_IN_FIRST_THREE = true;
     const PERFECT_TIMING_MIN_HIT = 2;
     const HIT_STOP_MS = 52;
+    const POST_PLACE_PAUSE_MS = 36;
+    const CLEAR_CRACK_MS = 180;
+    const CLEAR_RESOLVE_MS = 430;
+    const HAMMER_ENTRY_DELAY_MS = 120;
+    const HAMMER_WINDUP_MS = 300;
+    const HAMMER_SMASH_DELAY_MS = HAMMER_ENTRY_DELAY_MS + HAMMER_WINDUP_MS;
+    const EGG_SHATTER_DELAY_MS = HAMMER_SMASH_DELAY_MS + 120;
+    const MONEY_LAUNCH_DELAY_MS = HAMMER_SMASH_DELAY_MS + 300;
+    const HAMMER_SEQUENCE_END_MS = MONEY_LAUNCH_DELAY_MS + 360;
+    const MOVE_AFTER_CLEAR_MS = CLEAR_RESOLVE_MS + 110;
+    const NO_MOVE_CHECK_MS = MOVE_AFTER_CLEAR_MS + 220;
     const SOFT_SNAP_MS = 110;
     const DROP_SNAP_RADIUS = 2;
     const REBOUND_SNAP_RADIUS = GRID_SIZE;
@@ -2046,6 +2314,83 @@
         return plan;
     }
 
+    function buildBalancedMolePlan(blockIds, baseRate, guardrails, seedHash) {
+        const n = blockIds.length;
+        if (!n) return [];
+        const plan = new Array(n).fill(false);
+        const eligible = blockIds.map((sid) => !guardrails || isMoleEligibleByList({ id: sid }));
+        let forced = 0;
+        for (let i = 0; i < Math.min(3, n); i++) {
+            if (eligible[i]) {
+                plan[i] = true;
+                forced++;
+            }
+        }
+
+        const totalTarget = Math.max(forced, Math.round(n * baseRate));
+        let placed = forced;
+        let gap = 0;
+        const salt = (seedHash ^ 0x6a09e667) >>> 0;
+        const eligibleSuffix = new Array(n + 1).fill(0);
+        for (let i = n - 1; i >= 0; i--) {
+            eligibleSuffix[i] = eligibleSuffix[i + 1] + (eligible[i] ? 1 : 0);
+        }
+
+        for (let i = 3; i < n; i++) {
+            if (!eligible[i]) {
+                gap++;
+                continue;
+            }
+            const remainingEligible = eligibleSuffix[i];
+            const remainingTarget = Math.max(0, totalTarget - placed);
+            const baseP = remainingEligible > 0 ? remainingTarget / remainingEligible : 0;
+            const recentStart = Math.max(0, i - 6);
+            let recentHits = 0;
+            for (let j = recentStart; j < i; j++) {
+                if (plan[j]) recentHits++;
+            }
+            const expectedSoFar = totalTarget * ((i + 1) / n);
+            const deficit = expectedSoFar - placed;
+            let adjusted = baseP;
+            adjusted += Math.min(0.18, Math.max(0, gap - 2) * 0.035);
+            adjusted += Math.max(-0.12, Math.min(0.12, deficit * 0.03));
+            adjusted -= Math.max(0, recentHits - 1) * 0.06;
+            adjusted = Math.min(0.92, Math.max(0.02, adjusted));
+            if (gap >= 9) adjusted = Math.max(adjusted, 0.82);
+
+            if (deterministicRoll01(i, salt) < adjusted) {
+                plan[i] = true;
+                placed++;
+                gap = 0;
+            } else {
+                gap++;
+            }
+        }
+
+        const desired = totalTarget;
+        let current = plan.filter(Boolean).length;
+        const tweakSalt = (seedHash ^ 0x3c6ef372) >>> 0;
+        if (current < desired) {
+            const need = desired - current;
+            const cands = [];
+            for (let i = 3; i < n; i++) {
+                if (eligible[i] && !plan[i]) cands.push(i);
+            }
+            cands.sort((a, b) => deterministicRoll01(b, tweakSalt) - deterministicRoll01(a, tweakSalt) || a - b);
+            cands.slice(0, need).forEach((i) => { plan[i] = true; });
+        } else if (current > desired) {
+            const need = current - desired;
+            const cands = [];
+            for (let i = 3; i < n; i++) {
+                if (eligible[i] && plan[i]) cands.push(i);
+            }
+            cands.sort((a, b) => deterministicRoll01(a, tweakSalt) - deterministicRoll01(b, tweakSalt) || a - b);
+            cands.slice(0, need).forEach((i) => { plan[i] = false; });
+        }
+
+        return plan;
+    }
+
     function buildSeedMolePlan(seedCase) {
         const blockIds = seedCase?.blockIds || [];
         const n = blockIds.length;
@@ -2071,6 +2416,9 @@
                 if (eligible[i]) smoothed[i] = true;
             }
             return { hasMole: smoothed, posRoll };
+        }
+        if (moleDistributionModeCurrent === 'uniform_balanced') {
+            return { hasMole: buildBalancedMolePlan(blockIds, getCurrentMoleSpawnRate(), guardrails, seedHash), posRoll };
         }
         return { hasMole, posRoll };
     }
@@ -2536,11 +2884,11 @@
         }
         if (isAllSlotsEmpty()) generatePieces();
         runHitStop(placedCells, () => {
-            checkClearance();
-            setTimeout(moveMoles, 360);
+            setTimeout(() => checkClearance(), POST_PLACE_PAUSE_MS);
+            setTimeout(moveMoles, MOVE_AFTER_CLEAR_MS);
             setTimeout(() => {
                 if (!hasAnyMoves()) endGame(false, '没有空格了', { cause: 'no_space' });
-            }, 520);
+            }, NO_MOVE_CHECK_MS);
         });
     }
 
@@ -2586,7 +2934,7 @@
         el.className = 'mole-entity';
         const sprite = document.createElement('img');
         sprite.className = 'mole-sprite';
-        sprite.src = 'pic/mole.png?v=2';
+        sprite.src = 'pic/鼠.png?v=1';
         sprite.alt = 'mole';
         el.appendChild(sprite);
         const emoji = document.createElement('div');
@@ -2694,10 +3042,10 @@
                 holeBlockId.forEach(row => row[c] = -1);
             });
             updateGridView();
-        }, 360);
+        }, CLEAR_RESOLVE_MS);
 
         captured.forEach((mole, idx) => {
-            const delay = 260 + idx * 80;
+            const delay = CLEAR_RESOLVE_MS + HAMMER_ENTRY_DELAY_MS + idx * 90;
             setTimeout(() => spawnHammerSequence(mole), delay);
         });
         if (captured.length >= PERFECT_TIMING_MIN_HIT) {
@@ -2707,7 +3055,7 @@
             const comboText = comboTier === 'double'
                 ? 'Double Mole!'
                 : (comboTier === 'triple' ? 'Triple Mole!' : 'Multi Mole!');
-            setTimeout(() => showComboToast(comboText, 1000, comboTier), 220);
+            setTimeout(() => showComboToast(comboText, 1100, comboTier), CLEAR_RESOLVE_MS + 40);
         }
 
         moles = moles.filter(mole => !captured.includes(mole));
@@ -2722,8 +3070,8 @@
                     setTimeout(() => {
                         cell.classList.remove('crack');
                         cell.classList.add('shatter');
-                    }, 160);
-                    setTimeout(() => cell.classList.remove('shatter'), 360);
+                    }, CLEAR_CRACK_MS);
+                    setTimeout(() => cell.classList.remove('shatter'), CLEAR_RESOLVE_MS);
                 }
             }
         }
@@ -2758,6 +3106,8 @@
             cell.classList.add('line-preview');
             previewLines.push(p);
         });
+        previewTargetMoles = predicted.hitMoles || [];
+        previewTargetMoles.forEach((mole) => mole.element?.classList.add('preview-target'));
     }
 
     function clearPreview() {
@@ -2769,8 +3119,10 @@
             const cell = document.getElementById(`grid-${p.r}-${p.c}`);
             cell.classList.remove('line-preview');
         });
+        previewTargetMoles.forEach((mole) => mole.element?.classList.remove('preview-target'));
         previewCells = [];
         previewLines = [];
+        previewTargetMoles = [];
     }
 
     function boardShake() {
@@ -3036,13 +3388,14 @@
                 }
             }
         }
-        const hit = moles.some(m => fullRows.includes(m.r) || fullCols.includes(m.c));
-        return { lineCells, hit };
+        const hitMoles = moles.filter(m => fullRows.includes(m.r) || fullCols.includes(m.c));
+        const hit = hitMoles.length > 0;
+        return { lineCells, hit, hitMoles, fullRows, fullCols };
     }
 
     function spawnHammerSequence(mole) {
         const h = document.createElement('div');
-        h.className = 'hammer';
+        h.className = 'hammer ready';
         h.style.left = `calc(${(mole.c * 12.5)}% - 8px)`;
         h.style.top = `calc(${(mole.r * 12.5)}% - 8px)`;
         moleLayer.appendChild(h);
@@ -3055,22 +3408,19 @@
         moleLayer.appendChild(egg);
 
         setTimeout(() => {
+            h.classList.remove('ready');
             h.classList.add('smash');
-            screenShakeStrong();
-        }, 300);
-
-        setTimeout(() => {
             mole.element.classList.add('stunned');
-            screenShake();
-        }, 260);
+            screenShakeStrong();
+        }, HAMMER_WINDUP_MS);
 
         setTimeout(() => {
             egg.classList.add('shatter');
-        }, 320);
+        }, EGG_SHATTER_DELAY_MS - HAMMER_ENTRY_DELAY_MS);
 
         setTimeout(() => {
             flyMoneyToEarned(mole.r, mole.c, mole.reward);
-        }, 420);
+        }, MONEY_LAUNCH_DELAY_MS - HAMMER_ENTRY_DELAY_MS);
 
         setTimeout(() => {
             egg.remove();
@@ -3086,7 +3436,7 @@
             if (getEarnedAmount() >= maxReward || collectedCount >= maxKillsCurrent) {
                 endGame(true, '已拿满最大奖励', { type: 'max_win' });
             }
-        }, 780);
+        }, HAMMER_SEQUENCE_END_MS - HAMMER_ENTRY_DELAY_MS);
     }
 
     function updateGridView(pulse = false, pulseCells = []) {
@@ -3220,6 +3570,13 @@
             if (t < 1) {
                 requestAnimationFrame(tick);
             } else {
+                const earnedCard = earnedStatusEl?.closest('.goal-card');
+                if (earnedCard) {
+                    earnedCard.classList.remove('collect-pulse');
+                    void earnedCard.offsetWidth;
+                    earnedCard.classList.add('collect-pulse');
+                    setTimeout(() => earnedCard.classList.remove('collect-pulse'), 320);
+                }
                 flyer.remove();
             }
         }
@@ -3579,7 +3936,9 @@
         playEntryBtn.innerText = `Play for $${entryFee}`;
         const segText = moleDistributionModeCurrent === 'segment_custom'
             ? ` | Seg:${Math.round(segmentRatesCurrent.r0_2*100)}/${Math.round(segmentRatesCurrent.r3_29*100)}/${Math.round(segmentRatesCurrent.r30_59*100)}/${Math.round(segmentRatesCurrent.r60_89*100)}/${Math.round(segmentRatesCurrent.r90p*100)}`
-            : (moleDistributionModeCurrent === 'uniform_smooth' ? ' | Smooth:p30,w12,l2,u5' : '');
+            : (moleDistributionModeCurrent === 'uniform_smooth'
+                ? ' | Smooth:p30,w12,l2,u5'
+                : (moleDistributionModeCurrent === 'uniform_balanced' ? ' | Balanced:adaptive' : ''));
         debugHintEl.innerText = `倍率: ${activeReturnMultiplier}x (fixed) | Goal:${goalTargetCurrent} | Cap:${maxKillsCurrent} | 难度筛选: ${selectedDifficultyFilter} | 当前难度: ${currentDifficulty} | Seed: ${currentSeedName}${segText}`;
         if (debugGoalInputEl) debugGoalInputEl.value = String(goalTargetCurrent);
         if (debugDifficultySelectEl) debugDifficultySelectEl.value = selectedDifficultyFilter;
@@ -3617,7 +3976,7 @@
         const nextCap = Math.max(nextGoal, Number(debugMaxMolesInputEl?.value || maxMolesCapCurrent));
         const nextCoveragePct = Number(debugMoleRateInputEl?.value ?? (getCurrentMoleSpawnRate() * 100));
         const nextMoleDistModeRaw = String(debugMoleDistSelectEl?.value || moleDistributionModeCurrent);
-        const nextMoleDistMode = ['guardrails', 'flat', 'uniform_smooth', 'segment_35_30_20_5', 'segment_25_20_15_5', 'segment_28_20_12_5', 'segment_custom'].includes(nextMoleDistModeRaw)
+        const nextMoleDistMode = ['guardrails', 'flat', 'uniform_smooth', 'uniform_balanced', 'segment_35_30_20_5', 'segment_25_20_15_5', 'segment_28_20_12_5', 'segment_custom'].includes(nextMoleDistModeRaw)
             ? nextMoleDistModeRaw
             : 'flat';
         const rawRewardRate = String(debugMoleRewardRateInputEl?.value ?? '').trim();
@@ -3702,7 +4061,7 @@
     function openSettlement(title, subtitle, buttonText, onClick) {
         document.getElementById('msg-title').innerText = title;
         msgSubtitleEl.innerText = subtitle;
-        document.getElementById('msg-title').style.color = '#1f1f1f';
+        document.getElementById('msg-title').style.color = '#fff4dc';
         overlayBtnEl.innerText = buttonText;
         overlayBtnEl.onclick = onClick;
         document.getElementById('overlay').classList.remove('hidden');
@@ -3714,7 +4073,7 @@
 
     function openReviveModal(meta = {}) {
         pendingReviveContext = { ...(meta || {}) };
-        const reviveCost = entryFee * 0.7;
+        const reviveCost = entryFee * 1.5;
         const earnedNow = getEarnedAmount();
         const causeText = meta?.cause === 'time' ? 'Time is up' : 'Out of moves';
         reviveTitleEl.innerText = `Still close!`;
@@ -3836,7 +4195,7 @@
         await finalizeFailSettlement(ctx.message || '没有空格了');
     });
     revivePayBtn.addEventListener('click', () => {
-        const reviveCost = entryFee * 0.7;
+        const reviveCost = entryFee * 1.5;
         if (accountBalance < reviveCost) {
             showToast('余额不足，无法复活', 1200, 'fail');
             openRechargeModal();

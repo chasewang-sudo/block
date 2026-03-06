@@ -23,6 +23,7 @@ MOLE_MODE_SEGMENT_V4 = "segment_25_20_15_5"
 MOLE_MODE_SEGMENT_V5 = "segment_28_20_12_5"
 MOLE_MODE_SEGMENT_CUSTOM = "segment_custom"
 MOLE_MODE_UNIFORM_SMOOTH = "uniform_smooth"
+MOLE_MODE_UNIFORM_BALANCED = "uniform_balanced"
 MOLE_MODES = {
     MOLE_MODE_GUARDRAILS,
     MOLE_MODE_FLAT,
@@ -31,6 +32,7 @@ MOLE_MODES = {
     MOLE_MODE_SEGMENT_V5,
     MOLE_MODE_SEGMENT_CUSTOM,
     MOLE_MODE_UNIFORM_SMOOTH,
+    MOLE_MODE_UNIFORM_BALANCED,
 }
 MOLE_DISTRIBUTION_FLAT = "flat"
 MOLE_DISTRIBUTION_SEGMENT_V3 = "segment_35_30_20_5"
@@ -38,6 +40,7 @@ MOLE_DISTRIBUTION_SEGMENT_V4 = "segment_25_20_15_5"
 MOLE_DISTRIBUTION_SEGMENT_V5 = "segment_28_20_12_5"
 MOLE_DISTRIBUTION_SEGMENT_CUSTOM = "segment_custom"
 MOLE_DISTRIBUTION_UNIFORM_SMOOTH = "uniform_smooth"
+MOLE_DISTRIBUTION_UNIFORM_BALANCED = "uniform_balanced"
 UNIFORM_SMOOTH_RATE = 0.30
 UNIFORM_SMOOTH_WINDOW = 12
 UNIFORM_SMOOTH_MIN = 2
@@ -373,6 +376,81 @@ def smooth_plan_by_window(
     return plan
 
 
+def build_balanced_mole_plan(
+    block_ids: List[str],
+    base_rate: float,
+    use_mole_guardrails: bool,
+    seed_hash: int,
+) -> List[bool]:
+    n = len(block_ids)
+    if n <= 0:
+        return []
+    plan = [False] * n
+    eligible = [((not use_mole_guardrails) or is_mole_eligible(sid)) for sid in block_ids]
+    forced = 0
+    for i in range(min(3, n)):
+        if eligible[i]:
+            plan[i] = True
+            forced += 1
+
+    total_target = max(forced, round(n * base_rate))
+    placed = forced
+    gap = 0
+    salt = seed_hash ^ 0x6A09E667
+
+    eligible_suffix = [0] * (n + 1)
+    for i in range(n - 1, -1, -1):
+        eligible_suffix[i] = eligible_suffix[i + 1] + (1 if eligible[i] else 0)
+
+    for i in range(3, n):
+        if not eligible[i]:
+            gap += 1
+            continue
+        remaining_eligible = eligible_suffix[i]
+        remaining_target = max(0, total_target - placed)
+        base_p = remaining_target / remaining_eligible if remaining_eligible > 0 else 0.0
+
+        recent_start = max(0, i - 6)
+        recent_hits = sum(1 for x in plan[recent_start:i] if x)
+        expected_so_far = total_target * ((i + 1) / n)
+        deficit = expected_so_far - placed
+
+        adjusted = base_p
+        adjusted += min(0.18, max(0.0, gap - 2) * 0.035)
+        adjusted += max(-0.12, min(0.12, deficit * 0.03))
+        adjusted -= max(0.0, recent_hits - 1) * 0.06
+        adjusted = min(0.92, max(0.02, adjusted))
+
+        if gap >= 9:
+            adjusted = max(adjusted, 0.82)
+
+        roll = deterministic_roll01(i, salt)
+        if roll < adjusted:
+            plan[i] = True
+            placed += 1
+            gap = 0
+        else:
+            gap += 1
+
+    # Light correction so the realized density stays close to the configured rate.
+    desired = total_target
+    current = sum(1 for x in plan if x)
+    tweak_salt = seed_hash ^ 0x3C6EF372
+    if current < desired:
+        need = desired - current
+        cands = [i for i in range(3, n) if eligible[i] and not plan[i]]
+        cands.sort(key=lambda i: (-deterministic_roll01(i, tweak_salt), i))
+        for i in cands[:need]:
+            plan[i] = True
+    elif current > desired:
+        need = current - desired
+        cands = [i for i in range(3, n) if eligible[i] and plan[i]]
+        cands.sort(key=lambda i: (deterministic_roll01(i, tweak_salt), i))
+        for i in cands[:need]:
+            plan[i] = False
+    return plan
+
+
 def resolve_mole_mode(mole_mode: str) -> Tuple[bool, str]:
     m = (mole_mode or "").strip().lower()
     if m not in MOLE_MODES:
@@ -389,6 +467,8 @@ def resolve_mole_mode(mole_mode: str) -> Tuple[bool, str]:
         return False, MOLE_DISTRIBUTION_SEGMENT_CUSTOM
     if m == MOLE_MODE_UNIFORM_SMOOTH:
         return False, MOLE_DISTRIBUTION_UNIFORM_SMOOTH
+    if m == MOLE_MODE_UNIFORM_BALANCED:
+        return False, MOLE_DISTRIBUTION_UNIFORM_BALANCED
     return False, MOLE_DISTRIBUTION_FLAT
 
 
@@ -425,6 +505,8 @@ def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guard
         for i in range(min(3, n)):
             if eligible_flags[i]:
                 has_mole[i] = True
+    elif mole_distribution == MOLE_DISTRIBUTION_UNIFORM_BALANCED:
+        has_mole = build_balanced_mole_plan(block_ids, mole_spawn_rate, use_mole_guardrails, seed_hash)
     return {"has_mole": has_mole, "pos_roll": pos_roll}
 
 
@@ -508,6 +590,8 @@ def simulate(
         mole_mode = MOLE_MODE_SEGMENT_CUSTOM
     elif mole_distribution == MOLE_DISTRIBUTION_UNIFORM_SMOOTH:
         mole_mode = MOLE_MODE_UNIFORM_SMOOTH
+    elif mole_distribution == MOLE_DISTRIBUTION_UNIFORM_BALANCED:
+        mole_mode = MOLE_MODE_UNIFORM_BALANCED
     else:
         mole_mode = MOLE_MODE_FLAT
     mole_reward = entry_fee * mole_reward_rate
@@ -1074,7 +1158,7 @@ def summarize(rows: List[dict]):
         st = sum(x["stake"] for x in rs)
         ea = sum(x["earned"] for x in rs)
         wr = sum(1 for x in rs if x["result"] != "Fail") / len(rs)
-        print(f"{diff:>7}  n={len(rs):5d}  win={wr:.3f}  RTP={ea/st:.3f}")
+        print(f"{diff:>7}  n={len(rs):5d}  win={wr:.3f}  RTP={ea/st:.3f}  stake={st:.2f}  earned={ea:.2f}")
 
 
 def main():
