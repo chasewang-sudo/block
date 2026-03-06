@@ -22,14 +22,28 @@ MOLE_MODE_SEGMENT_V3 = "segment_35_30_20_5"
 MOLE_MODE_SEGMENT_V4 = "segment_25_20_15_5"
 MOLE_MODE_SEGMENT_V5 = "segment_28_20_12_5"
 MOLE_MODE_SEGMENT_CUSTOM = "segment_custom"
-MOLE_MODES = {MOLE_MODE_GUARDRAILS, MOLE_MODE_FLAT, MOLE_MODE_SEGMENT_V3, MOLE_MODE_SEGMENT_V4, MOLE_MODE_SEGMENT_V5, MOLE_MODE_SEGMENT_CUSTOM}
+MOLE_MODE_UNIFORM_SMOOTH = "uniform_smooth"
+MOLE_MODES = {
+    MOLE_MODE_GUARDRAILS,
+    MOLE_MODE_FLAT,
+    MOLE_MODE_SEGMENT_V3,
+    MOLE_MODE_SEGMENT_V4,
+    MOLE_MODE_SEGMENT_V5,
+    MOLE_MODE_SEGMENT_CUSTOM,
+    MOLE_MODE_UNIFORM_SMOOTH,
+}
 MOLE_DISTRIBUTION_FLAT = "flat"
 MOLE_DISTRIBUTION_SEGMENT_V3 = "segment_35_30_20_5"
 MOLE_DISTRIBUTION_SEGMENT_V4 = "segment_25_20_15_5"
 MOLE_DISTRIBUTION_SEGMENT_V5 = "segment_28_20_12_5"
 MOLE_DISTRIBUTION_SEGMENT_CUSTOM = "segment_custom"
-DEFAULT_MOLE_DISTRIBUTION = MOLE_DISTRIBUTION_SEGMENT_V3
-DEFAULT_MOLE_MODE = MOLE_MODE_SEGMENT_V3
+MOLE_DISTRIBUTION_UNIFORM_SMOOTH = "uniform_smooth"
+UNIFORM_SMOOTH_RATE = 0.30
+UNIFORM_SMOOTH_WINDOW = 12
+UNIFORM_SMOOTH_MIN = 2
+UNIFORM_SMOOTH_MAX = 5
+DEFAULT_MOLE_DISTRIBUTION = MOLE_DISTRIBUTION_UNIFORM_SMOOTH
+DEFAULT_MOLE_MODE = MOLE_MODE_UNIFORM_SMOOTH
 FORCE_SECOND_BLOCK = False
 FORCE_ONE_MOLE_IN_FIRST_THREE = True
 FIXED_RETURN_MULTIPLIER = 2.0
@@ -261,6 +275,8 @@ def is_mole_eligible(shape_id: str) -> bool:
 
 def get_mole_spawn_rate_for_index(seq_index: int, base_rate: float, mode: str, segment_rates: Optional[Dict[str, float]] = None) -> float:
     m = (mode or "").strip().lower()
+    if m == MOLE_DISTRIBUTION_UNIFORM_SMOOTH:
+        return UNIFORM_SMOOTH_RATE
     if m == MOLE_DISTRIBUTION_SEGMENT_V3:
         if seq_index <= 2:
             return 1.0
@@ -310,6 +326,53 @@ def get_mole_spawn_rate_for_index(seq_index: int, base_rate: float, mode: str, s
     return base_rate
 
 
+def smooth_plan_by_window(
+    has_mole: List[bool],
+    eligible: List[bool],
+    seed_hash: int,
+    window_size: int,
+    low: int,
+    high: int,
+) -> List[bool]:
+    n = len(has_mole)
+    if n <= 0:
+        return []
+    plan = list(has_mole)
+    w = max(1, min(window_size, n))
+    low = max(0, min(low, w))
+    high = max(low, min(high, w))
+    tweak_salt = seed_hash ^ 0x27D4EB2F
+
+    def score(idx: int) -> float:
+        return deterministic_roll01(idx, tweak_salt)
+
+    max_iters = 8
+    for _ in range(max_iters):
+        changed = False
+        starts = range(0, n - w + 1) if n >= w else [0]
+        for start in starts:
+            end = start + w
+            window_indices = list(range(start, end))
+            count = sum(1 for i in window_indices if plan[i])
+            if count < low:
+                need = low - count
+                cands = [i for i in window_indices if eligible[i] and (not plan[i])]
+                cands.sort(key=lambda i: (-score(i), i))
+                for i in cands[:need]:
+                    plan[i] = True
+                    changed = True
+            elif count > high:
+                need = count - high
+                cands = [i for i in window_indices if eligible[i] and plan[i]]
+                cands.sort(key=lambda i: (score(i), i))
+                for i in cands[:need]:
+                    plan[i] = False
+                    changed = True
+        if not changed:
+            break
+    return plan
+
+
 def resolve_mole_mode(mole_mode: str) -> Tuple[bool, str]:
     m = (mole_mode or "").strip().lower()
     if m not in MOLE_MODES:
@@ -324,6 +387,8 @@ def resolve_mole_mode(mole_mode: str) -> Tuple[bool, str]:
         return False, MOLE_DISTRIBUTION_SEGMENT_V5
     if m == MOLE_MODE_SEGMENT_CUSTOM:
         return False, MOLE_DISTRIBUTION_SEGMENT_CUSTOM
+    if m == MOLE_MODE_UNIFORM_SMOOTH:
+        return False, MOLE_DISTRIBUTION_UNIFORM_SMOOTH
     return False, MOLE_DISTRIBUTION_FLAT
 
 
@@ -336,13 +401,30 @@ def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guard
     salt = seed_hash ^ 0x9E3779B9
     pos_salt = seed_hash ^ 0x85EBCA6B
     has_mole = [False] * n
+    eligible_flags = [False] * n
     pos_roll = [0.0] * n
     for i, sid in enumerate(block_ids):
         rate_i = get_mole_spawn_rate_for_index(i, mole_spawn_rate, mole_distribution, segment_rates)
         eligible = (not use_mole_guardrails) or is_mole_eligible(sid)
+        eligible_flags[i] = eligible
         roll = deterministic_roll01(i, salt)
         has_mole[i] = eligible and (roll < rate_i)
         pos_roll[i] = deterministic_roll01(i, pos_salt)
+    if mole_distribution == MOLE_DISTRIBUTION_UNIFORM_SMOOTH:
+        for i in range(min(3, n)):
+            if eligible_flags[i]:
+                has_mole[i] = True
+        has_mole = smooth_plan_by_window(
+            has_mole,
+            eligible_flags,
+            seed_hash,
+            UNIFORM_SMOOTH_WINDOW,
+            UNIFORM_SMOOTH_MIN,
+            UNIFORM_SMOOTH_MAX,
+        )
+        for i in range(min(3, n)):
+            if eligible_flags[i]:
+                has_mole[i] = True
     return {"has_mole": has_mole, "pos_roll": pos_roll}
 
 
@@ -424,6 +506,8 @@ def simulate(
         mole_mode = MOLE_MODE_SEGMENT_V5
     elif mole_distribution == MOLE_DISTRIBUTION_SEGMENT_CUSTOM:
         mole_mode = MOLE_MODE_SEGMENT_CUSTOM
+    elif mole_distribution == MOLE_DISTRIBUTION_UNIFORM_SMOOTH:
+        mole_mode = MOLE_MODE_UNIFORM_SMOOTH
     else:
         mole_mode = MOLE_MODE_FLAT
     mole_reward = entry_fee * mole_reward_rate
@@ -1000,7 +1084,7 @@ def main():
     ap.add_argument("--entry-fee", type=float, default=1.0)
     ap.add_argument("--goal-target", type=int, default=12, help="Required mole captures to count as clear")
     ap.add_argument("--max-moles", type=int, default=20, help="Mole capture cap for max reward")
-    ap.add_argument("--mole-rate", type=float, default=0.40, help="Mole coverage rate [0,1]")
+    ap.add_argument("--mole-rate", type=float, default=0.30, help="Mole coverage rate [0,1]")
     ap.add_argument("--mole-mode", default=DEFAULT_MOLE_MODE, choices=sorted(MOLE_MODES), help="Mole generation mode")
     ap.add_argument("--seg-rate-0-2", type=float, default=1.0, help="Custom segment rate for seq 0-2 [0,1]")
     ap.add_argument("--seg-rate-3-29", type=float, default=0.28, help="Custom segment rate for seq 3-29 [0,1]")

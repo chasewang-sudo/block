@@ -18,6 +18,7 @@ from simulator import (
     MOLE_MODE_SEGMENT_V4,
     MOLE_MODE_SEGMENT_V5,
     MOLE_MODE_SEGMENT_CUSTOM,
+    MOLE_MODE_UNIFORM_SMOOTH,
     MOLE_MODES,
     MOLE_REWARD_RATE,
     build_run_seed_list,
@@ -244,6 +245,7 @@ def render_page(defaults, summary=None, rows=None, error=""):
     mole_mode_options = [
         (MOLE_MODE_GUARDRAILS, "干预"),
         (MOLE_MODE_FLAT, "不干预"),
+        (MOLE_MODE_UNIFORM_SMOOTH, "uniform_smooth (p30,w12,l2,u5)"),
         (MOLE_MODE_SEGMENT_V3, "segment_35_30_20_5"),
         (MOLE_MODE_SEGMENT_V4, "segment_25_20_15_5"),
         (MOLE_MODE_SEGMENT_V5, "segment_28_20_12_5"),
@@ -384,9 +386,10 @@ def render_page(defaults, summary=None, rows=None, error=""):
   const sync = () => {{
     if (!modeEl || !rateField || !rateInput) return;
     const isSegment = modeEl.value === 'segment_35_30_20_5' || modeEl.value === 'segment_25_20_15_5' || modeEl.value === 'segment_28_20_12_5' || modeEl.value === 'segment_custom';
+    const isUniformSmooth = modeEl.value === 'uniform_smooth';
     const isCustom = modeEl.value === 'segment_custom';
-    rateField.style.display = isSegment ? 'none' : '';
-    rateInput.disabled = isSegment;
+    rateField.style.display = (isSegment || isUniformSmooth) ? 'none' : '';
+    rateInput.disabled = (isSegment || isUniformSmooth);
     segFields.forEach((el) => {{ if (el) el.style.display = isCustom ? '' : 'none'; }});
   }};
   if (modeEl) modeEl.addEventListener('change', sync);
@@ -617,7 +620,7 @@ def main():
     ap.add_argument("--entry-fee", type=float, default=1.0)
     ap.add_argument("--goal-target", type=int, default=12)
     ap.add_argument("--max-moles", type=int, default=20)
-    ap.add_argument("--mole-rate", type=float, default=0.40)
+    ap.add_argument("--mole-rate", type=float, default=0.30)
     ap.add_argument("--mole-mode", default=DEFAULT_MOLE_MODE, choices=sorted(MOLE_MODES))
     ap.add_argument("--seg-rate-0-2", type=float, default=1.0)
     ap.add_argument("--seg-rate-3-29", type=float, default=0.28)

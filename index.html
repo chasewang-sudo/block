@@ -1616,14 +1616,15 @@
             </div>
             <div class="debug-config-item" id="debug-mole-rate-item">
                 <label for="debug-mole-rate-input">覆盖率(%)</label>
-                <input id="debug-mole-rate-input" type="number" min="0" max="100" step="1" value="40" />
+                <input id="debug-mole-rate-input" type="number" min="0" max="100" step="1" value="30" />
             </div>
             <div class="debug-config-item">
                 <label for="debug-mole-dist-select">覆盖率模式</label>
                 <select id="debug-mole-dist-select">
                     <option value="guardrails">干预</option>
                     <option value="flat">不干预</option>
-                    <option value="segment_35_30_20_5" selected>segment_35_30_20_5</option>
+                    <option value="uniform_smooth" selected>uniform_smooth (p30,w12,l2,u5)</option>
+                    <option value="segment_35_30_20_5">segment_35_30_20_5</option>
                     <option value="segment_25_20_15_5">segment_25_20_15_5</option>
                     <option value="segment_28_20_12_5">segment_28_20_12_5</option>
                     <option value="segment_custom">segment_custom</option>
@@ -1798,8 +1799,8 @@
     let entryFee = 1;
     let goalTargetCurrent = 12;
     let maxMolesCapCurrent = 20;
-    let moleSpawnRateCurrent = 0.40;
-    let moleDistributionModeCurrent = 'segment_35_30_20_5';
+    let moleSpawnRateCurrent = 0.30;
+    let moleDistributionModeCurrent = 'uniform_smooth';
     let segmentRatesCurrent = { r0_2: 1.0, r3_29: 0.28, r30_59: 0.20, r60_89: 0.12, r90p: 0.05 };
     let moleRewardRateCurrent = 0.10;
     let useExternalSeedApi = (location.protocol === 'http:' || location.protocol === 'https:');
@@ -2004,10 +2005,52 @@
         return x >>> 0;
     }
 
+    function smoothMolePlanByWindow(hasMole, eligible, seedHash, windowSize, low, high) {
+        const n = hasMole.length;
+        if (!n) return [];
+        const plan = hasMole.slice();
+        const w = Math.max(1, Math.min(windowSize, n));
+        const l = Math.max(0, Math.min(low, w));
+        const u = Math.max(l, Math.min(high, w));
+        const tweakSalt = (seedHash ^ 0x27d4eb2f) >>> 0;
+        const score = (idx) => deterministicRoll01(idx, tweakSalt);
+        for (let iter = 0; iter < 8; iter++) {
+            let changed = false;
+            const starts = n >= w ? Array.from({length: n - w + 1}, (_, i) => i) : [0];
+            for (const start of starts) {
+                const end = start + w;
+                const window = [];
+                for (let i = start; i < end; i++) window.push(i);
+                let count = 0;
+                window.forEach((i) => { if (plan[i]) count++; });
+                if (count < l) {
+                    const need = l - count;
+                    const cands = window.filter((i) => eligible[i] && !plan[i]);
+                    cands.sort((a, b) => score(b) - score(a) || (a - b));
+                    cands.slice(0, need).forEach((i) => {
+                        plan[i] = true;
+                        changed = true;
+                    });
+                } else if (count > u) {
+                    const need = count - u;
+                    const cands = window.filter((i) => eligible[i] && plan[i]);
+                    cands.sort((a, b) => score(a) - score(b) || (a - b));
+                    cands.slice(0, need).forEach((i) => {
+                        plan[i] = false;
+                        changed = true;
+                    });
+                }
+            }
+            if (!changed) break;
+        }
+        return plan;
+    }
+
     function buildSeedMolePlan(seedCase) {
         const blockIds = seedCase?.blockIds || [];
         const n = blockIds.length;
         const hasMole = new Array(n).fill(false);
+        const eligible = new Array(n).fill(false);
         const posRoll = new Array(n).fill(0);
         const seedHash = stableNameHash(seedCase?.name || '');
         const salt = (seedHash ^ 0x9e3779b9) >>> 0;
@@ -2015,14 +2058,27 @@
         const guardrails = isGuardrailsMode();
         for (let i = 0; i < n; i++) {
             const sid = blockIds[i];
-            const eligible = !guardrails || isMoleEligibleByList({ id: sid });
-            hasMole[i] = eligible && (deterministicRoll01(i, salt) < getMoleSpawnRateForIndex(i));
+            eligible[i] = !guardrails || isMoleEligibleByList({ id: sid });
+            hasMole[i] = eligible[i] && (deterministicRoll01(i, salt) < getMoleSpawnRateForIndex(i));
             posRoll[i] = deterministicRoll01(i, posSalt);
+        }
+        if (moleDistributionModeCurrent === 'uniform_smooth') {
+            for (let i = 0; i < Math.min(3, n); i++) {
+                if (eligible[i]) hasMole[i] = true;
+            }
+            const smoothed = smoothMolePlanByWindow(hasMole, eligible, seedHash, 12, 2, 5);
+            for (let i = 0; i < Math.min(3, n); i++) {
+                if (eligible[i]) smoothed[i] = true;
+            }
+            return { hasMole: smoothed, posRoll };
         }
         return { hasMole, posRoll };
     }
 
     function getMoleSpawnRateForIndex(seqIndexInSeed) {
+        if (moleDistributionModeCurrent === 'uniform_smooth') {
+            return 0.30;
+        }
         if (moleDistributionModeCurrent === 'segment_35_30_20_5') {
             if (seqIndexInSeed <= 2) return 1.0;
             if (seqIndexInSeed <= 29) return 0.30;
@@ -2074,7 +2130,7 @@
     }
 
     function isSegmentMode(mode = moleDistributionModeCurrent) {
-        return mode === 'segment_35_30_20_5' || mode === 'segment_25_20_15_5' || mode === 'segment_28_20_12_5' || mode === 'segment_custom';
+        return mode === 'segment_35_30_20_5' || mode === 'segment_25_20_15_5' || mode === 'segment_28_20_12_5' || mode === 'segment_custom' || mode === 'uniform_smooth';
     }
 
     function updateMoleRateVisibility(mode = moleDistributionModeCurrent) {
@@ -3523,7 +3579,7 @@
         playEntryBtn.innerText = `Play for $${entryFee}`;
         const segText = moleDistributionModeCurrent === 'segment_custom'
             ? ` | Seg:${Math.round(segmentRatesCurrent.r0_2*100)}/${Math.round(segmentRatesCurrent.r3_29*100)}/${Math.round(segmentRatesCurrent.r30_59*100)}/${Math.round(segmentRatesCurrent.r60_89*100)}/${Math.round(segmentRatesCurrent.r90p*100)}`
-            : '';
+            : (moleDistributionModeCurrent === 'uniform_smooth' ? ' | Smooth:p30,w12,l2,u5' : '');
         debugHintEl.innerText = `倍率: ${activeReturnMultiplier}x (fixed) | Goal:${goalTargetCurrent} | Cap:${maxKillsCurrent} | 难度筛选: ${selectedDifficultyFilter} | 当前难度: ${currentDifficulty} | Seed: ${currentSeedName}${segText}`;
         if (debugGoalInputEl) debugGoalInputEl.value = String(goalTargetCurrent);
         if (debugDifficultySelectEl) debugDifficultySelectEl.value = selectedDifficultyFilter;
@@ -3561,7 +3617,7 @@
         const nextCap = Math.max(nextGoal, Number(debugMaxMolesInputEl?.value || maxMolesCapCurrent));
         const nextCoveragePct = Number(debugMoleRateInputEl?.value ?? (getCurrentMoleSpawnRate() * 100));
         const nextMoleDistModeRaw = String(debugMoleDistSelectEl?.value || moleDistributionModeCurrent);
-        const nextMoleDistMode = ['guardrails', 'flat', 'segment_35_30_20_5', 'segment_25_20_15_5', 'segment_28_20_12_5', 'segment_custom'].includes(nextMoleDistModeRaw)
+        const nextMoleDistMode = ['guardrails', 'flat', 'uniform_smooth', 'segment_35_30_20_5', 'segment_25_20_15_5', 'segment_28_20_12_5', 'segment_custom'].includes(nextMoleDistModeRaw)
             ? nextMoleDistModeRaw
             : 'flat';
         const rawRewardRate = String(debugMoleRewardRateInputEl?.value ?? '').trim();
