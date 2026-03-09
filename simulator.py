@@ -24,6 +24,8 @@ MOLE_MODE_SEGMENT_V5 = "segment_28_20_12_5"
 MOLE_MODE_SEGMENT_CUSTOM = "segment_custom"
 MOLE_MODE_UNIFORM_SMOOTH = "uniform_smooth"
 MOLE_MODE_UNIFORM_BALANCED = "uniform_balanced"
+MOLE_MODE_CONFIG_FIXED = "config_fixed"
+MOLE_MODE_CONFIG_FIXED_UNIFORM30 = "config_fixed_uniform30"
 MOLE_MODES = {
     MOLE_MODE_GUARDRAILS,
     MOLE_MODE_FLAT,
@@ -33,6 +35,8 @@ MOLE_MODES = {
     MOLE_MODE_SEGMENT_CUSTOM,
     MOLE_MODE_UNIFORM_SMOOTH,
     MOLE_MODE_UNIFORM_BALANCED,
+    MOLE_MODE_CONFIG_FIXED,
+    MOLE_MODE_CONFIG_FIXED_UNIFORM30,
 }
 MOLE_DISTRIBUTION_FLAT = "flat"
 MOLE_DISTRIBUTION_SEGMENT_V3 = "segment_35_30_20_5"
@@ -41,12 +45,13 @@ MOLE_DISTRIBUTION_SEGMENT_V5 = "segment_28_20_12_5"
 MOLE_DISTRIBUTION_SEGMENT_CUSTOM = "segment_custom"
 MOLE_DISTRIBUTION_UNIFORM_SMOOTH = "uniform_smooth"
 MOLE_DISTRIBUTION_UNIFORM_BALANCED = "uniform_balanced"
+MOLE_DISTRIBUTION_CONFIG_FIXED = "config_fixed"
 UNIFORM_SMOOTH_RATE = 0.30
 UNIFORM_SMOOTH_WINDOW = 12
 UNIFORM_SMOOTH_MIN = 2
 UNIFORM_SMOOTH_MAX = 5
-DEFAULT_MOLE_DISTRIBUTION = MOLE_DISTRIBUTION_UNIFORM_SMOOTH
-DEFAULT_MOLE_MODE = MOLE_MODE_UNIFORM_SMOOTH
+DEFAULT_MOLE_DISTRIBUTION = MOLE_DISTRIBUTION_CONFIG_FIXED
+DEFAULT_MOLE_MODE = MOLE_MODE_CONFIG_FIXED
 FORCE_SECOND_BLOCK = False
 FORCE_ONE_MOLE_IN_FIRST_THREE = True
 FIXED_RETURN_MULTIPLIER = 2.0
@@ -75,6 +80,16 @@ POLICY_ALIASES = {
     "v3": "lookahead_2ply",
     "v4": "triplet_beam",
 }
+
+ROOT_DIR = Path(__file__).resolve().parent
+MOLE_TEMPLATE_FILE = ROOT_DIR / "mole_spawn_templates.json"
+MOLE_TEMPLATE_FILE_UNIFORM30 = ROOT_DIR / "mole_spawn_templates_uniform30.json"
+MOLE_FIGURE_FILE = ROOT_DIR / "mole_figure_config.json"
+_MOLE_TEMPLATE_CONFIG = None
+_MOLE_TEMPLATE_CONFIG_UNIFORM30 = None
+_MOLE_POSITION_CONFIG = None
+_SEED_MOLE_PLAN_CACHE: Dict[Tuple, dict] = {}
+_SEED_CASES_CACHE: Dict[Tuple[str, int], List[dict]] = {}
 
 
 BLOCK_FIGURES = [
@@ -248,6 +263,87 @@ def deterministic_roll01(seq_index: int, salt: int = 0) -> float:
     x = ((x ^ (x >> 16)) * 0x45D9F3B) & 0xFFFFFFFF
     x = x ^ (x >> 16)
     return (x & 0xFFFFFFFF) / 4294967296.0
+
+
+def load_mole_template_config(mole_mode: str = MOLE_MODE_CONFIG_FIXED) -> dict:
+    global _MOLE_TEMPLATE_CONFIG, _MOLE_TEMPLATE_CONFIG_UNIFORM30
+    if mole_mode == MOLE_MODE_CONFIG_FIXED_UNIFORM30:
+        if _MOLE_TEMPLATE_CONFIG_UNIFORM30 is not None:
+            return _MOLE_TEMPLATE_CONFIG_UNIFORM30
+        if MOLE_TEMPLATE_FILE_UNIFORM30.exists():
+            with MOLE_TEMPLATE_FILE_UNIFORM30.open("r", encoding="utf-8") as f:
+                _MOLE_TEMPLATE_CONFIG_UNIFORM30 = json.load(f)
+        else:
+            _MOLE_TEMPLATE_CONFIG_UNIFORM30 = {"templates": []}
+        return _MOLE_TEMPLATE_CONFIG_UNIFORM30
+    if _MOLE_TEMPLATE_CONFIG is not None:
+        return _MOLE_TEMPLATE_CONFIG
+    if MOLE_TEMPLATE_FILE.exists():
+        with MOLE_TEMPLATE_FILE.open("r", encoding="utf-8") as f:
+            _MOLE_TEMPLATE_CONFIG = json.load(f)
+    else:
+        _MOLE_TEMPLATE_CONFIG = {"templates": []}
+    return _MOLE_TEMPLATE_CONFIG
+
+
+def load_mole_position_config() -> Dict[str, Tuple[int, int]]:
+    global _MOLE_POSITION_CONFIG
+    if _MOLE_POSITION_CONFIG is not None:
+        return _MOLE_POSITION_CONFIG
+    pos_map: Dict[str, Tuple[int, int]] = {}
+    if MOLE_FIGURE_FILE.exists():
+        with MOLE_FIGURE_FILE.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        for fig in data.get("figures", []):
+            fid = str(fig.get("id", ""))
+            size = fig.get("size") or {}
+            w = int(size.get("x", 0) or 0)
+            pts = fig.get("points") or []
+            if not fid or w <= 0:
+                continue
+            for idx, pt in enumerate(pts):
+                if pt.get("isActive") and pt.get("hasMole") is True:
+                    pos_map[fid] = (idx // w, idx % w)
+                    break
+    _MOLE_POSITION_CONFIG = pos_map
+    return _MOLE_POSITION_CONFIG
+
+
+def build_config_fixed_mole_plan(seed_case: dict, mole_mode: str = MOLE_MODE_CONFIG_FIXED) -> List[bool]:
+    block_ids = seed_case.get("blockIds") or []
+    n = len(block_ids)
+    if n <= 0:
+        return []
+    cfg = load_mole_template_config(mole_mode)
+    templates = cfg.get("templates") or []
+    if not templates:
+        return [False] * n
+    cycle_range = cfg.get("windowRange") or [0, 119]
+    cycle_len = max(1, int(cycle_range[1]) - int(cycle_range[0]) + 1)
+    seed_hash = stable_name_hash(seed_case.get("name", ""))
+    template = templates[seed_hash % len(templates)]
+    spawn_indices = {int(x) for x in (template.get("spawnIndices") or [])}
+    return [((i % cycle_len) in spawn_indices) for i in range(n)]
+
+
+def get_config_fixed_template_id(seed_case: dict, mole_mode: str = MOLE_MODE_CONFIG_FIXED) -> str:
+    cfg = load_mole_template_config(mole_mode)
+    templates = cfg.get("templates") or []
+    if not templates:
+        return ""
+    seed_hash = stable_name_hash(seed_case.get("name", ""))
+    template = templates[seed_hash % len(templates)]
+    return str(template.get("templateId") or "")
+
+
+def get_configured_mole_pos(shape_id: str, shape: List[List[int]]) -> Optional[Tuple[int, int]]:
+    pos = load_mole_position_config().get(shape_id)
+    if pos is not None:
+        r, c = pos
+        if 0 <= r < len(shape) and 0 <= c < len(shape[r]) and shape[r][c]:
+            return pos
+    valid = [(r, c) for r, row in enumerate(shape) for c, v in enumerate(row) if v]
+    return valid[0] if valid else None
 
 
 def stable_name_hash(name: str) -> int:
@@ -469,14 +565,42 @@ def resolve_mole_mode(mole_mode: str) -> Tuple[bool, str]:
         return False, MOLE_DISTRIBUTION_UNIFORM_SMOOTH
     if m == MOLE_MODE_UNIFORM_BALANCED:
         return False, MOLE_DISTRIBUTION_UNIFORM_BALANCED
+    if m == MOLE_MODE_CONFIG_FIXED:
+        return False, MOLE_DISTRIBUTION_CONFIG_FIXED
+    if m == MOLE_MODE_CONFIG_FIXED_UNIFORM30:
+        return False, MOLE_MODE_CONFIG_FIXED_UNIFORM30
     return False, MOLE_DISTRIBUTION_FLAT
 
 
 def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guardrails: bool, mole_distribution: str, segment_rates: Optional[Dict[str, float]] = None) -> dict:
+    segment_rates = segment_rates or {}
+    cache_key = (
+        seed_case.get("name", ""),
+        tuple(seed_case.get("blockIds") or []),
+        round(float(mole_spawn_rate), 6),
+        bool(use_mole_guardrails),
+        str(mole_distribution),
+        round(float(segment_rates.get("r0_2", 0.0)), 6),
+        round(float(segment_rates.get("r3_29", 0.0)), 6),
+        round(float(segment_rates.get("r30_59", 0.0)), 6),
+        round(float(segment_rates.get("r60_89", 0.0)), 6),
+        round(float(segment_rates.get("r90p", 0.0)), 6),
+    )
+    cached = _SEED_MOLE_PLAN_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
     block_ids = seed_case.get("blockIds") or []
     n = len(block_ids)
     if n <= 0:
         return {"has_mole": [], "pos_roll": []}
+    if mole_distribution in {MOLE_DISTRIBUTION_CONFIG_FIXED, MOLE_MODE_CONFIG_FIXED_UNIFORM30}:
+        plan = {
+            "has_mole": build_config_fixed_mole_plan(seed_case, mole_distribution),
+            "pos_roll": [],
+            "templateId": get_config_fixed_template_id(seed_case, mole_distribution),
+        }
+        _SEED_MOLE_PLAN_CACHE[cache_key] = plan
+        return plan
     seed_hash = stable_name_hash(seed_case.get("name", ""))
     salt = seed_hash ^ 0x9E3779B9
     pos_salt = seed_hash ^ 0x85EBCA6B
@@ -507,7 +631,11 @@ def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guard
                 has_mole[i] = True
     elif mole_distribution == MOLE_DISTRIBUTION_UNIFORM_BALANCED:
         has_mole = build_balanced_mole_plan(block_ids, mole_spawn_rate, use_mole_guardrails, seed_hash)
-    return {"has_mole": has_mole, "pos_roll": pos_roll}
+    elif mole_distribution in {MOLE_DISTRIBUTION_CONFIG_FIXED, MOLE_MODE_CONFIG_FIXED_UNIFORM30}:
+        has_mole = build_config_fixed_mole_plan(seed_case, mole_distribution)
+    plan = {"has_mole": has_mole, "pos_roll": pos_roll, "templateId": ""}
+    _SEED_MOLE_PLAN_CACHE[cache_key] = plan
+    return plan
 
 
 def can_place(grid: List[List[int]], shape: List[List[int]], r: int, c: int) -> bool:
@@ -592,6 +720,10 @@ def simulate(
         mole_mode = MOLE_MODE_UNIFORM_SMOOTH
     elif mole_distribution == MOLE_DISTRIBUTION_UNIFORM_BALANCED:
         mole_mode = MOLE_MODE_UNIFORM_BALANCED
+    elif mole_distribution == MOLE_DISTRIBUTION_CONFIG_FIXED:
+        mole_mode = MOLE_MODE_CONFIG_FIXED
+    elif mole_distribution == MOLE_MODE_CONFIG_FIXED_UNIFORM30:
+        mole_mode = MOLE_MODE_CONFIG_FIXED_UNIFORM30
     else:
         mole_mode = MOLE_MODE_FLAT
     mole_reward = entry_fee * mole_reward_rate
@@ -601,6 +733,7 @@ def simulate(
     seed_mole_plan = build_seed_mole_plan(seed_case, mole_spawn_rate, use_mole_guardrails, mole_distribution, segment_rates)
     seed_has_mole = seed_mole_plan["has_mole"]
     seed_pos_roll = seed_mole_plan["pos_roll"]
+    seed_template_id = seed_mole_plan.get("templateId", "")
 
     def next_piece_triplet() -> List[Piece]:
         nonlocal seq_cursor
@@ -649,14 +782,18 @@ def simulate(
 
         for p in pieces:
             seq_mod = p.seq_index % len(block_ids)
-            valid = [(r, c) for r, row in enumerate(p.shape) for c, v in enumerate(row) if v]
             if p.has_mole and (not use_mole_guardrails or is_mole_eligible(p.shape_id) or p.seq_index < 3):
                 if use_mole_guardrails:
+                    valid = [(r, c) for r, row in enumerate(p.shape) for c, v in enumerate(row) if v]
                     j = (p.seq_index + pos_salt) % len(valid)
+                    p.mole_pos = valid[j]
+                elif mole_distribution in {MOLE_DISTRIBUTION_CONFIG_FIXED, MOLE_MODE_CONFIG_FIXED_UNIFORM30}:
+                    p.mole_pos = get_configured_mole_pos(p.shape_id, p.shape)
                 else:
+                    valid = [(r, c) for r, row in enumerate(p.shape) for c, v in enumerate(row) if v]
                     roll = seed_pos_roll[seq_mod] if seq_mod < len(seed_pos_roll) else 0.0
                     j = min(len(valid) - 1, int(roll * len(valid)))
-                p.mole_pos = valid[j]
+                    p.mole_pos = valid[j]
             else:
                 p.has_mole = False
                 p.mole_pos = None
@@ -1071,6 +1208,7 @@ def simulate(
 
     out = {
         "seed": seed_case["name"],
+        "templateId": seed_template_id,
         "difficulty": parse_difficulty(seed_case["name"]),
         "result": result,
         "stake": entry_fee,
@@ -1106,6 +1244,10 @@ def simulate(
 def load_seed_cases(seeds_dir: Path, max_seeds: int = 0) -> List[dict]:
     if seeds_dir.name != "ExportSeeds" and (seeds_dir / "ExportSeeds").is_dir():
         seeds_dir = seeds_dir / "ExportSeeds"
+    cache_key = (str(seeds_dir.resolve()), int(max_seeds or 0))
+    cached = _SEED_CASES_CACHE.get(cache_key)
+    if cached is not None:
+        return list(cached)
 
     def stable_name_hash(name: str) -> int:
         # Deterministic lightweight hash; used to avoid lexicographic sampling bias.
@@ -1135,6 +1277,7 @@ def load_seed_cases(seeds_dir: Path, max_seeds: int = 0) -> List[dict]:
                     "blockIds": [x.get("block_id") for x in d.get("block_sequence", []) if x.get("block_id")],
                 }
             )
+    _SEED_CASES_CACHE[cache_key] = list(out)
     return out
 
 

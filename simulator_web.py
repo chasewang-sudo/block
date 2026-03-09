@@ -9,11 +9,12 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from uuid import uuid4
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, unquote
 
 from simulator import (
     DEFAULT_POLICY,
     DEFAULT_MOLE_MODE,
+    MOLE_MODE_CONFIG_FIXED,
     MOLE_MODE_FLAT,
     MOLE_MODE_GUARDRAILS,
     MOLE_MODE_SEGMENT_V3,
@@ -22,6 +23,7 @@ from simulator import (
     MOLE_MODE_SEGMENT_CUSTOM,
     MOLE_MODE_UNIFORM_SMOOTH,
     MOLE_MODE_UNIFORM_BALANCED,
+    MOLE_MODE_CONFIG_FIXED_UNIFORM30,
     MOLE_MODES,
     MOLE_REWARD_RATE,
     build_run_seed_list,
@@ -66,6 +68,7 @@ def read_seed_case_from_file(path: Path):
 
 FIELD_LABELS_ZH = {
     "seed": "种子名",
+    "templateId": "模板ID",
     "difficulty": "难度",
     "level": "关卡",
     "mode": "模式",
@@ -106,6 +109,7 @@ PREFERRED_FIELD_ORDER = [
     "startedAt",
     "endedAt",
     "seed",
+    "templateId",
     "difficulty",
     "level",
     "mode",
@@ -144,6 +148,7 @@ PREFERRED_FIELD_ORDER = [
 
 CONCISE_FIELDS = [
     "seed",
+    "templateId",
     "difficulty",
     "maxAliveMoles",
     "maxNoMolePlaceStreak",
@@ -383,6 +388,8 @@ def render_page(defaults, summary=None, rows=None, error=""):
         f'<option value="{v}" {"selected" if policy_val == v else ""}>{label}</option>' for v, label in policy_options
     )
     mole_mode_options = [
+        (MOLE_MODE_CONFIG_FIXED, "config_fixed"),
+        (MOLE_MODE_CONFIG_FIXED_UNIFORM30, "config_fixed_uniform30"),
         (MOLE_MODE_GUARDRAILS, "干预"),
         (MOLE_MODE_FLAT, "不干预"),
         (MOLE_MODE_UNIFORM_SMOOTH, "uniform_smooth (p30,w12,l2,u5)"),
@@ -562,7 +569,7 @@ def render_page(defaults, summary=None, rows=None, error=""):
   ];
   const sync = () => {{
     if (!modeEl || !rateField || !rateInput) return;
-    const isSegment = modeEl.value === 'segment_35_30_20_5' || modeEl.value === 'segment_25_20_15_5' || modeEl.value === 'segment_28_20_12_5' || modeEl.value === 'segment_custom';
+    const isSegment = modeEl.value === 'segment_35_30_20_5' || modeEl.value === 'segment_25_20_15_5' || modeEl.value === 'segment_28_20_12_5' || modeEl.value === 'segment_custom' || modeEl.value === 'config_fixed' || modeEl.value === 'config_fixed_uniform30';
     const isUniformSmooth = modeEl.value === 'uniform_smooth';
     const isCustom = modeEl.value === 'segment_custom';
     rateField.style.display = (isSegment || isUniformSmooth) ? 'none' : '';
@@ -797,7 +804,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(data)
             return
         if path.startswith("/"):
-            rel = path.lstrip("/")
+            rel = unquote(path.lstrip("/"))
             if rel:
                 target = (self.workspace_dir / rel).resolve()
                 if str(target).startswith(str(self.workspace_dir)) and target.is_file():

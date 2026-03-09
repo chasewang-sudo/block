@@ -1,0 +1,2075 @@
+{
+  "groupName": "R1",
+  "description": "",
+  "figures": [
+    {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 1,
+      "minimumScore": 0,
+      "defaultWeight": 30,
+      "id": "1111001",
+      "difficulty": 1,
+      "gemTypes": 0,
+      "description": "编号：1\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 1
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 2,
+      "minimumScore": 0,
+      "defaultWeight": 25,
+      "id": "1122003",
+      "difficulty": 2,
+      "gemTypes": 0,
+      "description": "编号：2\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 1,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 2,
+      "minimumScore": 0,
+      "defaultWeight": 25,
+      "id": "1212003",
+      "difficulty": 2,
+      "gemTypes": 0,
+      "description": "编号：3\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 2,
+      "minimumScore": 0,
+      "defaultWeight": 25,
+      "id": "1222009",
+      "difficulty": 2,
+      "gemTypes": 0,
+      "description": "编号：4\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 2,
+      "minimumScore": 0,
+      "defaultWeight": 25,
+      "id": "1222006",
+      "difficulty": 2,
+      "gemTypes": 0,
+      "description": "编号：5\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 1
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 3,
+      "minimumScore": 0,
+      "defaultWeight": 50,
+      "id": "1133007",
+      "difficulty": 3,
+      "gemTypes": 0,
+      "description": "编号：6\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 1,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 3,
+      "minimumScore": 0,
+      "defaultWeight": 50,
+      "id": "1313007",
+      "difficulty": 3,
+      "gemTypes": 0,
+      "description": "编号：7\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 3,
+      "minimumScore": 0,
+      "defaultWeight": 38,
+      "id": "1223007",
+      "difficulty": 4,
+      "gemTypes": 0,
+      "description": "编号：10\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 3,
+      "minimumScore": 0,
+      "defaultWeight": 38,
+      "id": "1223013",
+      "difficulty": 4,
+      "gemTypes": 0,
+      "description": "编号：11\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 3,
+      "minimumScore": 0,
+      "defaultWeight": 38,
+      "id": "1223014",
+      "difficulty": 4,
+      "gemTypes": 0,
+      "description": "编号：12\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 3,
+      "minimumScore": 0,
+      "defaultWeight": 38,
+      "id": "1223011",
+      "difficulty": 4,
+      "gemTypes": 0,
+      "description": "编号：13\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 200,
+      "defaultWeight": 50,
+      "id": "1224015",
+      "difficulty": 5,
+      "gemTypes": 0,
+      "description": "编号：16\n难度：1",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 200,
+      "defaultWeight": 22,
+      "id": "1234058",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：17\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 0,
+      "defaultWeight": 22,
+      "id": "1324046",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：18\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 100,
+      "defaultWeight": 22,
+      "id": "1234023",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：19\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 100,
+      "defaultWeight": 22,
+      "id": "1324029",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：20\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 0,
+      "defaultWeight": 22,
+      "id": "1234015",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：21\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 0,
+      "defaultWeight": 22,
+      "id": "1324053",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：22\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 0,
+      "defaultWeight": 22,
+      "id": "1234060",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：23\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 0,
+      "defaultWeight": 22,
+      "id": "1324043",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：24\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 100,
+      "defaultWeight": 22,
+      "id": "1234039",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：25\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 100,
+      "defaultWeight": 22,
+      "id": "1324023",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：26\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 0,
+      "defaultWeight": 22,
+      "id": "1234057",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：27\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 0,
+      "defaultWeight": 22,
+      "id": "1324058",
+      "difficulty": 6,
+      "gemTypes": 0,
+      "description": "编号：28\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 100,
+      "defaultWeight": 40,
+      "id": "1234030",
+      "difficulty": 7,
+      "gemTypes": 0,
+      "description": "编号：29\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 100,
+      "defaultWeight": 40,
+      "id": "1234051",
+      "difficulty": 7,
+      "gemTypes": 0,
+      "description": "编号：30\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 0,
+      "defaultWeight": 40,
+      "id": "1324045",
+      "difficulty": 7,
+      "gemTypes": 0,
+      "description": "编号：31\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 0,
+      "defaultWeight": 40,
+      "id": "1324030",
+      "difficulty": 7,
+      "gemTypes": 0,
+      "description": "编号：32\n难度：2",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 3,
+      "minimumScore": 0,
+      "defaultWeight": 13,
+      "id": "1333273",
+      "difficulty": 8,
+      "gemTypes": 0,
+      "description": "编号：8\n难度：3",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 3,
+      "minimumScore": 0,
+      "defaultWeight": 13,
+      "id": "1333084",
+      "difficulty": 8,
+      "gemTypes": 0,
+      "description": "编号：9\n难度：3",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 4,
+        "y": 1
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 100,
+      "defaultWeight": 50,
+      "id": "1144015",
+      "difficulty": 5,
+      "gemTypes": 0,
+      "description": "编号：14\n难度：3",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 1,
+        "y": 4
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 4,
+      "minimumScore": 100,
+      "defaultWeight": 50,
+      "id": "1414015",
+      "difficulty": 5,
+      "gemTypes": 0,
+      "description": "编号：15\n难度：3",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 2,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 6,
+      "minimumScore": 50,
+      "defaultWeight": 13,
+      "id": "1326063",
+      "difficulty": 8,
+      "gemTypes": 0,
+      "description": "编号：39\n难度：3",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 2
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 6,
+      "minimumScore": 50,
+      "defaultWeight": 13,
+      "id": "1236063",
+      "difficulty": 8,
+      "gemTypes": 0,
+      "description": "编号：40\n难度：3",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 5,
+        "y": 1
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 5,
+      "minimumScore": 50,
+      "defaultWeight": 0,
+      "id": "1155031",
+      "difficulty": 9,
+      "gemTypes": 0,
+      "description": "编号：33\n难度：4",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 1,
+        "y": 5
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 5,
+      "minimumScore": 50,
+      "defaultWeight": 0,
+      "id": "1515031",
+      "difficulty": 9,
+      "gemTypes": 0,
+      "description": "编号：34\n难度：4",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 5,
+      "minimumScore": 50,
+      "defaultWeight": 0,
+      "id": "1335079",
+      "difficulty": 9,
+      "gemTypes": 0,
+      "description": "编号：35\n难度：4",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 5,
+      "minimumScore": 5000,
+      "defaultWeight": 0,
+      "id": "1335457",
+      "difficulty": 9,
+      "gemTypes": 0,
+      "description": "编号：36\n难度：4",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 5,
+      "minimumScore": 5000,
+      "defaultWeight": 0,
+      "id": "1335484",
+      "difficulty": 9,
+      "gemTypes": 0,
+      "description": "编号：37\n难度：4",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": false,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        }
+      ],
+      "activePoints": 5,
+      "minimumScore": 0,
+      "defaultWeight": 0,
+      "id": "1335295",
+      "difficulty": 9,
+      "gemTypes": 0,
+      "description": "编号：38\n难度：4",
+      "spriteType": 0,
+      "isSpecial": false
+    },
+    {
+      "size": {
+        "x": 3,
+        "y": 3
+      },
+      "points": [
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": false
+        },
+        {
+          "isActive": true,
+          "hasCollectable": false,
+          "collectableName": "",
+          "hasMole": true
+        }
+      ],
+      "activePoints": 9,
+      "minimumScore": 0,
+      "defaultWeight": 0,
+      "id": "1339511",
+      "difficulty": 10,
+      "gemTypes": 0,
+      "description": "编号：41\n难度：5",
+      "spriteType": 0,
+      "isSpecial": false
+    }
+  ],
+  "isGroupLocked": true,
+  "createdTime": "2025-12-25 13:15:20",
+  "lastModifiedTime": "2026-01-04 16:49:17",
+  "creator": "ethan.li"
+}

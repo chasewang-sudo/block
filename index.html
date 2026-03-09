@@ -1876,9 +1876,11 @@
             <div class="debug-config-item">
                 <label for="debug-mole-dist-select">覆盖率模式</label>
                 <select id="debug-mole-dist-select">
+                    <option value="config_fixed" selected>config_fixed</option>
+                    <option value="config_fixed_uniform30">config_fixed_uniform30</option>
                     <option value="guardrails">干预</option>
                     <option value="flat">不干预</option>
-                    <option value="uniform_smooth" selected>uniform_smooth (p30,w12,l2,u5)</option>
+                    <option value="uniform_smooth">uniform_smooth (p30,w12,l2,u5)</option>
                     <option value="uniform_balanced">uniform_balanced</option>
                     <option value="segment_35_30_20_5">segment_35_30_20_5</option>
                     <option value="segment_25_20_15_5">segment_25_20_15_5</option>
@@ -2056,7 +2058,7 @@
     let goalTargetCurrent = 12;
     let maxMolesCapCurrent = 20;
     let moleSpawnRateCurrent = 0.30;
-    let moleDistributionModeCurrent = 'uniform_smooth';
+    let moleDistributionModeCurrent = 'config_fixed';
     let segmentRatesCurrent = { r0_2: 1.0, r3_29: 0.28, r30_59: 0.20, r60_89: 0.12, r90p: 0.05 };
     let moleRewardRateCurrent = 0.10;
     let useExternalSeedApi = (location.protocol === 'http:' || location.protocol === 'https:');
@@ -2064,7 +2066,11 @@
     let maxReward = 1.5;
     let rewardPerMole = 0.1;
     let maxKillsCurrent = 15;
-    let currentSeedMolePlan = { hasMole: [], posRoll: [] };
+    let currentSeedMolePlan = { hasMole: [], posRoll: [], templateId: '' };
+    let moleSpawnTemplateConfig = null;
+    let moleSpawnTemplateConfigUniform30 = null;
+    let moleFigureConfig = null;
+    let moleConfiguredPosById = new Map();
     let injectedPieceBatch = null;
     let pendingReviveContext = null;
     let currentMatchLog = null;
@@ -2391,6 +2397,68 @@
         return plan;
     }
 
+    async function ensureMoleConfigsLoaded() {
+        if (moleSpawnTemplateConfig && moleSpawnTemplateConfigUniform30 && moleFigureConfig) return true;
+        try {
+            const [templateResp, uniformResp, figureResp] = await Promise.all([
+                fetch('./mole_spawn_templates.json', { cache: 'no-store' }),
+                fetch('./mole_spawn_templates_uniform30.json', { cache: 'no-store' }),
+                fetch('./mole_figure_config.json', { cache: 'no-store' })
+            ]);
+            if (!templateResp.ok || !uniformResp.ok || !figureResp.ok) return false;
+            moleSpawnTemplateConfig = await templateResp.json();
+            moleSpawnTemplateConfigUniform30 = await uniformResp.json();
+            moleFigureConfig = await figureResp.json();
+            const nextMap = new Map();
+            (moleFigureConfig?.figures || []).forEach((fig) => {
+                const fid = String(fig?.id || '');
+                const w = Number(fig?.size?.x || 0);
+                const pts = Array.isArray(fig?.points) ? fig.points : [];
+                if (!fid || w <= 0) return;
+                for (let idx = 0; idx < pts.length; idx++) {
+                    const pt = pts[idx];
+                    if (pt?.isActive && pt?.hasMole === true) {
+                        nextMap.set(fid, { r: Math.floor(idx / w), c: idx % w });
+                        break;
+                    }
+                }
+            });
+            moleConfiguredPosById = nextMap;
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function buildConfigFixedMolePlan(seedCase, mode = moleDistributionModeCurrent) {
+        const blockIds = seedCase?.blockIds || [];
+        const n = blockIds.length;
+        const templateConfig = mode === 'config_fixed_uniform30' ? moleSpawnTemplateConfigUniform30 : moleSpawnTemplateConfig;
+        const templates = templateConfig?.templates || [];
+        if (!n || !templates.length) return { hasMole: new Array(n).fill(false), posRoll: [], templateId: '' };
+        const range = templateConfig?.windowRange || [0, 119];
+        const cycleLen = Math.max(1, Number(range[1]) - Number(range[0]) + 1);
+        const seedHash = stableNameHash(seedCase?.name || '');
+        const template = templates[Math.abs(seedHash) % templates.length] || templates[0];
+        const spawnSet = new Set((template?.spawnIndices || []).map((x) => Number(x)));
+        const hasMole = new Array(n).fill(false);
+        for (let i = 0; i < n; i++) {
+            hasMole[i] = spawnSet.has(i % cycleLen);
+        }
+        return { hasMole, posRoll: [], templateId: String(template?.templateId || '') };
+    }
+
+    function getConfiguredMolePos(shapeObj) {
+        const pos = moleConfiguredPosById.get(shapeObj?.id);
+        if (pos && shapeObj?.s?.[pos.r]?.[pos.c]) return { r: pos.r, c: pos.c };
+        for (let r = 0; r < shapeObj.s.length; r++) {
+            for (let c = 0; c < shapeObj.s[r].length; c++) {
+                if (shapeObj.s[r][c]) return { r, c };
+            }
+        }
+        return null;
+    }
+
     function buildSeedMolePlan(seedCase) {
         const blockIds = seedCase?.blockIds || [];
         const n = blockIds.length;
@@ -2401,6 +2469,9 @@
         const salt = (seedHash ^ 0x9e3779b9) >>> 0;
         const posSalt = (seedHash ^ 0x85ebca6b) >>> 0;
         const guardrails = isGuardrailsMode();
+        if (moleDistributionModeCurrent === 'config_fixed' || moleDistributionModeCurrent === 'config_fixed_uniform30') {
+            return buildConfigFixedMolePlan(seedCase, moleDistributionModeCurrent);
+        }
         for (let i = 0; i < n; i++) {
             const sid = blockIds[i];
             eligible[i] = !guardrails || isMoleEligibleByList({ id: sid });
@@ -2478,7 +2549,7 @@
     }
 
     function isSegmentMode(mode = moleDistributionModeCurrent) {
-        return mode === 'segment_35_30_20_5' || mode === 'segment_25_20_15_5' || mode === 'segment_28_20_12_5' || mode === 'segment_custom' || mode === 'uniform_smooth';
+        return mode === 'segment_35_30_20_5' || mode === 'segment_25_20_15_5' || mode === 'segment_28_20_12_5' || mode === 'segment_custom' || mode === 'uniform_smooth' || mode === 'config_fixed' || mode === 'config_fixed_uniform30';
     }
 
     function updateMoleRateVisibility(mode = moleDistributionModeCurrent) {
@@ -2681,14 +2752,21 @@
                 ? forcedAllowMole
                 : (guardrails ? forcedAllowMole : seededAllowMole));
             const posSalt = (getMolePatternSalt() >>> 6) + selectedStake * 17;
-            const fixedIdx = validCells.length
-                ? (debugUnlimitedMode
-                    ? Math.floor(runRandom() * validCells.length)
-                    : (guardrails
-                        ? ((pieces[i].seqIndex + posSalt) % validCells.length)
-                        : Math.min(validCells.length - 1, Math.floor((currentSeedMolePlan?.posRoll?.[seqMod] ?? deterministicRoll01(pieces[i].seqIndex, posSalt)) * validCells.length))))
-                : 0;
-            let molePos = allowMole ? validCells[fixedIdx] : null;
+            let molePos = null;
+            if (allowMole) {
+                if (!debugUnlimitedMode && (moleDistributionModeCurrent === 'config_fixed' || moleDistributionModeCurrent === 'config_fixed_uniform30')) {
+                    molePos = getConfiguredMolePos(shapeObj);
+                } else {
+                    const fixedIdx = validCells.length
+                        ? (debugUnlimitedMode
+                            ? Math.floor(runRandom() * validCells.length)
+                            : (guardrails
+                                ? ((pieces[i].seqIndex + posSalt) % validCells.length)
+                                : Math.min(validCells.length - 1, Math.floor((currentSeedMolePlan?.posRoll?.[seqMod] ?? deterministicRoll01(pieces[i].seqIndex, posSalt)) * validCells.length))))
+                        : 0;
+                    molePos = validCells[fixedIdx] || null;
+                }
+            }
             const moleType = allowMole ? 'normal' : null;
 
             pieceEl.style.gridTemplateColumns = `repeat(${shapeW}, 1fr)`;
@@ -2909,6 +2987,7 @@
                 );
             }
         }
+        updateIngameDebugView();
         shape.forEach((row, i) => {
             row.forEach((v, j) => {
                 if (v) {
@@ -3177,27 +3256,9 @@
             }, 70);
         } else {
             triggerInvalidDragFeedback();
-            const rebound = touchDrag.lastValidPlacement
-                || findNearestPlacement(touchDrag.data.shape, targetR, targetC, REBOUND_SNAP_RADIUS);
-            if (rebound && canPlace(touchDrag.data.shape, rebound.r, rebound.c)) {
-                const pos = getGhostTopLeftFromPlacement(rebound.r, rebound.c);
-                if (dragGhost) {
-                    dragGhost.classList.add('rebound');
-                    dragGhost.style.left = `${pos.left}px`;
-                    dragGhost.style.top = `${pos.top}px`;
-                }
-                clearPreview();
-                updatePreview(touchDrag.data.shape, rebound.r, rebound.c);
-                setTimeout(() => {
-                    commitPlacement(touchDrag.data, rebound.r, rebound.c, touchDrag.sourceEl);
-                    clearPreview();
-                    resetTouchDrag();
-                }, Math.max(90, SOFT_SNAP_MS));
-                return;
-            }
             boardShake();
             clearPreview();
-            setTimeout(() => resetTouchDrag(), 120);
+            animateGhostBackToTray();
         }
     }
 
@@ -3221,6 +3282,24 @@
         setTimeout(() => {
             if (dragGhost) dragGhost.classList.remove('invalid-flash');
         }, 180);
+    }
+
+    function animateGhostBackToTray() {
+        if (!touchDrag) return;
+        if (!dragGhost) {
+            resetTouchDrag();
+            return;
+        }
+        const sourceRect = touchDrag.sourceEl?.getBoundingClientRect();
+        if (!sourceRect) {
+            setTimeout(() => resetTouchDrag(), 120);
+            return;
+        }
+        dragGhost.classList.add('rebound');
+        dragGhost.classList.remove('magnetic');
+        dragGhost.style.left = `${sourceRect.left}px`;
+        dragGhost.style.top = `${sourceRect.top}px`;
+        setTimeout(() => resetTouchDrag(), Math.max(120, SOFT_SNAP_MS));
     }
 
     window.addEventListener('blur', () => resetTouchDrag());
@@ -3897,6 +3976,7 @@
     }
 
     async function rollSeedForDetail() {
+        await ensureMoleConfigsLoaded();
         let pick = null;
         try {
             pick = await tryFetchSeedFromApi();
@@ -3914,13 +3994,10 @@
     }
 
     function updateIngameDebugView() {
-        const label = Number.isFinite(activeReturnMultiplier) ? `${activeReturnMultiplier}x` : 'INF';
-        const mode = debugUnlimitedMode ? 'Unlimited' : 'Normal';
-        const seedText = debugUnlimitedMode
-            ? `${currentSeedName} | RNG:${runSeed ?? '--'}`
-            : currentSeedName;
-        const moleRate = isSegmentMode() ? 'SEG' : `${Math.round(getCurrentMoleSpawnRate() * 100)}%`;
-        ingameDebugMultiEl.innerText = `Mode: ${mode} | Return: ${label} | Mole: ${moleRate} | Dist:${moleDistributionModeCurrent} | RewardRate:${moleRewardRateCurrent.toFixed(2)} | Goal:${goalTargetCurrent} | Cap:${maxKillsCurrent} | Diff: ${currentDifficulty} | Seed: ${seedText}`;
+        const seedText = debugUnlimitedMode ? (runSeed ?? '--') : currentSeedName;
+        const templateText = currentSeedMolePlan?.templateId || '--';
+        const usedBlocks = currentMatchLog?.blocksPlaced ?? 0;
+        ingameDebugMultiEl.innerText = `Seed: ${seedText} | Template: ${templateText} | Blocks: ${usedBlocks}`;
     }
 
     function recalcRewards() {
@@ -3938,7 +4015,11 @@
             ? ` | Seg:${Math.round(segmentRatesCurrent.r0_2*100)}/${Math.round(segmentRatesCurrent.r3_29*100)}/${Math.round(segmentRatesCurrent.r30_59*100)}/${Math.round(segmentRatesCurrent.r60_89*100)}/${Math.round(segmentRatesCurrent.r90p*100)}`
             : (moleDistributionModeCurrent === 'uniform_smooth'
                 ? ' | Smooth:p30,w12,l2,u5'
-                : (moleDistributionModeCurrent === 'uniform_balanced' ? ' | Balanced:adaptive' : ''));
+                : (moleDistributionModeCurrent === 'uniform_balanced'
+                    ? ' | Balanced:adaptive'
+                    : ((moleDistributionModeCurrent === 'config_fixed' || moleDistributionModeCurrent === 'config_fixed_uniform30')
+                        ? ` | Config:${currentSeedMolePlan?.templateId || '--'}`
+                        : '')));
         debugHintEl.innerText = `倍率: ${activeReturnMultiplier}x (fixed) | Goal:${goalTargetCurrent} | Cap:${maxKillsCurrent} | 难度筛选: ${selectedDifficultyFilter} | 当前难度: ${currentDifficulty} | Seed: ${currentSeedName}${segText}`;
         if (debugGoalInputEl) debugGoalInputEl.value = String(goalTargetCurrent);
         if (debugDifficultySelectEl) debugDifficultySelectEl.value = selectedDifficultyFilter;
@@ -3976,7 +4057,7 @@
         const nextCap = Math.max(nextGoal, Number(debugMaxMolesInputEl?.value || maxMolesCapCurrent));
         const nextCoveragePct = Number(debugMoleRateInputEl?.value ?? (getCurrentMoleSpawnRate() * 100));
         const nextMoleDistModeRaw = String(debugMoleDistSelectEl?.value || moleDistributionModeCurrent);
-        const nextMoleDistMode = ['guardrails', 'flat', 'uniform_smooth', 'uniform_balanced', 'segment_35_30_20_5', 'segment_25_20_15_5', 'segment_28_20_12_5', 'segment_custom'].includes(nextMoleDistModeRaw)
+        const nextMoleDistMode = ['config_fixed', 'config_fixed_uniform30', 'guardrails', 'flat', 'uniform_smooth', 'uniform_balanced', 'segment_35_30_20_5', 'segment_25_20_15_5', 'segment_28_20_12_5', 'segment_custom'].includes(nextMoleDistModeRaw)
             ? nextMoleDistModeRaw
             : 'flat';
         const rawRewardRate = String(debugMoleRewardRateInputEl?.value ?? '').trim();
@@ -4281,6 +4362,7 @@
     (async () => {
         loadMatchLogs();
         applyStake(1);
+        await ensureMoleConfigsLoaded();
         await preloadGameAssetsOnGate();
         await rollSeedForDetail();
         rollLevelMultiplierForDetail();
