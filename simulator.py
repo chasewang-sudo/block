@@ -298,12 +298,14 @@ def load_mole_position_config() -> Dict[str, Tuple[int, int]]:
             fid = str(fig.get("id", ""))
             size = fig.get("size") or {}
             w = int(size.get("x", 0) or 0)
+            h = int(size.get("y", 0) or 0)
             pts = fig.get("points") or []
-            if not fid or w <= 0:
+            if not fid or w <= 0 or h <= 0:
                 continue
             for idx, pt in enumerate(pts):
                 if pt.get("isActive") and pt.get("hasMole") is True:
-                    pos_map[fid] = (idx // w, idx % w)
+                    r = h - 1 - (idx // w)
+                    pos_map[fid] = (r, idx % w)
                     break
     _MOLE_POSITION_CONFIG = pos_map
     return _MOLE_POSITION_CONFIG

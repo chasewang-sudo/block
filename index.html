@@ -2413,12 +2413,13 @@
             (moleFigureConfig?.figures || []).forEach((fig) => {
                 const fid = String(fig?.id || '');
                 const w = Number(fig?.size?.x || 0);
+                const h = Number(fig?.size?.y || 0);
                 const pts = Array.isArray(fig?.points) ? fig.points : [];
-                if (!fid || w <= 0) return;
+                if (!fid || w <= 0 || h <= 0) return;
                 for (let idx = 0; idx < pts.length; idx++) {
                     const pt = pts[idx];
                     if (pt?.isActive && pt?.hasMole === true) {
-                        nextMap.set(fid, { r: Math.floor(idx / w), c: idx % w });
+                        nextMap.set(fid, { r: h - 1 - Math.floor(idx / w), c: idx % w });
                         break;
                     }
                 }
