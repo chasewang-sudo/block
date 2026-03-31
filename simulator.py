@@ -19,11 +19,39 @@ USE_MOLE_GUARDRAILS = False
 MOLE_MODE_GUARDRAILS = "guardrails"
 MOLE_MODE_FLAT = "flat"
 MOLE_MODE_SEGMENT_V3 = "segment_35_30_20_5"
-MOLE_MODES = {MOLE_MODE_GUARDRAILS, MOLE_MODE_FLAT, MOLE_MODE_SEGMENT_V3}
+MOLE_MODE_SEGMENT_V4 = "segment_25_20_15_5"
+MOLE_MODE_SEGMENT_V5 = "segment_28_20_12_5"
+MOLE_MODE_SEGMENT_CUSTOM = "segment_custom"
+MOLE_MODE_UNIFORM_SMOOTH = "uniform_smooth"
+MOLE_MODE_UNIFORM_BALANCED = "uniform_balanced"
+MOLE_MODE_CONFIG_FIXED = "config_fixed"
+MOLE_MODE_CONFIG_FIXED_UNIFORM30 = "config_fixed_uniform30"
+MOLE_MODES = {
+    MOLE_MODE_GUARDRAILS,
+    MOLE_MODE_FLAT,
+    MOLE_MODE_SEGMENT_V3,
+    MOLE_MODE_SEGMENT_V4,
+    MOLE_MODE_SEGMENT_V5,
+    MOLE_MODE_SEGMENT_CUSTOM,
+    MOLE_MODE_UNIFORM_SMOOTH,
+    MOLE_MODE_UNIFORM_BALANCED,
+    MOLE_MODE_CONFIG_FIXED,
+    MOLE_MODE_CONFIG_FIXED_UNIFORM30,
+}
 MOLE_DISTRIBUTION_FLAT = "flat"
 MOLE_DISTRIBUTION_SEGMENT_V3 = "segment_35_30_20_5"
-DEFAULT_MOLE_DISTRIBUTION = MOLE_DISTRIBUTION_SEGMENT_V3
-DEFAULT_MOLE_MODE = MOLE_MODE_SEGMENT_V3
+MOLE_DISTRIBUTION_SEGMENT_V4 = "segment_25_20_15_5"
+MOLE_DISTRIBUTION_SEGMENT_V5 = "segment_28_20_12_5"
+MOLE_DISTRIBUTION_SEGMENT_CUSTOM = "segment_custom"
+MOLE_DISTRIBUTION_UNIFORM_SMOOTH = "uniform_smooth"
+MOLE_DISTRIBUTION_UNIFORM_BALANCED = "uniform_balanced"
+MOLE_DISTRIBUTION_CONFIG_FIXED = "config_fixed"
+UNIFORM_SMOOTH_RATE = 0.30
+UNIFORM_SMOOTH_WINDOW = 12
+UNIFORM_SMOOTH_MIN = 2
+UNIFORM_SMOOTH_MAX = 5
+DEFAULT_MOLE_DISTRIBUTION = MOLE_DISTRIBUTION_CONFIG_FIXED
+DEFAULT_MOLE_MODE = MOLE_MODE_CONFIG_FIXED
 FORCE_SECOND_BLOCK = False
 FORCE_ONE_MOLE_IN_FIRST_THREE = True
 FIXED_RETURN_MULTIPLIER = 2.0
@@ -52,6 +80,16 @@ POLICY_ALIASES = {
     "v3": "lookahead_2ply",
     "v4": "triplet_beam",
 }
+
+ROOT_DIR = Path(__file__).resolve().parent
+MOLE_TEMPLATE_FILE = ROOT_DIR / "mole_spawn_templates.json"
+MOLE_TEMPLATE_FILE_UNIFORM30 = ROOT_DIR / "mole_spawn_templates_uniform30.json"
+MOLE_FIGURE_FILE = ROOT_DIR / "mole_figure_config.json"
+_MOLE_TEMPLATE_CONFIG = None
+_MOLE_TEMPLATE_CONFIG_UNIFORM30 = None
+_MOLE_POSITION_CONFIG = None
+_SEED_MOLE_PLAN_CACHE: Dict[Tuple, dict] = {}
+_SEED_CASES_CACHE: Dict[Tuple[str, int], List[dict]] = {}
 
 
 BLOCK_FIGURES = [
@@ -227,6 +265,89 @@ def deterministic_roll01(seq_index: int, salt: int = 0) -> float:
     return (x & 0xFFFFFFFF) / 4294967296.0
 
 
+def load_mole_template_config(mole_mode: str = MOLE_MODE_CONFIG_FIXED) -> dict:
+    global _MOLE_TEMPLATE_CONFIG, _MOLE_TEMPLATE_CONFIG_UNIFORM30
+    if mole_mode == MOLE_MODE_CONFIG_FIXED_UNIFORM30:
+        if _MOLE_TEMPLATE_CONFIG_UNIFORM30 is not None:
+            return _MOLE_TEMPLATE_CONFIG_UNIFORM30
+        if MOLE_TEMPLATE_FILE_UNIFORM30.exists():
+            with MOLE_TEMPLATE_FILE_UNIFORM30.open("r", encoding="utf-8") as f:
+                _MOLE_TEMPLATE_CONFIG_UNIFORM30 = json.load(f)
+        else:
+            _MOLE_TEMPLATE_CONFIG_UNIFORM30 = {"templates": []}
+        return _MOLE_TEMPLATE_CONFIG_UNIFORM30
+    if _MOLE_TEMPLATE_CONFIG is not None:
+        return _MOLE_TEMPLATE_CONFIG
+    if MOLE_TEMPLATE_FILE.exists():
+        with MOLE_TEMPLATE_FILE.open("r", encoding="utf-8") as f:
+            _MOLE_TEMPLATE_CONFIG = json.load(f)
+    else:
+        _MOLE_TEMPLATE_CONFIG = {"templates": []}
+    return _MOLE_TEMPLATE_CONFIG
+
+
+def load_mole_position_config() -> Dict[str, Tuple[int, int]]:
+    global _MOLE_POSITION_CONFIG
+    if _MOLE_POSITION_CONFIG is not None:
+        return _MOLE_POSITION_CONFIG
+    pos_map: Dict[str, Tuple[int, int]] = {}
+    if MOLE_FIGURE_FILE.exists():
+        with MOLE_FIGURE_FILE.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        for fig in data.get("figures", []):
+            fid = str(fig.get("id", ""))
+            size = fig.get("size") or {}
+            w = int(size.get("x", 0) or 0)
+            h = int(size.get("y", 0) or 0)
+            pts = fig.get("points") or []
+            if not fid or w <= 0 or h <= 0:
+                continue
+            for idx, pt in enumerate(pts):
+                if pt.get("isActive") and pt.get("hasMole") is True:
+                    r = h - 1 - (idx // w)
+                    pos_map[fid] = (r, idx % w)
+                    break
+    _MOLE_POSITION_CONFIG = pos_map
+    return _MOLE_POSITION_CONFIG
+
+
+def build_config_fixed_mole_plan(seed_case: dict, mole_mode: str = MOLE_MODE_CONFIG_FIXED) -> List[bool]:
+    block_ids = seed_case.get("blockIds") or []
+    n = len(block_ids)
+    if n <= 0:
+        return []
+    cfg = load_mole_template_config(mole_mode)
+    templates = cfg.get("templates") or []
+    if not templates:
+        return [False] * n
+    cycle_range = cfg.get("windowRange") or [0, 119]
+    cycle_len = max(1, int(cycle_range[1]) - int(cycle_range[0]) + 1)
+    seed_hash = stable_name_hash(seed_case.get("name", ""))
+    template = templates[seed_hash % len(templates)]
+    spawn_indices = {int(x) for x in (template.get("spawnIndices") or [])}
+    return [((i % cycle_len) in spawn_indices) for i in range(n)]
+
+
+def get_config_fixed_template_id(seed_case: dict, mole_mode: str = MOLE_MODE_CONFIG_FIXED) -> str:
+    cfg = load_mole_template_config(mole_mode)
+    templates = cfg.get("templates") or []
+    if not templates:
+        return ""
+    seed_hash = stable_name_hash(seed_case.get("name", ""))
+    template = templates[seed_hash % len(templates)]
+    return str(template.get("templateId") or "")
+
+
+def get_configured_mole_pos(shape_id: str, shape: List[List[int]]) -> Optional[Tuple[int, int]]:
+    pos = load_mole_position_config().get(shape_id)
+    if pos is not None:
+        r, c = pos
+        if 0 <= r < len(shape) and 0 <= c < len(shape[r]) and shape[r][c]:
+            return pos
+    valid = [(r, c) for r, row in enumerate(shape) for c, v in enumerate(row) if v]
+    return valid[0] if valid else None
+
+
 def stable_name_hash(name: str) -> int:
     x = 2166136261
     for ch in name:
@@ -253,8 +374,10 @@ def is_mole_eligible(shape_id: str) -> bool:
     return shape_id in MOLE_WHITELIST and shape_id not in MOLE_BLACKLIST
 
 
-def get_mole_spawn_rate_for_index(seq_index: int, base_rate: float, mode: str) -> float:
+def get_mole_spawn_rate_for_index(seq_index: int, base_rate: float, mode: str, segment_rates: Optional[Dict[str, float]] = None) -> float:
     m = (mode or "").strip().lower()
+    if m == MOLE_DISTRIBUTION_UNIFORM_SMOOTH:
+        return UNIFORM_SMOOTH_RATE
     if m == MOLE_DISTRIBUTION_SEGMENT_V3:
         if seq_index <= 2:
             return 1.0
@@ -265,7 +388,165 @@ def get_mole_spawn_rate_for_index(seq_index: int, base_rate: float, mode: str) -
         if seq_index <= 89:
             return 0.20
         return 0.05
+    if m == MOLE_DISTRIBUTION_SEGMENT_V4:
+        if seq_index <= 2:
+            return 1.0
+        if seq_index <= 29:
+            return 0.25
+        if seq_index <= 59:
+            return 0.20
+        if seq_index <= 89:
+            return 0.15
+        return 0.05
+    if m == MOLE_DISTRIBUTION_SEGMENT_V5:
+        if seq_index <= 2:
+            return 1.0
+        if seq_index <= 29:
+            return 0.28
+        if seq_index <= 59:
+            return 0.20
+        if seq_index <= 89:
+            return 0.12
+        return 0.05
+    if m == MOLE_DISTRIBUTION_SEGMENT_CUSTOM:
+        rates = segment_rates or {}
+        r0_2 = min(1.0, max(0.0, float(rates.get("r0_2", 1.0))))
+        r3_29 = min(1.0, max(0.0, float(rates.get("r3_29", base_rate))))
+        r30_59 = min(1.0, max(0.0, float(rates.get("r30_59", base_rate))))
+        r60_89 = min(1.0, max(0.0, float(rates.get("r60_89", base_rate))))
+        r90p = min(1.0, max(0.0, float(rates.get("r90p", base_rate))))
+        if seq_index <= 2:
+            return r0_2
+        if seq_index <= 29:
+            return r3_29
+        if seq_index <= 59:
+            return r30_59
+        if seq_index <= 89:
+            return r60_89
+        return r90p
     return base_rate
+
+
+def smooth_plan_by_window(
+    has_mole: List[bool],
+    eligible: List[bool],
+    seed_hash: int,
+    window_size: int,
+    low: int,
+    high: int,
+) -> List[bool]:
+    n = len(has_mole)
+    if n <= 0:
+        return []
+    plan = list(has_mole)
+    w = max(1, min(window_size, n))
+    low = max(0, min(low, w))
+    high = max(low, min(high, w))
+    tweak_salt = seed_hash ^ 0x27D4EB2F
+
+    def score(idx: int) -> float:
+        return deterministic_roll01(idx, tweak_salt)
+
+    max_iters = 8
+    for _ in range(max_iters):
+        changed = False
+        starts = range(0, n - w + 1) if n >= w else [0]
+        for start in starts:
+            end = start + w
+            window_indices = list(range(start, end))
+            count = sum(1 for i in window_indices if plan[i])
+            if count < low:
+                need = low - count
+                cands = [i for i in window_indices if eligible[i] and (not plan[i])]
+                cands.sort(key=lambda i: (-score(i), i))
+                for i in cands[:need]:
+                    plan[i] = True
+                    changed = True
+            elif count > high:
+                need = count - high
+                cands = [i for i in window_indices if eligible[i] and plan[i]]
+                cands.sort(key=lambda i: (score(i), i))
+                for i in cands[:need]:
+                    plan[i] = False
+                    changed = True
+        if not changed:
+            break
+    return plan
+
+
+def build_balanced_mole_plan(
+    block_ids: List[str],
+    base_rate: float,
+    use_mole_guardrails: bool,
+    seed_hash: int,
+) -> List[bool]:
+    n = len(block_ids)
+    if n <= 0:
+        return []
+    plan = [False] * n
+    eligible = [((not use_mole_guardrails) or is_mole_eligible(sid)) for sid in block_ids]
+    forced = 0
+    for i in range(min(3, n)):
+        if eligible[i]:
+            plan[i] = True
+            forced += 1
+
+    total_target = max(forced, round(n * base_rate))
+    placed = forced
+    gap = 0
+    salt = seed_hash ^ 0x6A09E667
+
+    eligible_suffix = [0] * (n + 1)
+    for i in range(n - 1, -1, -1):
+        eligible_suffix[i] = eligible_suffix[i + 1] + (1 if eligible[i] else 0)
+
+    for i in range(3, n):
+        if not eligible[i]:
+            gap += 1
+            continue
+        remaining_eligible = eligible_suffix[i]
+        remaining_target = max(0, total_target - placed)
+        base_p = remaining_target / remaining_eligible if remaining_eligible > 0 else 0.0
+
+        recent_start = max(0, i - 6)
+        recent_hits = sum(1 for x in plan[recent_start:i] if x)
+        expected_so_far = total_target * ((i + 1) / n)
+        deficit = expected_so_far - placed
+
+        adjusted = base_p
+        adjusted += min(0.18, max(0.0, gap - 2) * 0.035)
+        adjusted += max(-0.12, min(0.12, deficit * 0.03))
+        adjusted -= max(0.0, recent_hits - 1) * 0.06
+        adjusted = min(0.92, max(0.02, adjusted))
+
+        if gap >= 9:
+            adjusted = max(adjusted, 0.82)
+
+        roll = deterministic_roll01(i, salt)
+        if roll < adjusted:
+            plan[i] = True
+            placed += 1
+            gap = 0
+        else:
+            gap += 1
+
+    # Light correction so the realized density stays close to the configured rate.
+    desired = total_target
+    current = sum(1 for x in plan if x)
+    tweak_salt = seed_hash ^ 0x3C6EF372
+    if current < desired:
+        need = desired - current
+        cands = [i for i in range(3, n) if eligible[i] and not plan[i]]
+        cands.sort(key=lambda i: (-deterministic_roll01(i, tweak_salt), i))
+        for i in cands[:need]:
+            plan[i] = True
+    elif current > desired:
+        need = current - desired
+        cands = [i for i in range(3, n) if eligible[i] and plan[i]]
+        cands.sort(key=lambda i: (deterministic_roll01(i, tweak_salt), i))
+        for i in cands[:need]:
+            plan[i] = False
+    return plan
 
 
 def resolve_mole_mode(mole_mode: str) -> Tuple[bool, str]:
@@ -276,26 +557,87 @@ def resolve_mole_mode(mole_mode: str) -> Tuple[bool, str]:
         return True, MOLE_DISTRIBUTION_FLAT
     if m == MOLE_MODE_SEGMENT_V3:
         return False, MOLE_DISTRIBUTION_SEGMENT_V3
+    if m == MOLE_MODE_SEGMENT_V4:
+        return False, MOLE_DISTRIBUTION_SEGMENT_V4
+    if m == MOLE_MODE_SEGMENT_V5:
+        return False, MOLE_DISTRIBUTION_SEGMENT_V5
+    if m == MOLE_MODE_SEGMENT_CUSTOM:
+        return False, MOLE_DISTRIBUTION_SEGMENT_CUSTOM
+    if m == MOLE_MODE_UNIFORM_SMOOTH:
+        return False, MOLE_DISTRIBUTION_UNIFORM_SMOOTH
+    if m == MOLE_MODE_UNIFORM_BALANCED:
+        return False, MOLE_DISTRIBUTION_UNIFORM_BALANCED
+    if m == MOLE_MODE_CONFIG_FIXED:
+        return False, MOLE_DISTRIBUTION_CONFIG_FIXED
+    if m == MOLE_MODE_CONFIG_FIXED_UNIFORM30:
+        return False, MOLE_MODE_CONFIG_FIXED_UNIFORM30
     return False, MOLE_DISTRIBUTION_FLAT
 
 
-def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guardrails: bool, mole_distribution: str) -> dict:
+def build_seed_mole_plan(seed_case: dict, mole_spawn_rate: float, use_mole_guardrails: bool, mole_distribution: str, segment_rates: Optional[Dict[str, float]] = None) -> dict:
+    segment_rates = segment_rates or {}
+    cache_key = (
+        seed_case.get("name", ""),
+        tuple(seed_case.get("blockIds") or []),
+        round(float(mole_spawn_rate), 6),
+        bool(use_mole_guardrails),
+        str(mole_distribution),
+        round(float(segment_rates.get("r0_2", 0.0)), 6),
+        round(float(segment_rates.get("r3_29", 0.0)), 6),
+        round(float(segment_rates.get("r30_59", 0.0)), 6),
+        round(float(segment_rates.get("r60_89", 0.0)), 6),
+        round(float(segment_rates.get("r90p", 0.0)), 6),
+    )
+    cached = _SEED_MOLE_PLAN_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
     block_ids = seed_case.get("blockIds") or []
     n = len(block_ids)
     if n <= 0:
         return {"has_mole": [], "pos_roll": []}
+    if mole_distribution in {MOLE_DISTRIBUTION_CONFIG_FIXED, MOLE_MODE_CONFIG_FIXED_UNIFORM30}:
+        plan = {
+            "has_mole": build_config_fixed_mole_plan(seed_case, mole_distribution),
+            "pos_roll": [],
+            "templateId": get_config_fixed_template_id(seed_case, mole_distribution),
+        }
+        _SEED_MOLE_PLAN_CACHE[cache_key] = plan
+        return plan
     seed_hash = stable_name_hash(seed_case.get("name", ""))
     salt = seed_hash ^ 0x9E3779B9
     pos_salt = seed_hash ^ 0x85EBCA6B
     has_mole = [False] * n
+    eligible_flags = [False] * n
     pos_roll = [0.0] * n
     for i, sid in enumerate(block_ids):
-        rate_i = get_mole_spawn_rate_for_index(i, mole_spawn_rate, mole_distribution)
+        rate_i = get_mole_spawn_rate_for_index(i, mole_spawn_rate, mole_distribution, segment_rates)
         eligible = (not use_mole_guardrails) or is_mole_eligible(sid)
+        eligible_flags[i] = eligible
         roll = deterministic_roll01(i, salt)
         has_mole[i] = eligible and (roll < rate_i)
         pos_roll[i] = deterministic_roll01(i, pos_salt)
-    return {"has_mole": has_mole, "pos_roll": pos_roll}
+    if mole_distribution == MOLE_DISTRIBUTION_UNIFORM_SMOOTH:
+        for i in range(min(3, n)):
+            if eligible_flags[i]:
+                has_mole[i] = True
+        has_mole = smooth_plan_by_window(
+            has_mole,
+            eligible_flags,
+            seed_hash,
+            UNIFORM_SMOOTH_WINDOW,
+            UNIFORM_SMOOTH_MIN,
+            UNIFORM_SMOOTH_MAX,
+        )
+        for i in range(min(3, n)):
+            if eligible_flags[i]:
+                has_mole[i] = True
+    elif mole_distribution == MOLE_DISTRIBUTION_UNIFORM_BALANCED:
+        has_mole = build_balanced_mole_plan(block_ids, mole_spawn_rate, use_mole_guardrails, seed_hash)
+    elif mole_distribution in {MOLE_DISTRIBUTION_CONFIG_FIXED, MOLE_MODE_CONFIG_FIXED_UNIFORM30}:
+        has_mole = build_config_fixed_mole_plan(seed_case, mole_distribution)
+    plan = {"has_mole": has_mole, "pos_roll": pos_roll, "templateId": ""}
+    _SEED_MOLE_PLAN_CACHE[cache_key] = plan
+    return plan
 
 
 def can_place(grid: List[List[int]], shape: List[List[int]], r: int, c: int) -> bool:
@@ -328,6 +670,7 @@ def simulate(
     collect_trace: bool = False,
     mole_reward_rate: float = MOLE_REWARD_RATE,
     mole_mode: str = DEFAULT_MOLE_MODE,
+    segment_rates: Optional[Dict[str, float]] = None,
 ) -> dict:
     grid = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
     holes = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
@@ -364,14 +707,35 @@ def simulate(
     mole_spawn_rate = min(1.0, max(0.0, float(mole_spawn_rate)))
     mole_reward_rate = max(0.0, float(mole_reward_rate))
     use_mole_guardrails, mole_distribution = resolve_mole_mode(mole_mode)
-    mole_mode = MOLE_MODE_GUARDRAILS if use_mole_guardrails else (MOLE_MODE_SEGMENT_V3 if mole_distribution == MOLE_DISTRIBUTION_SEGMENT_V3 else MOLE_MODE_FLAT)
+    segment_rates = segment_rates or {}
+    if use_mole_guardrails:
+        mole_mode = MOLE_MODE_GUARDRAILS
+    elif mole_distribution == MOLE_DISTRIBUTION_SEGMENT_V3:
+        mole_mode = MOLE_MODE_SEGMENT_V3
+    elif mole_distribution == MOLE_DISTRIBUTION_SEGMENT_V4:
+        mole_mode = MOLE_MODE_SEGMENT_V4
+    elif mole_distribution == MOLE_DISTRIBUTION_SEGMENT_V5:
+        mole_mode = MOLE_MODE_SEGMENT_V5
+    elif mole_distribution == MOLE_DISTRIBUTION_SEGMENT_CUSTOM:
+        mole_mode = MOLE_MODE_SEGMENT_CUSTOM
+    elif mole_distribution == MOLE_DISTRIBUTION_UNIFORM_SMOOTH:
+        mole_mode = MOLE_MODE_UNIFORM_SMOOTH
+    elif mole_distribution == MOLE_DISTRIBUTION_UNIFORM_BALANCED:
+        mole_mode = MOLE_MODE_UNIFORM_BALANCED
+    elif mole_distribution == MOLE_DISTRIBUTION_CONFIG_FIXED:
+        mole_mode = MOLE_MODE_CONFIG_FIXED
+    elif mole_distribution == MOLE_MODE_CONFIG_FIXED_UNIFORM30:
+        mole_mode = MOLE_MODE_CONFIG_FIXED_UNIFORM30
+    else:
+        mole_mode = MOLE_MODE_FLAT
     mole_reward = entry_fee * mole_reward_rate
     max_reward = max_moles_cap * mole_reward
     salt = get_mole_pattern_salt(multiplier) ^ (1 * 131)
     pos_salt = (get_mole_pattern_salt(multiplier) >> 6) + 17
-    seed_mole_plan = build_seed_mole_plan(seed_case, mole_spawn_rate, use_mole_guardrails, mole_distribution)
+    seed_mole_plan = build_seed_mole_plan(seed_case, mole_spawn_rate, use_mole_guardrails, mole_distribution, segment_rates)
     seed_has_mole = seed_mole_plan["has_mole"]
     seed_pos_roll = seed_mole_plan["pos_roll"]
+    seed_template_id = seed_mole_plan.get("templateId", "")
 
     def next_piece_triplet() -> List[Piece]:
         nonlocal seq_cursor
@@ -420,14 +784,18 @@ def simulate(
 
         for p in pieces:
             seq_mod = p.seq_index % len(block_ids)
-            valid = [(r, c) for r, row in enumerate(p.shape) for c, v in enumerate(row) if v]
             if p.has_mole and (not use_mole_guardrails or is_mole_eligible(p.shape_id) or p.seq_index < 3):
                 if use_mole_guardrails:
+                    valid = [(r, c) for r, row in enumerate(p.shape) for c, v in enumerate(row) if v]
                     j = (p.seq_index + pos_salt) % len(valid)
+                    p.mole_pos = valid[j]
+                elif mole_distribution in {MOLE_DISTRIBUTION_CONFIG_FIXED, MOLE_MODE_CONFIG_FIXED_UNIFORM30}:
+                    p.mole_pos = get_configured_mole_pos(p.shape_id, p.shape)
                 else:
+                    valid = [(r, c) for r, row in enumerate(p.shape) for c, v in enumerate(row) if v]
                     roll = seed_pos_roll[seq_mod] if seq_mod < len(seed_pos_roll) else 0.0
                     j = min(len(valid) - 1, int(roll * len(valid)))
-                p.mole_pos = valid[j]
+                    p.mole_pos = valid[j]
             else:
                 p.has_mole = False
                 p.mole_pos = None
@@ -842,6 +1210,7 @@ def simulate(
 
     out = {
         "seed": seed_case["name"],
+        "templateId": seed_template_id,
         "difficulty": parse_difficulty(seed_case["name"]),
         "result": result,
         "stake": entry_fee,
@@ -877,6 +1246,10 @@ def simulate(
 def load_seed_cases(seeds_dir: Path, max_seeds: int = 0) -> List[dict]:
     if seeds_dir.name != "ExportSeeds" and (seeds_dir / "ExportSeeds").is_dir():
         seeds_dir = seeds_dir / "ExportSeeds"
+    cache_key = (str(seeds_dir.resolve()), int(max_seeds or 0))
+    cached = _SEED_CASES_CACHE.get(cache_key)
+    if cached is not None:
+        return list(cached)
 
     def stable_name_hash(name: str) -> int:
         # Deterministic lightweight hash; used to avoid lexicographic sampling bias.
@@ -906,6 +1279,7 @@ def load_seed_cases(seeds_dir: Path, max_seeds: int = 0) -> List[dict]:
                     "blockIds": [x.get("block_id") for x in d.get("block_sequence", []) if x.get("block_id")],
                 }
             )
+    _SEED_CASES_CACHE[cache_key] = list(out)
     return out
 
 
@@ -929,7 +1303,7 @@ def summarize(rows: List[dict]):
         st = sum(x["stake"] for x in rs)
         ea = sum(x["earned"] for x in rs)
         wr = sum(1 for x in rs if x["result"] != "Fail") / len(rs)
-        print(f"{diff:>7}  n={len(rs):5d}  win={wr:.3f}  RTP={ea/st:.3f}")
+        print(f"{diff:>7}  n={len(rs):5d}  win={wr:.3f}  RTP={ea/st:.3f}  stake={st:.2f}  earned={ea:.2f}")
 
 
 def main():
@@ -939,8 +1313,13 @@ def main():
     ap.add_argument("--entry-fee", type=float, default=1.0)
     ap.add_argument("--goal-target", type=int, default=12, help="Required mole captures to count as clear")
     ap.add_argument("--max-moles", type=int, default=20, help="Mole capture cap for max reward")
-    ap.add_argument("--mole-rate", type=float, default=0.40, help="Mole coverage rate [0,1]")
+    ap.add_argument("--mole-rate", type=float, default=0.30, help="Mole coverage rate [0,1]")
     ap.add_argument("--mole-mode", default=DEFAULT_MOLE_MODE, choices=sorted(MOLE_MODES), help="Mole generation mode")
+    ap.add_argument("--seg-rate-0-2", type=float, default=1.0, help="Custom segment rate for seq 0-2 [0,1]")
+    ap.add_argument("--seg-rate-3-29", type=float, default=0.28, help="Custom segment rate for seq 3-29 [0,1]")
+    ap.add_argument("--seg-rate-30-59", type=float, default=0.20, help="Custom segment rate for seq 30-59 [0,1]")
+    ap.add_argument("--seg-rate-60-89", type=float, default=0.12, help="Custom segment rate for seq 60-89 [0,1]")
+    ap.add_argument("--seg-rate-90p", type=float, default=0.05, help="Custom segment rate for seq 90+ [0,1]")
     ap.add_argument("--mole-reward-rate", type=float, default=MOLE_REWARD_RATE, help="Single-mole reward coefficient vs entry fee")
     ap.add_argument("--difficulty", default="D5", help="Difficulty filter, e.g. D5/Easy/R14/ALL")
     ap.add_argument(
@@ -979,6 +1358,13 @@ def main():
 
     rng = random.Random(args.rng_seed)
     rows = []
+    segment_rates = {
+        "r0_2": min(1.0, max(0.0, float(args.seg_rate_0_2))),
+        "r3_29": min(1.0, max(0.0, float(args.seg_rate_3_29))),
+        "r30_59": min(1.0, max(0.0, float(args.seg_rate_30_59))),
+        "r60_89": min(1.0, max(0.0, float(args.seg_rate_60_89))),
+        "r90p": min(1.0, max(0.0, float(args.seg_rate_90p))),
+    }
 
     if args.runs and args.runs > 0:
         balance_all = args.all_balanced and (str(args.difficulty).strip().upper() == "ALL")
@@ -997,6 +1383,7 @@ def main():
                     False,
                     args.mole_reward_rate,
                     args.mole_mode,
+                    segment_rates,
                 )
             )
     else:
@@ -1015,6 +1402,7 @@ def main():
                     False,
                     args.mole_reward_rate,
                     args.mole_mode,
+                    segment_rates,
                 )
             )
 

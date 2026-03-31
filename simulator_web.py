@@ -4,17 +4,26 @@ import html
 import json
 import mimetypes
 import random
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from uuid import uuid4
+from urllib.parse import parse_qs, urlparse, unquote
 
 from simulator import (
     DEFAULT_POLICY,
     DEFAULT_MOLE_MODE,
+    MOLE_MODE_CONFIG_FIXED,
     MOLE_MODE_FLAT,
     MOLE_MODE_GUARDRAILS,
     MOLE_MODE_SEGMENT_V3,
+    MOLE_MODE_SEGMENT_V4,
+    MOLE_MODE_SEGMENT_V5,
+    MOLE_MODE_SEGMENT_CUSTOM,
+    MOLE_MODE_UNIFORM_SMOOTH,
+    MOLE_MODE_UNIFORM_BALANCED,
+    MOLE_MODE_CONFIG_FIXED_UNIFORM30,
     MOLE_MODES,
     MOLE_REWARD_RATE,
     build_run_seed_list,
@@ -29,6 +38,8 @@ from simulator import (
 
 LAST_CSV = b""
 LAST_CSV_NAME = "sim_results.csv"
+RUN_JOBS = {}
+RUN_JOBS_LOCK = threading.Lock()
 
 
 def build_seed_file_index(seeds_dir: Path):
@@ -57,6 +68,7 @@ def read_seed_case_from_file(path: Path):
 
 FIELD_LABELS_ZH = {
     "seed": "种子名",
+    "templateId": "模板ID",
     "difficulty": "难度",
     "level": "关卡",
     "mode": "模式",
@@ -97,6 +109,7 @@ PREFERRED_FIELD_ORDER = [
     "startedAt",
     "endedAt",
     "seed",
+    "templateId",
     "difficulty",
     "level",
     "mode",
@@ -133,6 +146,17 @@ PREFERRED_FIELD_ORDER = [
     "rtp",
 ]
 
+CONCISE_FIELDS = [
+    "seed",
+    "templateId",
+    "difficulty",
+    "maxAliveMoles",
+    "maxNoMolePlaceStreak",
+    "earned",
+    "remainingTime",
+    "result",
+]
+
 
 def to_int(val: str, default: int) -> int:
     try:
@@ -148,19 +172,22 @@ def to_float(val: str, default: float) -> float:
         return default
 
 
-def ordered_fields(rows):
+def ordered_fields(rows, concise_report: bool = False):
     if not rows:
         return []
+    if concise_report:
+        keys = list(rows[0].keys())
+        return [k for k in CONCISE_FIELDS if k in keys]
     keys = list(rows[0].keys())
     ordered = [k for k in PREFERRED_FIELD_ORDER if k in keys]
     ordered.extend([k for k in keys if k not in ordered])
     return ordered
 
 
-def build_csv(rows):
+def build_csv(rows, concise_report: bool = False):
     if not rows:
         return b""
-    header = ordered_fields(rows)
+    header = ordered_fields(rows, concise_report)
     zh = [FIELD_LABELS_ZH.get(k, k) for k in header]
     lines = [",".join(header), ",".join(zh)]
     for row in rows:
@@ -176,10 +203,38 @@ def build_csv(rows):
 
 def summarize(rows, duration_seconds: float = 0.0):
     if not rows:
-        return {"matches": 0, "win_rate": 0.0, "rtp": 0.0, "stake": 0.0, "earned": 0.0, "duration_seconds": duration_seconds}
+        return {
+            "matches": 0,
+            "win_rate": 0.0,
+            "rtp": 0.0,
+            "stake": 0.0,
+            "earned": 0.0,
+            "duration_seconds": duration_seconds,
+            "by_difficulty": [],
+        }
     stake = sum(r["stake"] for r in rows)
     earned = sum(r["earned"] for r in rows)
     win = sum(1 for r in rows if r["result"] != "Fail")
+    by_diff = {}
+    for row in rows:
+        diff = str(row.get("difficulty", "Unknown"))
+        by_diff.setdefault(diff, []).append(row)
+    by_difficulty = []
+    for diff in sorted(by_diff.keys()):
+        diff_rows = by_diff[diff]
+        diff_stake = sum(r["stake"] for r in diff_rows)
+        diff_earned = sum(r["earned"] for r in diff_rows)
+        diff_win = sum(1 for r in diff_rows if r["result"] != "Fail")
+        by_difficulty.append(
+            {
+                "difficulty": diff,
+                "matches": len(diff_rows),
+                "win_rate": (diff_win / len(diff_rows)) if diff_rows else 0.0,
+                "rtp": (diff_earned / diff_stake) if diff_stake > 0 else 0.0,
+                "stake": diff_stake,
+                "earned": diff_earned,
+            }
+        )
     return {
         "matches": len(rows),
         "win_rate": win / len(rows),
@@ -187,7 +242,114 @@ def summarize(rows, duration_seconds: float = 0.0):
         "stake": stake,
         "earned": earned,
         "duration_seconds": duration_seconds,
+        "by_difficulty": by_difficulty,
     }
+
+
+def render_progress_page(defaults, job_id: str):
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simulator Progress</title>
+  <style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #f5f6f8; color: #111; }}
+    .wrap {{ max-width: 760px; margin: 32px auto; padding: 0 16px 32px; }}
+    .card {{ background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 6px 24px rgba(0,0,0,.08); }}
+    .meta {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 14px; color: #445; }}
+    .bar {{ margin-top: 18px; height: 14px; border-radius: 999px; background: #e7ebf0; overflow: hidden; }}
+    .bar-fill {{ height: 100%; width: 0%; background: linear-gradient(90deg, #32b46c, #0d6efd); transition: width .18s ease; }}
+    .status {{ margin-top: 14px; font-size: 15px; font-weight: 600; color: #223; }}
+    .sub {{ margin-top: 8px; font-size: 13px; color: #667; }}
+    .timing {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; font-size: 13px; color: #556; }}
+    .error {{ margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: #ffe7e7; color: #b00020; display:none; }}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>模拟进行中</h2>
+      <div class="sub">任务 ID: {html.escape(job_id)}</div>
+      <div class="meta">
+        <div>难度: <b>{html.escape(str(defaults.get("difficulty", "D5")))}</b></div>
+        <div>模式: <b>{html.escape(str(defaults.get("mole_mode", DEFAULT_MOLE_MODE)))}</b></div>
+        <div>runs: <b>{html.escape(str(defaults.get("runs", 0)))}</b></div>
+        <div>策略: <b>{html.escape(str(defaults.get("policy", DEFAULT_POLICY)))}</b></div>
+      </div>
+      <div class="bar"><div id="bar-fill" class="bar-fill"></div></div>
+      <div id="status" class="status">准备中...</div>
+      <div id="sub" class="sub">0 / 0</div>
+      <div class="timing">
+        <div>已耗时: <b id="elapsed">00:00</b></div>
+        <div>预计结束: <b id="eta">计算中...</b></div>
+      </div>
+      <div id="error" class="error"></div>
+    </div>
+  </div>
+<script>
+(() => {{
+  const jobId = {json.dumps(job_id)};
+  const fillEl = document.getElementById('bar-fill');
+  const statusEl = document.getElementById('status');
+  const subEl = document.getElementById('sub');
+  const elapsedEl = document.getElementById('elapsed');
+  const etaEl = document.getElementById('eta');
+  const errEl = document.getElementById('error');
+
+  const fmtSeconds = (sec) => {{
+    const total = Math.max(0, Math.floor(Number(sec || 0)));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    if (h > 0) return `${{String(h).padStart(2, '0')}}:${{String(m).padStart(2, '0')}}:${{String(s).padStart(2, '0')}}`;
+    return `${{String(m).padStart(2, '0')}}:${{String(s).padStart(2, '0')}}`;
+  }};
+  const fmtClock = (epochSec) => {{
+    if (!epochSec) return '计算中...';
+    const d = new Date(Number(epochSec) * 1000);
+    return d.toLocaleTimeString([], {{ hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }});
+  }};
+
+  const tick = async () => {{
+    try {{
+      const resp = await fetch(`/api/run-status?id=${{encodeURIComponent(jobId)}}`, {{ cache: 'no-store' }});
+      if (!resp.ok) throw new Error(`HTTP ${{resp.status}}`);
+      const data = await resp.json();
+      const total = Math.max(0, Number(data.total || 0));
+      const current = Math.max(0, Number(data.current || 0));
+      const pct = total > 0 ? Math.max(0, Math.min(100, current / total * 100)) : 0;
+      fillEl.style.width = `${{pct}}%`;
+      statusEl.textContent = data.status_text || '运行中...';
+      subEl.textContent = `${{current}} / ${{total}}`;
+      elapsedEl.textContent = fmtSeconds(data.elapsed_seconds || 0);
+      etaEl.textContent = fmtClock(data.eta_epoch || 0);
+      if (data.state === 'done') {{
+        fillEl.style.width = '100%';
+        etaEl.textContent = '已完成';
+        window.location.href = `/result?id=${{encodeURIComponent(jobId)}}`;
+        return;
+      }}
+      if (data.state === 'error') {{
+        errEl.style.display = 'block';
+        errEl.textContent = data.error || '模拟失败';
+        statusEl.textContent = '运行失败';
+        etaEl.textContent = '--';
+        return;
+      }}
+      setTimeout(tick, 250);
+    }} catch (err) {{
+      errEl.style.display = 'block';
+      errEl.textContent = String(err);
+      statusEl.textContent = '状态查询失败';
+      etaEl.textContent = '--';
+    }}
+  }};
+  tick();
+}})();
+</script>
+</body>
+</html>"""
 
 
 def render_page(defaults, summary=None, rows=None, error=""):
@@ -226,9 +388,16 @@ def render_page(defaults, summary=None, rows=None, error=""):
         f'<option value="{v}" {"selected" if policy_val == v else ""}>{label}</option>' for v, label in policy_options
     )
     mole_mode_options = [
+        (MOLE_MODE_CONFIG_FIXED, "config_fixed"),
+        (MOLE_MODE_CONFIG_FIXED_UNIFORM30, "config_fixed_uniform30"),
         (MOLE_MODE_GUARDRAILS, "干预"),
         (MOLE_MODE_FLAT, "不干预"),
+        (MOLE_MODE_UNIFORM_SMOOTH, "uniform_smooth (p30,w12,l2,u5)"),
+        (MOLE_MODE_UNIFORM_BALANCED, "uniform_balanced"),
         (MOLE_MODE_SEGMENT_V3, "segment_35_30_20_5"),
+        (MOLE_MODE_SEGMENT_V4, "segment_25_20_15_5"),
+        (MOLE_MODE_SEGMENT_V5, "segment_28_20_12_5"),
+        (MOLE_MODE_SEGMENT_CUSTOM, "segment_custom"),
     ]
     mole_mode_val = str(defaults.get("mole_mode", DEFAULT_MOLE_MODE))
     mole_mode_select = "".join(
@@ -236,6 +405,41 @@ def render_page(defaults, summary=None, rows=None, error=""):
     )
     summary_html = ""
     if summary:
+        by_diff_rows = "".join(
+            (
+                "<tr>"
+                f"<td>{html.escape(str(item['difficulty']))}</td>"
+                f"<td>{item['matches']}</td>"
+                f"<td>{item['win_rate']:.2%}</td>"
+                f"<td>{item['rtp']:.3f}</td>"
+                f"<td>${item['stake']:.2f}</td>"
+                f"<td>${item['earned']:.2f}</td>"
+                "</tr>"
+            )
+            for item in summary.get("by_difficulty", [])
+        )
+        by_diff_html = ""
+        if by_diff_rows:
+            by_diff_html = f"""
+            <div style="margin-top:14px">
+              <h4 style="margin:0 0 8px">分难度返奖率</h4>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>difficulty</th>
+                      <th>对局数</th>
+                      <th>胜率</th>
+                      <th>RTP</th>
+                      <th>总下注</th>
+                      <th>总返奖</th>
+                    </tr>
+                  </thead>
+                  <tbody>{by_diff_rows}</tbody>
+                </table>
+              </div>
+            </div>
+            """
         summary_html = f"""
         <div class="card">
           <h3>结果总览</h3>
@@ -247,13 +451,15 @@ def render_page(defaults, summary=None, rows=None, error=""):
             <div>总返奖: <b>${summary['earned']:.2f}</b></div>
             <div>模拟耗时: <b>{summary.get('duration_seconds', 0.0):.3f}s</b></div>
           </div>
+          {by_diff_html}
           <a class="btn" href="/download">下载CSV</a>
         </div>
         """
 
+    concise_report = bool(defaults.get("concise_report", False))
     table_html = ""
     if rows:
-        header_fields = ordered_fields(rows)
+        header_fields = ordered_fields(rows, concise_report)
         head = "".join(
             f"<th>{html.escape(k)}<br><small>{html.escape(FIELD_LABELS_ZH.get(k, ''))}</small></th>"
             for k in header_fields
@@ -315,6 +521,11 @@ def render_page(defaults, summary=None, rows=None, error=""):
           <div id="mole-rate-field"><label>mole_rate (0~1)</label><input id="mole-rate-input" name="mole_rate" value="{defaults['mole_rate']}" /></div>
           <div><label>mole_mode</label><select id="mole-mode-select" name="mole_mode">{mole_mode_select}</select></div>
           <div><label>mole_reward_rate (单鼠奖励系数)</label><input name="mole_reward_rate" value="{defaults['mole_reward_rate']}" /></div>
+          <div id="seg-0-2-field"><label>seg_rate_0_2</label><input name="seg_rate_0_2" value="{defaults.get('seg_rate_0_2', 1.0)}" /></div>
+          <div id="seg-3-29-field"><label>seg_rate_3_29</label><input name="seg_rate_3_29" value="{defaults.get('seg_rate_3_29', 0.28)}" /></div>
+          <div id="seg-30-59-field"><label>seg_rate_30_59</label><input name="seg_rate_30_59" value="{defaults.get('seg_rate_30_59', 0.20)}" /></div>
+          <div id="seg-60-89-field"><label>seg_rate_60_89</label><input name="seg_rate_60_89" value="{defaults.get('seg_rate_60_89', 0.12)}" /></div>
+          <div id="seg-90p-field"><label>seg_rate_90p</label><input name="seg_rate_90p" value="{defaults.get('seg_rate_90p', 0.05)}" /></div>
           <div><label>difficulty</label><select name="difficulty">{diff_select}</select></div>
           <div><label>策略版本</label><select name="policy">{policy_select}</select></div>
           <div><label>action_seconds</label><input name="action_seconds" value="{defaults['action_seconds']}" /></div>
@@ -329,6 +540,10 @@ def render_page(defaults, summary=None, rows=None, error=""):
           <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#222;margin-top:6px;">
             <input type="checkbox" name="all_balanced" value="1" {"checked" if defaults.get("all_balanced", True) else ""} />
             ALL难度时按难度均衡采样
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#222;margin-top:6px;">
+            <input type="checkbox" name="concise_report" value="1" {"checked" if defaults.get("concise_report", False) else ""} />
+            精简报表模式（仅保留：场上同鼠峰值、连续未出鼠、本局收益、剩余时间、比赛结果）
           </label>
         </div>
         <div class="actions">
@@ -345,17 +560,121 @@ def render_page(defaults, summary=None, rows=None, error=""):
   const modeEl = document.getElementById('mole-mode-select');
   const rateField = document.getElementById('mole-rate-field');
   const rateInput = document.getElementById('mole-rate-input');
+  const segFields = [
+    document.getElementById('seg-0-2-field'),
+    document.getElementById('seg-3-29-field'),
+    document.getElementById('seg-30-59-field'),
+    document.getElementById('seg-60-89-field'),
+    document.getElementById('seg-90p-field'),
+  ];
   const sync = () => {{
     if (!modeEl || !rateField || !rateInput) return;
-    const isSegment = modeEl.value === 'segment_35_30_20_5';
-    rateField.style.display = isSegment ? 'none' : '';
-    rateInput.disabled = isSegment;
+    const isSegment = modeEl.value === 'segment_35_30_20_5' || modeEl.value === 'segment_25_20_15_5' || modeEl.value === 'segment_28_20_12_5' || modeEl.value === 'segment_custom' || modeEl.value === 'config_fixed' || modeEl.value === 'config_fixed_uniform30';
+    const isUniformSmooth = modeEl.value === 'uniform_smooth';
+    const isCustom = modeEl.value === 'segment_custom';
+    rateField.style.display = (isSegment || isUniformSmooth) ? 'none' : '';
+    rateInput.disabled = (isSegment || isUniformSmooth);
+    segFields.forEach((el) => {{ if (el) el.style.display = isCustom ? '' : 'none'; }});
   }};
   if (modeEl) modeEl.addEventListener('change', sync);
   sync();
 }})();
 </script>
 </html>"""
+
+
+def run_simulation_job(job_id: str, defaults: dict):
+    global LAST_CSV, LAST_CSV_NAME
+    try:
+        with RUN_JOBS_LOCK:
+            RUN_JOBS[job_id]["state"] = "running"
+            RUN_JOBS[job_id]["status_text"] = "读取种子..."
+            started_at = float(RUN_JOBS[job_id].get("started_at", time.time()))
+        t0 = time.perf_counter()
+        seed_cases = load_seed_cases(Path(defaults["seeds_dir"]), defaults["max_seeds"])
+        seed_cases = build_seed_pool(seed_cases, defaults["difficulty"], defaults["prefer_unique"])
+        if not seed_cases:
+            raise ValueError("没有可用seed（请检查目录/难度筛选）")
+
+        rng = random.Random(defaults["rng_seed"])
+        segment_rates = {
+            "r0_2": min(1.0, max(0.0, float(defaults.get("seg_rate_0_2", 1.0)))),
+            "r3_29": min(1.0, max(0.0, float(defaults.get("seg_rate_3_29", 0.28)))),
+            "r30_59": min(1.0, max(0.0, float(defaults.get("seg_rate_30_59", 0.20)))),
+            "r60_89": min(1.0, max(0.0, float(defaults.get("seg_rate_60_89", 0.12)))),
+            "r90p": min(1.0, max(0.0, float(defaults.get("seg_rate_90p", 0.05)))),
+        }
+        rows = []
+        runs = defaults["runs"]
+        if runs > 0:
+            balance_all = defaults["all_balanced"] and str(defaults["difficulty"]).strip().upper() == "ALL"
+            run_list = build_run_seed_list(seed_cases, runs, rng, balance_all)
+        else:
+            run_list = list(seed_cases)
+
+        total = len(run_list)
+        with RUN_JOBS_LOCK:
+            RUN_JOBS[job_id]["total"] = total
+            RUN_JOBS[job_id]["status_text"] = "开始模拟..."
+
+        for idx, sc in enumerate(run_list, start=1):
+            rows.append(
+                simulate(
+                    sc,
+                    rng,
+                    defaults["entry_fee"],
+                    defaults["action_seconds"],
+                    defaults["max_actions"],
+                    defaults["goal_target"],
+                    defaults["max_moles"],
+                    defaults["mole_rate"],
+                    defaults["policy"],
+                    False,
+                    defaults["mole_reward_rate"],
+                    defaults["mole_mode"],
+                    segment_rates,
+                )
+            )
+            if idx == 1 or idx == total or idx % 5 == 0:
+                with RUN_JOBS_LOCK:
+                    if job_id in RUN_JOBS:
+                        elapsed_now = max(0.0, time.time() - started_at)
+                        eta_epoch = 0.0
+                        if idx > 0 and total > 0:
+                            eta_epoch = time.time() + max(0.0, elapsed_now * (total - idx) / idx)
+                        RUN_JOBS[job_id]["current"] = idx
+                        RUN_JOBS[job_id]["status_text"] = f"模拟中... ({idx}/{total})"
+                        RUN_JOBS[job_id]["elapsed_seconds"] = elapsed_now
+                        RUN_JOBS[job_id]["eta_epoch"] = eta_epoch
+
+        elapsed = max(time.perf_counter() - t0, time.time() - started_at)
+        concise_report = bool(defaults.get("concise_report", False))
+        csv_bytes = build_csv(rows, concise_report)
+        csv_name = "sim_results_concise.csv" if concise_report else "sim_results.csv"
+        summary = summarize(rows, elapsed)
+
+        with RUN_JOBS_LOCK:
+            RUN_JOBS[job_id].update({
+                "state": "done",
+                "current": total,
+                "total": total,
+                "status_text": "模拟完成",
+                "elapsed_seconds": elapsed,
+                "eta_epoch": 0.0,
+                "rows": rows,
+                "summary": summary,
+                "csv_bytes": csv_bytes,
+                "csv_name": csv_name,
+            })
+        LAST_CSV = csv_bytes
+        LAST_CSV_NAME = csv_name
+    except Exception as e:
+        with RUN_JOBS_LOCK:
+            if job_id in RUN_JOBS:
+                RUN_JOBS[job_id]["state"] = "error"
+                RUN_JOBS[job_id]["error"] = str(e)
+                RUN_JOBS[job_id]["status_text"] = "模拟失败"
+                RUN_JOBS[job_id]["eta_epoch"] = 0.0
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -395,6 +714,41 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
+        if path == "/api/run-status":
+            q = parse_qs(parsed.query or "")
+            job_id = (q.get("id", [""])[0] or "").strip()
+            with RUN_JOBS_LOCK:
+                job = RUN_JOBS.get(job_id)
+            if not job:
+                self.send_json({"error": "job not found"}, status=404)
+                return
+            self.send_json({
+                "id": job_id,
+                "state": job.get("state", "queued"),
+                "current": job.get("current", 0),
+                "total": job.get("total", 0),
+                "status_text": job.get("status_text", ""),
+                "elapsed_seconds": job.get("elapsed_seconds", max(0.0, time.time() - float(job.get("started_at", time.time())))),
+                "eta_epoch": job.get("eta_epoch", 0.0),
+                "error": job.get("error", ""),
+            })
+            return
+        if path == "/result":
+            q = parse_qs(parsed.query or "")
+            job_id = (q.get("id", [""])[0] or "").strip()
+            with RUN_JOBS_LOCK:
+                job = RUN_JOBS.get(job_id)
+            if not job:
+                self.send_html(render_page(self.defaults, error="任务不存在"), status=404)
+                return
+            if job.get("state") == "error":
+                self.send_html(render_page(job.get("defaults", self.defaults), error=job.get("error", "模拟失败")), status=400)
+                return
+            if job.get("state") != "done":
+                self.send_html(render_progress_page(job.get("defaults", self.defaults), job_id))
+                return
+            self.send_html(render_page(job.get("defaults", self.defaults), job.get("summary"), job.get("rows")))
+            return
         if path == "/download":
             if not LAST_CSV:
                 self.send_response(404)
@@ -450,7 +804,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(data)
             return
         if path.startswith("/"):
-            rel = path.lstrip("/")
+            rel = unquote(path.lstrip("/"))
             if rel:
                 target = (self.workspace_dir / rel).resolve()
                 if str(target).startswith(str(self.workspace_dir)) and target.is_file():
@@ -483,6 +837,11 @@ class Handler(BaseHTTPRequestHandler):
             "max_moles": to_int(form.get("max_moles", str(self.defaults["max_moles"])), self.defaults["max_moles"]),
             "mole_rate": to_float(form.get("mole_rate", str(self.defaults["mole_rate"])), self.defaults["mole_rate"]),
             "mole_mode": ((form.get("mole_mode", self.defaults["mole_mode"]) or DEFAULT_MOLE_MODE).strip()),
+            "seg_rate_0_2": to_float(form.get("seg_rate_0_2", str(self.defaults.get("seg_rate_0_2", 1.0))), self.defaults.get("seg_rate_0_2", 1.0)),
+            "seg_rate_3_29": to_float(form.get("seg_rate_3_29", str(self.defaults.get("seg_rate_3_29", 0.28))), self.defaults.get("seg_rate_3_29", 0.28)),
+            "seg_rate_30_59": to_float(form.get("seg_rate_30_59", str(self.defaults.get("seg_rate_30_59", 0.20))), self.defaults.get("seg_rate_30_59", 0.20)),
+            "seg_rate_60_89": to_float(form.get("seg_rate_60_89", str(self.defaults.get("seg_rate_60_89", 0.12))), self.defaults.get("seg_rate_60_89", 0.12)),
+            "seg_rate_90p": to_float(form.get("seg_rate_90p", str(self.defaults.get("seg_rate_90p", 0.05))), self.defaults.get("seg_rate_90p", 0.05)),
             "mole_reward_rate": to_float(form.get("mole_reward_rate", str(self.defaults["mole_reward_rate"])), self.defaults["mole_reward_rate"]),
             "difficulty": (form.get("difficulty", self.defaults["difficulty"]) or "D5").strip(),
             "policy": normalize_policy((form.get("policy", self.defaults["policy"]) or DEFAULT_POLICY).strip().lower()),
@@ -491,64 +850,33 @@ class Handler(BaseHTTPRequestHandler):
             "rng_seed": to_int(form.get("rng_seed", str(self.defaults["rng_seed"])), self.defaults["rng_seed"]),
             "prefer_unique": form.get("prefer_unique", "0") == "1",
             "all_balanced": form.get("all_balanced", "0") == "1",
+            "concise_report": form.get("concise_report", "0") == "1",
         }
         if defaults["mole_mode"] not in MOLE_MODES:
             defaults["mole_mode"] = DEFAULT_MOLE_MODE
         self.defaults = defaults
 
         try:
-            t0 = time.perf_counter()
-            seed_cases = load_seed_cases(Path(defaults["seeds_dir"]), defaults["max_seeds"])
-            seed_cases = build_seed_pool(seed_cases, defaults["difficulty"], defaults["prefer_unique"])
-            if not seed_cases:
-                raise ValueError("没有可用seed（请检查目录/难度筛选）")
-
-            rng = random.Random(defaults["rng_seed"])
-
-            rows = []
-            runs = defaults["runs"]
-            if runs > 0:
-                balance_all = defaults["all_balanced"] and str(defaults["difficulty"]).strip().upper() == "ALL"
-                for sc in build_run_seed_list(seed_cases, runs, rng, balance_all):
-                    rows.append(
-                        simulate(
-                            sc,
-                            rng,
-                            defaults["entry_fee"],
-                            defaults["action_seconds"],
-                            defaults["max_actions"],
-                            defaults["goal_target"],
-                            defaults["max_moles"],
-                            defaults["mole_rate"],
-                            defaults["policy"],
-                            False,
-                            defaults["mole_reward_rate"],
-                            defaults["mole_mode"],
-                        )
-                    )
-            else:
-                for sc in seed_cases:
-                    rows.append(
-                        simulate(
-                            sc,
-                            rng,
-                            defaults["entry_fee"],
-                            defaults["action_seconds"],
-                            defaults["max_actions"],
-                            defaults["goal_target"],
-                            defaults["max_moles"],
-                            defaults["mole_rate"],
-                            defaults["policy"],
-                            False,
-                            defaults["mole_reward_rate"],
-                            defaults["mole_mode"],
-                        )
-                    )
-
-            elapsed = time.perf_counter() - t0
-            LAST_CSV = build_csv(rows)
-            LAST_CSV_NAME = "sim_results.csv"
-            self.send_html(render_page(defaults, summarize(rows, elapsed), rows))
+            job_id = uuid4().hex
+            with RUN_JOBS_LOCK:
+                RUN_JOBS[job_id] = {
+                    "state": "queued",
+                    "current": 0,
+                    "total": 0,
+                    "status_text": "排队中...",
+                    "started_at": time.time(),
+                    "elapsed_seconds": 0.0,
+                    "eta_epoch": 0.0,
+                    "error": "",
+                    "defaults": dict(defaults),
+                    "rows": [],
+                    "summary": None,
+                    "csv_bytes": b"",
+                    "csv_name": "sim_results.csv",
+                }
+            worker = threading.Thread(target=run_simulation_job, args=(job_id, dict(defaults)), daemon=True)
+            worker.start()
+            self.send_html(render_progress_page(defaults, job_id))
         except Exception as e:
             self.send_html(render_page(defaults, error=str(e)), status=400)
 
@@ -563,8 +891,13 @@ def main():
     ap.add_argument("--entry-fee", type=float, default=1.0)
     ap.add_argument("--goal-target", type=int, default=12)
     ap.add_argument("--max-moles", type=int, default=20)
-    ap.add_argument("--mole-rate", type=float, default=0.40)
+    ap.add_argument("--mole-rate", type=float, default=0.30)
     ap.add_argument("--mole-mode", default=DEFAULT_MOLE_MODE, choices=sorted(MOLE_MODES))
+    ap.add_argument("--seg-rate-0-2", type=float, default=1.0)
+    ap.add_argument("--seg-rate-3-29", type=float, default=0.28)
+    ap.add_argument("--seg-rate-30-59", type=float, default=0.20)
+    ap.add_argument("--seg-rate-60-89", type=float, default=0.12)
+    ap.add_argument("--seg-rate-90p", type=float, default=0.05)
     ap.add_argument("--mole-reward-rate", type=float, default=MOLE_REWARD_RATE)
     ap.add_argument("--difficulty", default="D5")
     ap.add_argument("--policy", default=DEFAULT_POLICY)
@@ -594,6 +927,11 @@ def main():
         "max_moles": args.max_moles,
         "mole_rate": args.mole_rate,
         "mole_mode": args.mole_mode,
+        "seg_rate_0_2": args.seg_rate_0_2,
+        "seg_rate_3_29": args.seg_rate_3_29,
+        "seg_rate_30_59": args.seg_rate_30_59,
+        "seg_rate_60_89": args.seg_rate_60_89,
+        "seg_rate_90p": args.seg_rate_90p,
         "mole_reward_rate": args.mole_reward_rate,
         "difficulty": args.difficulty,
         "policy": normalize_policy(args.policy),
@@ -602,6 +940,7 @@ def main():
         "rng_seed": args.rng_seed,
         "prefer_unique": args.prefer_unique,
         "all_balanced": args.all_balanced,
+        "concise_report": False,
     }
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"Simulator UI: http://{args.host}:{args.port}")
